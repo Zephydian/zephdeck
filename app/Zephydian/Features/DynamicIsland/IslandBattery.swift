@@ -117,12 +117,12 @@ final class IslandBattery {
     }
 
     private func show(_ text: String) {
-        withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) { alert = Alert(text: text) }
+        withAnimation(IslandMotion.open) { alert = Alert(text: text) }
         hideTask?.cancel()
         hideTask = Task { [weak self] in
             try? await Task.sleep(for: Self.alertDuration)
             guard !Task.isCancelled else { return }
-            withAnimation(.spring(response: 0.45, dampingFraction: 1.0)) { self?.alert = nil }
+            withAnimation(IslandMotion.close) { self?.alert = nil }
         }
     }
 
@@ -243,7 +243,7 @@ struct IslandBatteryButton: View {
             // The island stays open while the details are up, and closes after if the pointer left.
             model.menuOpen = showing
             if !showing, model.state == .open, !model.pinned, !model.isPointerInside() {
-                withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.close() }
+                withAnimation(IslandMotion.close) { model.close() }
             }
         }
     }

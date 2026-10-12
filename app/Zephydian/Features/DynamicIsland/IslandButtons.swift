@@ -149,7 +149,7 @@ enum IslandButtons {
             return
         }
         guard let item = button.item else { return }
-        withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.close() }
+        withAnimation(IslandMotion.close) { model.close() }
         RadialActions.run(item)
     }
 }
@@ -211,8 +211,8 @@ private struct IslandSideBubble: View {
     let side: IslandButton.Side
     let order: Int
     let look: IslandSettings.Look
-    @State private var shown = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Out while the island is open; growing out and tucking back on the island's own spring.
+    private var shown: Bool { model.state == .open }
 
     private let d = IslandSideButtons.diameter
 
@@ -228,11 +228,7 @@ private struct IslandSideBubble: View {
             model.overSideButtons = hovering
             if !hovering { model.closeIfPointerLeft() }
         }
-        .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.38, dampingFraction: 0.7).delay(0.06 + 0.05 * Double(order))) {
-                shown = true
-            }
-        }
+        .animation(shown ? IslandMotion.sideButton(order) : IslandMotion.close, value: shown)
     }
 
     /// A short bar joining the bubble to the island's side (Black look only; glass stands alone).

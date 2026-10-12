@@ -231,7 +231,7 @@ final class IslandAirDrop: NSObject, NSSharingServiceDelegate {
     private func finish() {
         model?.menuOpen = false
         if let model, model.state == .open, !model.pinned, !model.isPointerInside() {
-            withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.close() }
+            withAnimation(IslandMotion.close) { model.close() }
         }
         Self.current = nil
     }
@@ -412,7 +412,7 @@ final class IslandShelfMouseView: NSView, NSDraggingSource {
         withExtendedLifetime(actions) {}
         model?.menuOpen = false
         if let model, model.state == .open, !model.pinned, !model.isPointerInside() {
-            withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.close() }
+            withAnimation(IslandMotion.close) { model.close() }
         }
     }
 

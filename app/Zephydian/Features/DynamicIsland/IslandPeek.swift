@@ -23,7 +23,7 @@ struct IslandPeekStrip: View {
             HStack(spacing: 4) {
                 ForEach(settings.visibleTabs.prefix(8)) { tab in
                     Button {
-                        withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.open(on: tab) }
+                        withAnimation(IslandMotion.open) { model.open(on: tab) }
                     } label: {
                         Image(systemName: tab.symbol)
                             .font(.system(size: 13, weight: .semibold))
@@ -37,7 +37,7 @@ struct IslandPeekStrip: View {
                 }
                 Spacer(minLength: 8)
                 Button {
-                    withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.open() }
+                    withAnimation(IslandMotion.open) { model.open() }
                 } label: {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 13, weight: .semibold))

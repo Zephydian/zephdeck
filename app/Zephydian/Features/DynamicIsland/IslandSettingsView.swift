@@ -261,7 +261,7 @@ struct IslandSettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if settings.opening.usesHover { hoverDelayControl }
                 PageSwitchRow(symbol: "hand.draw", title: "Gestures",
-                              caption: settings.gestures ? "Swipe down on the island to open it, up to close it." : nil,
+                              caption: settings.gestures ? "Scroll down on the island to open it, and up to close it." : nil,
                               isOn: $settings.gestures)
                 PageSwitchRow(symbol: "waveform.path", title: "Haptic feedback", isOn: $settings.haptics)
                 PageMenuRow(symbol: "arrow.uturn.backward", title: "When reopening", selection: $settings.reopenTo) {

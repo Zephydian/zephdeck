@@ -100,7 +100,7 @@ struct IslandHeader: View {
         model.menuOpen = false
         // The pointer may have left the island for the menu.
         if model.state == .open, !model.pinned, !model.isPointerInside() {
-            withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.close() }
+            withAnimation(IslandMotion.close) { model.close() }
         }
     }
 }

@@ -74,7 +74,7 @@ final class IslandModel {
             try? await Task.sleep(for: .milliseconds(120))
             guard !Task.isCancelled, let self, self.state == .open, !self.pinned, !self.menuOpen, !ScreenCapture.isHolding,
                   !self.overSideButtons, !self.isPointerInside() else { return }
-            withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { self.close() }
+            withAnimation(IslandMotion.close) { self.close() }
         }
     }
 
@@ -171,7 +171,7 @@ final class IslandModel {
             try? await Task.sleep(for: .milliseconds(600))
             while !Task.isCancelled, let self, self.state == .open {
                 if !self.pinned, !self.menuOpen, !ScreenCapture.isHolding, !self.isPointerInside(), NSEvent.pressedMouseButtons == 0 {
-                    withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { self.close() }
+                    withAnimation(IslandMotion.close) { self.close() }
                     return
                 }
                 try? await Task.sleep(for: .milliseconds(250))

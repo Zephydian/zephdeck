@@ -51,7 +51,7 @@ final class IslandEngine: FeatureEngine {
     func openShelf() {
         guard let model else { return }
         if model.state == .closed {
-            withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) { model.openForDrop() }
+            withAnimation(IslandMotion.open) { model.openForDrop() }
         } else {
             model.droppedOnShelf()
         }
@@ -282,7 +282,7 @@ final class IslandEngine: FeatureEngine {
     /// Opens or closes the island (the Settings page's button).
     func toggle() {
         guard let model else { return }
-        withAnimation(.interactiveSpring(response: 0.38, dampingFraction: 0.8)) {
+        withAnimation(IslandMotion.to(open: model.state != .open)) {
             if model.state == .open { model.close() } else { model.open() }
         }
     }

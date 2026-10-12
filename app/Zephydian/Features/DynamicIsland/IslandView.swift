@@ -32,9 +32,9 @@ struct IslandView: View {
     private let gestureSensitivity: CGFloat = 200
 
     // Shared interactive spring for movement/resizing to avoid conflicting animations
-    private var animationSpring: Animation {
-        reduceMotion ? .easeInOut(duration: 0.2) : .interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
-    }
+    /// Small moves under the pointer (hover, the preview strip, a swipe settling); opening and
+    /// closing use `IslandMotion.open`/`close`.
+    private var animationSpring: Animation { IslandMotion.hover }
 
     private var insets: (top: CGFloat, bottom: CGFloat) {
         model.state == .open ? IslandSizing.cornerRadiusInsets.opened : IslandSizing.cornerRadiusInsets.closed
@@ -80,8 +80,11 @@ struct IslandView: View {
 
     /// Vorssaint's outline: 2 pt, in the accent color (the owner's choice), orange while a timer shows
     /// in the closed island; stronger with Increase Contrast.
+    /// Always in place and shown by its opacity, so it shares the island's own geometry and spring
+    /// frame by frame: added and removed as its own view, it kept the open island's size while it
+    /// faded and was drawn again after the island had closed (B-43, measured).
     @ViewBuilder private var outline: some View {
-        if outlineShows {
+        if settings.outline {
             let timer = model.state == .closed && !model.hideOnClosed && IslandTimers.shared.soonest != nil
             let color = contrast == .increased ? Color.white : (timer ? Color.orange : appSettings.accentColor)
             currentShape
@@ -91,8 +94,8 @@ struct IslandView: View {
                 .mask(alignment: .bottom) {
                     Rectangle().padding(.top, model.floatsAsCapsule ? 0 : IslandSizing.outlineWidth)
                 }
+                .opacity(outlineShows ? 1 : 0)
                 .allowsHitTesting(false)
-                .transition(.opacity)
         }
     }
 
@@ -110,13 +113,17 @@ struct IslandView: View {
                 let mainLayout = layout
                     .frame(width: model.state == .open ? IslandSizing.openSize.width - 2 * (IslandSizing.cornerRadiusInsets.opened.top + 12) : nil,
                            alignment: .top)
+                    // Open, the island takes its height from its size, not from the page (B-43).
+                    .frame(maxHeight: model.state == .open ? .infinity : nil, alignment: .top)
+                    .overlay(alignment: .top) { openPage }
                     .padding(
                         .horizontal,
                         model.state == .open ? IslandSizing.cornerRadiusInsets.opened.top : IslandSizing.cornerRadiusInsets.closed.bottom
                     )
                     .padding([.horizontal, .bottom], model.state == .open ? 12 : 0)
+                    // Rides whatever animation changed it (hover, opening, closing), so width and height
+                    // always follow the same spring.
                     .padding([.horizontal, .bottom], outlineRoom)
-                    .animation(animationSpring, value: outlineRoom)
                     .background { background }
                     .clipShape(currentShape)
                     .overlay { outline }
@@ -148,7 +155,7 @@ struct IslandView: View {
                     }
                     .frame(height: model.state == .open ? model.size.height : nil)
                     .scaleEffect(hoverBulge, anchor: .top)
-                    .animation(openCloseAnimation, value: model.state)
+                    .animation(IslandMotion.to(open: model.state == .open), value: model.state)
                     .animation(.smooth, value: gestureProgress)
                     .contentShape(Rectangle())
                     .onHover { hovering in
@@ -157,10 +164,13 @@ struct IslandView: View {
                     .onTapGesture {
                         doOpen()
                     }
-                    .islandPanGesture(direction: .down) { translation, phase in
+                    // Scrolling down opens and scrolling up closes (B-44): `.up`
+                    // here is a scroll whose content moves up, which is what scrolling a page down does
+                    // whichever way the trackpad's natural scrolling is set.
+                    .islandPanGesture(direction: .up) { translation, phase in
                         handleDownGesture(translation: translation, phase: phase)
                     }
-                    .islandPanGesture(direction: .up) { translation, phase in
+                    .islandPanGesture(direction: .down) { translation, phase in
                         handleUpGesture(translation: translation, phase: phase)
                     }
                     .onChange(of: model.state) { _, newState in
@@ -187,9 +197,11 @@ struct IslandView: View {
         .padding(.bottom, 8)
         .overlay(alignment: .top) {
             // Buttons beside the open island (22.11, after Vorssaint's).
-            if model.state == .open && !settings.buttons.isEmpty {
+            // Always in place (when there are buttons): they grow out with the island and tuck back in
+            // the same way, instead of fading where they stood (B-43).
+            if !settings.buttons.isEmpty {
                 IslandSideButtons(model: model)
-                    .transition(.opacity)
+                    .allowsHitTesting(model.state == .open)
             }
         }
         .frame(maxWidth: IslandSizing.windowSize.width, maxHeight: IslandSizing.windowSize.height, alignment: .top)
@@ -205,7 +217,7 @@ struct IslandView: View {
         .background(dragDetector)
         .onChange(of: dragTargeting) { _, targeted in
             guard targeted, model.state == .closed else { return }
-            withAnimation(animationSpring) { model.openForDrop() }
+            withAnimation(IslandMotion.open) { model.openForDrop() }
             if settings.haptics { haptics.toggle() }
             model.watchUntilPointerLeaves()
         }
@@ -247,13 +259,6 @@ struct IslandView: View {
         }
     }
 
-    private var openCloseAnimation: Animation {
-        if reduceMotion { return .easeInOut(duration: 0.2) }
-        let openAnimation = Animation.spring(response: 0.42, dampingFraction: 0.8, blendDuration: 0)
-        let closeAnimation = Animation.spring(response: 0.45, dampingFraction: 1.0, blendDuration: 0)
-        return model.state == .open ? openAnimation : closeAnimation
-    }
-
     /// Click-only opening: the closed island swells a little under the pointer instead of opening.
     private var hoverBulge: CGFloat {
         guard !reduceMotion, settings.opening == .click, model.state == .closed, isHovering else { return 1 }
@@ -262,17 +267,31 @@ struct IslandView: View {
 
     /// Solid black, or Liquid Glass while open with the Liquid Glass look (black while closed, so it
     /// blends with the notch).
+    /// Every layer stays in place for the look and only crossfades, so it follows the island's shape
+    /// frame by frame both ways: swapped in and out as separate views, the leaving layer (the glass
+    /// on closing) kept the open island's size while it faded (B-43, as the outline did).
     @ViewBuilder private var background: some View {
-        if glassOpen {
-            ZStack {
-                // B-33: glass leaves the window's own pixels clear, and macOS sends clicks through clear
-                // pixels to the window behind. An invisible 1% fill makes the whole island catch them
-                // (boring.notch does the same for its notch's hover area).
-                currentShape.fill(Color.black.opacity(0.01))
-                Color.clear.glassSurface(in: currentShape, fallback: Material.regular)
+        ZStack {
+            Color.black
+                .opacity(glassOpen || translucentOpen ? 0 : 1)
+            if settings.look == .glass {
+                ZStack {
+                    // B-33: glass leaves the window's own pixels clear, and macOS sends clicks through clear
+                    // pixels to the window behind. An invisible 1% fill makes the whole island catch them
+                    // (boring.notch does the same for its notch's hover area).
+                    currentShape.fill(Color.black.opacity(0.01))
+                    Color.clear.glassSurface(in: currentShape, fallback: Material.regular)
+                }
+                .opacity(glassOpen ? 1 : 0)
             }
-            .transition(.opacity)
-        } else if translucentOpen {
+            if settings.look == .black && settings.translucent && !reduceTransparency {
+                translucentLayer
+                    .opacity(translucentOpen ? 1 : 0)
+            }
+        }
+    }
+
+    private var translucentLayer: some View {
             ZStack {
                 currentShape.fill(Color.black.opacity(0.01))   // clicks stop here (B-33)
                 IslandBehindBlur(shape: currentShape)
@@ -284,85 +303,94 @@ struct IslandView: View {
                     .init(color: .black.opacity(contrast == .increased ? 0.75 : 0.45), location: 1),
                 ], startPoint: .top, endPoint: .bottom)
             }
-            .transition(.opacity)
-        } else {
-            Color.black
-                .transition(.opacity)
-        }
     }
 
     @ViewBuilder private var layout: some View {
         VStack(alignment: .leading) {
-            VStack(alignment: .leading) {
+            // One thing at a time: a ZStack, so what's leaving overlaps what's arriving (centred)
+            // instead of stacking under it while it fades.
+            ZStack(alignment: .top) {
                 if model.state == .closed, model.peeking, IslandBattery.shared.alert == nil, IslandTimers.shared.doneAlert == nil {
                     // Preview on hover (Vorssaint's peek): the tabs and Open, under the notch.
                     IslandPeekStrip(model: model)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed, let alert = IslandBattery.shared.alert {
                     // boring.notch's battery expanding view: over everything for 3 s (22-D7).
                     IslandBatteryAlert(model: model, text: alert.text)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed, let done = IslandTimers.shared.doneAlert {
                     IslandTimerDoneAlert(model: model, text: done)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed, !model.hideOnClosed, let notice = IslandNotices.shared.current {
                     // Vorssaint's indicators: a moment's notice beside the notch.
                     IslandNoticeView(model: model, notice: notice)
                         .id(notice.id)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed, IslandCapture.isRecording {
                     // A recording comes first, even in full-screen apps (you need to know it's on).
                     IslandRecordingLiveActivity(model: model)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed, !model.hideOnClosed, !blockedByMenus, let timer = IslandTimers.shared.soonest {
                     // A timer comes before the calendar and music (22-D7).
                     IslandTimerLiveActivity(model: model, timer: timer)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed, !model.hideOnClosed, !blockedByMenus, let event = IslandCalendar.shared.upcoming {
                     // An event in the next 10 minutes comes before music (22-D20).
                     IslandCalendarLiveActivity(model: model, event: event)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .closed && model.showsMusicClosed && !model.hideOnClosed && !blockedByMenus {
                     IslandMusicLiveActivity(model: model, namespace: albumArtNamespace)
                         .frame(alignment: .center)
                 } else if model.state == .closed && model.showsBatteryRest && !model.hideOnClosed && !blockedByMenus {
                     // At rest with Battery (Vorssaint's resting choice).
                     IslandBatteryRest(model: model)
-                        .transition(.opacity)
+                        .transition(IslandMotion.activity)
                 } else if model.state == .open {
-                    IslandHeader(model: model)
-                        .frame(height: max(24, model.effectiveClosedHeight))
-                        .opacity(gestureProgress != 0 ? 1.0 - min(abs(gestureProgress) * 0.1, 0.3) : 1.0)
+                    // The header is drawn with the page in `openPage`; this keeps its strip. It must leave
+                    // at once and never be wider than the notch: inside a close animation SwiftUI gives
+                    // a removed view a fade as long as the spring, and a bare Color.clear takes all the
+                    // width offered, so it held the island wide (and its left-aligned stack off centre)
+                    // until the fade ended, then the island snapped shut (B-43).
+                    Color.clear
+                        .frame(width: max(0, model.closedSize.width - 20), height: max(24, model.effectiveClosedHeight))
+                        .transition(.identity)
                 } else {
                     Rectangle().fill(.clear).frame(width: model.closedSize.width - 20, height: model.effectiveClosedHeight)
+                        .transition(.identity)
                 }
 
             }
             .zIndex(2)
-            if model.state == .open {
+        }
+    }
+
+    /// The open header and page, laid out at their final size from the start (nothing re-wraps while
+    /// the shape grows) and drawn over the island rather than inside its layout, so their fade never
+    /// holds the island open or wide while it closes (B-43).
+    @ViewBuilder private var openPage: some View {
+        if model.state == .open {
+            let header = max(24, model.effectiveClosedHeight)
+            let width = IslandSizing.openSize.width - 2 * (IslandSizing.cornerRadiusInsets.opened.top + 12)
+            VStack(spacing: 8) {
+                IslandHeader(model: model)
+                    .frame(height: header)
                 IslandBody(model: model, namespace: albumArtNamespace)
-                    .transition(
-                        reduceMotion
-                            ? .opacity
-                            : .scale(scale: 0.8, anchor: .top)
-                                .combined(with: .opacity)
-                                .animation(.smooth(duration: 0.35))
-                    )
-                    .zIndex(1)
-                    .allowsHitTesting(model.state == .open)
-                    .opacity(gestureProgress != 0 ? 1.0 - min(abs(gestureProgress) * 0.1, 0.3) : 1.0)
+                    .frame(height: max(0, IslandSizing.openSize.height - header - 20), alignment: .top)
             }
+            .frame(width: width, alignment: .top)
+            .transition(IslandMotion.content)
+            .opacity(gestureProgress != 0 ? 1.0 - min(abs(gestureProgress) * 0.1, 0.3) : 1.0)
         }
     }
 
     private func doOpen() {
-        withAnimation(animationSpring) {
+        withAnimation(IslandMotion.open) {
             model.open()
         }
     }
 
     private func doClose() {
-        withAnimation(animationSpring) {
+        withAnimation(IslandMotion.close) {
             model.close()
         }
     }
@@ -413,6 +441,7 @@ struct IslandView: View {
     }
 
     // MARK: - Gesture Handling
+
 
     private func handleDownGesture(translation: CGFloat, phase: NSEvent.Phase) {
         guard settings.gestures, model.state == .closed, !IslandGestureGuard.overScrollingContent else { return }

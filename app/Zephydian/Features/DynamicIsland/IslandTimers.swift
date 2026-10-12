@@ -66,14 +66,14 @@ final class IslandTimers {
     }
 
     private func finished(_ timer: PackTimers.Timer) {
-        withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) {
+        withAnimation(IslandMotion.open) {
             doneAlert = timer.label.isEmpty ? "Time's up" : "\(timer.label) is done"
         }
         hideTask?.cancel()
         hideTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
-            withAnimation(.spring(response: 0.45, dampingFraction: 1.0)) { self?.doneAlert = nil }
+            withAnimation(IslandMotion.close) { self?.doneAlert = nil }
         }
     }
 
