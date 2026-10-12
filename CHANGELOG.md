@@ -17,6 +17,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 - **Capture can photograph Zephydian itself**: screenshots and recordings now include Zephydian's own windows (the island, the panel, Notes…); only the capture tool's own overlay, bars and preview stay out. While a capture is under way, an open island stays open so it can be in the picture.
+- **Menu Bar Stats and System Alerts use less power**: they read only the figures they show or check (disk space at most once a minute), which cut Zephydian's idle CPU with every feature on from about 1.6% to 0.4%.
 - With the island's Shelf on, it takes over from the floating Shelf: dragging a file opens the island on its Shelf.
 
 ## [0.8.0] - 2026-10-06

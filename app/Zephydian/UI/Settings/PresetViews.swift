@@ -99,6 +99,11 @@ struct PresetCards: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(3, reservesSpace: true)
+                Text(preset.cost)
+                    .font(.system(size: 9.5).monospacedDigit())
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, minHeight: 96)
             .padding(10)

@@ -9,29 +9,65 @@ import IOKit.ps
 /// network and the busy apps are the change since the previous reading, so each reader keeps its
 /// own `SystemStats`. Every reading also goes into `SystemHistory` for the graphs.
 final class SystemStats {
+    /// Which figures to read (the menu bar readouts and alerts ask only for what they show).
+    struct Parts: OptionSet {
+        let rawValue: Int
+        static let cpu = Parts(rawValue: 1 << 0)
+        static let memory = Parts(rawValue: 1 << 1)
+        static let disk = Parts(rawValue: 1 << 2)
+        static let battery = Parts(rawValue: 1 << 3)
+        static let network = Parts(rawValue: 1 << 4)
+        static let gpu = Parts(rawValue: 1 << 5)
+        static let temperatures = Parts(rawValue: 1 << 6)
+        static let fans = Parts(rawValue: 1 << 7)
+        static let addresses = Parts(rawValue: 1 << 8)
+        /// Battery details from the sensors, incl. the Mac's power draw.
+        static let power = Parts(rawValue: 1 << 9)
+        static let all: Parts = [.cpu, .memory, .disk, .battery, .network, .gpu, .temperatures, .fans, .addresses, .power]
+    }
+
     private var lastCPU: (ticks: [UInt32], at: Date)?
+    /// Free disk space changes slowly and is slow to read, so it's read at most once a minute.
+    private var lastDisk: (value: [String: Any], at: Date)?
     private var lastNet: (inBytes: UInt64, outBytes: UInt64, at: Date)?
     private let busy = BusyApps()
 
     /// `apps`: also work out the busiest apps (scans every process, so only when shown).
-    func read(apps: Bool = true) -> [String: Any] {
+    /// `parts`: the figures to read (all for the System utility, whose readings also go into the
+    /// history for its graphs).
+    func read(apps: Bool = true, parts: Parts = .all) -> [String: Any] {
         var out: [String: Any] = ["uptime": ProcessInfo.processInfo.systemUptime]
-        out["cpu"] = cpu()
-        out["memory"] = memory()
-        out["disk"] = disk()
-        var battery = battery()
-        let details = SystemSensors.battery()
-        if battery["present"] as? Bool == true { battery.merge(details) { a, _ in a } }
-        out["battery"] = battery
-        out["network"] = network()
-        if let gpu = SystemSensors.gpu() { out["gpu"] = gpu }
-        out["temperatures"] = SystemSensors.temperatures()
-        let fans = SystemSensors.fans()
-        if !fans.isEmpty { out["fans"] = fans }
+        if parts.contains(.cpu) { out["cpu"] = cpu() }
+        if parts.contains(.memory) { out["memory"] = memory() }
+        if parts.contains(.disk) {
+            if let lastDisk, Date().timeIntervalSince(lastDisk.at) < 60 {
+                out["disk"] = lastDisk.value
+            } else {
+                let value = disk()
+                lastDisk = (value, Date())
+                out["disk"] = value
+            }
+        }
+        var details: [String: Any] = [:]
+        if parts.contains(.battery) || parts.contains(.power) {
+            var battery = battery()
+            if parts.contains(.power) || parts == .all {
+                details = SystemSensors.battery()
+                if battery["present"] as? Bool == true { battery.merge(details) { a, _ in a } }
+            }
+            out["battery"] = battery
+        }
+        if parts.contains(.network) { out["network"] = network() }
+        if parts.contains(.gpu), let gpu = SystemSensors.gpu() { out["gpu"] = gpu }
+        if parts.contains(.temperatures) { out["temperatures"] = SystemSensors.temperatures(maxAge: parts == .all ? 1.5 : 10) }
+        if parts.contains(.fans) {
+            let fans = SystemSensors.fans()
+            if !fans.isEmpty { out["fans"] = fans }
+        }
         if let watts = details["systemWatts"] { out["watts"] = watts }
-        out["addresses"] = SystemSensors.localAddresses()
+        if parts.contains(.addresses) { out["addresses"] = SystemSensors.localAddresses() }
         if apps { out["apps"] = busy.read() }
-        SystemHistory.shared.add(out)
+        if parts == .all { SystemHistory.shared.add(out) }
         return out
     }
 

@@ -77,6 +77,16 @@ enum FeaturePreset: String, CaseIterable, Identifiable {
         }
     }
 
+    /// What it costs at rest, measured on a Release build (MacBook Air M4, 2026-10-12, a fresh launch
+    /// left idle for a minute).
+    var cost: String {
+        switch self {
+        case .lite: "About 0.1% CPU, 27 MB"
+        case .essential: "About 0.1% CPU, 30 MB"
+        case .everything: "About 0.4% CPU, 40 MB"
+        }
+    }
+
     /// The extra extras Everything leaves off (hardware fixes and habits not everyone wants).
     static let extras: Set<String> = [
         "pointer-acceleration", "click-filter", "key-debounce", "focus-follows-mouse",
