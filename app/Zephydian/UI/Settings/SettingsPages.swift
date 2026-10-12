@@ -570,11 +570,7 @@ private struct FeaturesPage: View {
                     Text("Switch on what you use. A feature that's off doesn't run at all, and it keeps its settings for when you switch it back on.")
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    HStack {
-                        ForEach(FeaturePreset.allCases) { preset in
-                            Button(preset.title) { features.apply(preset) }
-                        }
-                    }
+                    PresetCards()
                     HStack(spacing: 10) {
                         ProgressView(value: Double(on), total: Double(max(features.all.count, 1)))
                         Text("\(on) of \(features.all.count) on")

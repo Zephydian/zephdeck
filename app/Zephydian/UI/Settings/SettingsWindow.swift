@@ -49,7 +49,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .notes: ["Monospace font", "Notes window", "On top"]
         case .games: ["High-contrast colors", "Five", "Stats", "Library"]
         case .packs: ["Updates", "Check now", "Running now", "Stop", "Library", "Utilities"]
-        case .features: ["Presets", "Essentials", "Everything", "Turn on", "Turn off"]
+        case .features: ["Presets", "Lite", "Essential", "Everything", "Turn on", "Turn off", "Turn All Off"]
         case .permissions: ["Accessibility", "Screen Recording", "Repair", "Privacy"]
         }
     }

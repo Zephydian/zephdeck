@@ -13,6 +13,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Island settings**: three sizes (Compact, Spacious, Custom with a corner grip), black or Liquid Glass, a translucent background, an outline in your accent color, notch and capsule fit, a floating capsule on displays without a notch, four ways to open (click, preview on hover, expand on hover, hidden until hover), where it reopens, which display it's on (automatic, built-in, main, following the pointer, or all displays), hiding in full screen, what it shows at rest (music, battery or nothing), giving way to the menus, and whether it appears in screenshots.
 - **Indicators**: short notices beside the notch for a screenshot (copied), a saved recording, a new song, the microphone muted or on, and something copied while Clipboard history records.
 
+- **Three presets: Lite, Essential and Everything** (Settings → Features, and the welcome tour). Lite keeps Zephydian lightest: games, Notes, six utilities and two features. Essential adds every utility and the main Mac features. Everything turns on almost every feature and the Dynamic Island, leaving off the extras not everyone wants (like No Mouse Acceleration). A preset shows what it changes and the utilities it adds (with what each can do) before it does anything, and never removes anything.
+
 ### Changed
 - **Capture can photograph Zephydian itself**: screenshots and recordings now include Zephydian's own windows (the island, the panel, Notes…); only the capture tool's own overlay, bars and preview stay out. While a capture is under way, an open island stays open so it can be in the picture.
 - With the island's Shelf on, it takes over from the floating Shelf: dragging a file opens the island on its Shelf.

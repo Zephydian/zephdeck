@@ -39,8 +39,6 @@ struct Feature: Identifiable {
     var requires: [Permission] = []
     /// It works without these, but does more with them (window thumbnails, for example).
     var uses: [Permission] = []
-    /// Part of the Essentials preset.
-    var essential = false
     /// Its own settings, shown under the status on its page.
     var settings: (() -> AnyView)?
     let makeEngine: () -> FeatureEngine
@@ -48,17 +46,61 @@ struct Feature: Identifiable {
     var permissions: [Permission] { requires + uses.filter { !requires.contains($0) } }
 }
 
-/// A one-click starting point on the Features page and in the welcome tour.
+/// A one-click starting point on the Features page and in the welcome tour: which system features
+/// are on, and which utilities it adds from the Library (it never removes any).
 enum FeaturePreset: String, CaseIterable, Identifiable {
-    case essentials, everything, none
+    case lite, essential, everything
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .essentials: "Essentials"
+        case .lite: "Lite"
+        case .essential: "Essential"
         case .everything: "Everything"
-        case .none: "None"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .lite: "leaf"
+        case .essential: "star"
+        case .everything: "sparkles"
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .lite: "Games, Notes and six utilities. The lightest."
+        case .essential: "Every utility and the main Mac features."
+        case .everything: "Almost every feature, and the Dynamic Island."
+        }
+    }
+
+    /// The extra extras Everything leaves off (hardware fixes and habits not everyone wants).
+    static let extras: Set<String> = [
+        "pointer-acceleration", "click-filter", "key-debounce", "focus-follows-mouse",
+        "super-key", "quit-on-close", "music-blocker", "bluetooth-sleep",
+    ]
+
+    /// The features it switches on (every other one goes off).
+    func featureIDs(in catalog: [Feature]) -> Set<String> {
+        let ids = Set(catalog.map(\.id))
+        switch self {
+        case .lite: return Set(["quick-toggles", "command-bar"]).intersection(ids)
+        case .essential:
+            return Set(["dock-preview", "switcher", "window-layout", "quit-protection", "clean-url", "shelf",
+                        "dmg-installer", "command-bar", "quick-toggles", "radial-menu", "brightness",
+                        "sound-mixer"]).intersection(ids)
+        case .everything: return ids.subtracting(Self.extras)
+        }
+    }
+
+    /// The utilities it adds (pack ids); nil means every utility in the Library.
+    var utilityIDs: [String]? {
+        switch self {
+        case .lite: ["calculator", "timer", "clipboard", "screenshot", "colors", "text"]
+        case .essential, .everything: nil
         }
     }
 }
@@ -112,14 +154,22 @@ final class Features {
         sync()
     }
 
+    /// Switches on a preset's features and off the rest (their settings are kept).
     func apply(_ preset: FeaturePreset) {
-        let chosen: [Feature] = switch preset {
-        case .essentials: all.filter(\.essential)
-        case .everything: all
-        case .none: []
-        }
-        let newlyOn = chosen.filter { !enabled.contains($0.id) }
-        enabled = Set(chosen.map(\.id))
+        setEnabled(preset.featureIDs(in: all))
+    }
+
+    /// Every feature off (the Features page's Turn All Off, the welcome tour's Not now).
+    func turnAllOff() { setEnabled([]) }
+
+    /// The preset whose features are exactly the ones on now, if any.
+    var matchingPreset: FeaturePreset? {
+        FeaturePreset.allCases.first { $0.featureIDs(in: all) == enabled }
+    }
+
+    private func setEnabled(_ ids: Set<String>) {
+        let newlyOn = all.filter { ids.contains($0.id) && !enabled.contains($0.id) }
+        enabled = ids
         save()
         ask(for: newlyOn)
         sync()
@@ -210,19 +260,19 @@ extension Features {
             Feature(
                 id: "dock-preview", name: "Dock Preview",
                 summary: "Hover an open app in the Dock to see its windows, then click the one you want.",
-                symbol: "dock.rectangle", group: .windows, requires: [.accessibility], uses: [.screenRecording], essential: true,
+                symbol: "dock.rectangle", group: .windows, requires: [.accessibility], uses: [.screenRecording],
                 settings: { AnyView(DockPreviewSettingsView()) },
                 makeEngine: { DockPreviewEngine(appSettings: Features.shared.appSettings ?? SettingsStore()) }),
             Feature(
                 id: "switcher", name: "App Switcher",
                 summary: "⌘Tab with a live preview of every window, search, and quick close and quit.",
-                symbol: "rectangle.on.rectangle", group: .windows, requires: [.accessibility], uses: [.screenRecording], essential: true,
+                symbol: "rectangle.on.rectangle", group: .windows, requires: [.accessibility], uses: [.screenRecording],
                 settings: { AnyView(SwitcherSettingsView()) },
                 makeEngine: { SwitcherFeatureEngine() }),
             Feature(
                 id: "window-layout", name: "Window Layout",
                 summary: "Snap windows to halves, thirds and quarters with shortcuts, and move them from anywhere with ⌥-drag.",
-                symbol: "rectangle.split.2x1", group: .windows, requires: [.accessibility], essential: true,
+                symbol: "rectangle.split.2x1", group: .windows, requires: [.accessibility],
                 settings: { AnyView(WindowLayoutSettingsView()) },
                 makeEngine: { WindowLayoutEngine() }),
             Feature(
@@ -234,7 +284,7 @@ extension Features {
             Feature(
                 id: "quit-protection", name: "Quit Protection",
                 summary: "Press ⌘Q twice (or hold it) to quit, so a slip doesn't close an app. ⌘W too, if you like.",
-                symbol: "hand.raised.square", group: .windows, requires: [.accessibility], essential: true,
+                symbol: "hand.raised.square", group: .windows, requires: [.accessibility],
                 settings: { AnyView(QuitProtectionSettingsView()) },
                 makeEngine: { QuitProtectionEngine() }),
             Feature(
@@ -300,7 +350,7 @@ extension Features {
             Feature(
                 id: "clean-url", name: "Clean URLs",
                 summary: "Links you copy lose their tracking (utm_source, fbclid and the like) before you paste them.",
-                symbol: "link.badge.plus", group: .clipboardFiles, essential: true,
+                symbol: "link.badge.plus", group: .clipboardFiles,
                 settings: { AnyView(CleanURLSettingsView()) },
                 makeEngine: { CleanURLEngine() }),
             Feature(
@@ -330,7 +380,7 @@ extension Features {
             Feature(
                 id: "dmg-installer", name: "Disk Image Installer",
                 summary: "Opening a .dmg with an app offers to install it, eject it and throw the .dmg away.",
-                symbol: "externaldrive.badge.plus", group: .clipboardFiles, essential: true,
+                symbol: "externaldrive.badge.plus", group: .clipboardFiles,
                 settings: { AnyView(DiskImageInstallerSettingsView()) },
                 makeEngine: { DiskImageInstallerEngine() }),
             Feature(
@@ -342,7 +392,7 @@ extension Features {
             Feature(
                 id: "command-bar", name: "Command Bar",
                 summary: "⌥Space opens one search for apps, windows, files, menus, clipboard and snippets, with math, units and settings.",
-                symbol: "command", group: .everyday, uses: [.accessibility], essential: true,
+                symbol: "command", group: .everyday, uses: [.accessibility],
                 settings: { AnyView(CommandBarSettingsView()) },
                 makeEngine: { CommandBarEngine() }),
             Feature(
@@ -366,7 +416,7 @@ extension Features {
             Feature(
                 id: "quick-toggles", name: "Quick Toggles",
                 summary: "Dark mode, desktop icons, hidden files, eject disks, empty the Trash, lock, keyboard light and mute the mic, in one click.",
-                symbol: "switch.2", group: .everyday, essential: true,
+                symbol: "switch.2", group: .everyday,
                 settings: { AnyView(QuickTogglesSettingsView()) },
                 makeEngine: { QuickTogglesEngine() }),
             Feature(
