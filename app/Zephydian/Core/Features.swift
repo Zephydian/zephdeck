@@ -358,6 +358,12 @@ extension Features {
                 settings: { AnyView(RadialMenuSettingsView()) },
                 makeEngine: { RadialMenuEngine() }),
             Feature(
+                id: "dynamic-island", name: "Dynamic Island",
+                summary: "The camera notch grows into music, timers, the Shelf, your calendar and more, and shows what's live beside it.",
+                symbol: "rectangle.topthird.inset.filled", group: .everyday,
+                settings: { AnyView(IslandSettingsView()) },
+                makeEngine: { IslandEngine(appSettings: Features.shared.appSettings ?? SettingsStore()) }),
+            Feature(
                 id: "quick-toggles", name: "Quick Toggles",
                 summary: "Dark mode, desktop icons, hidden files, eject disks, empty the Trash, lock, keyboard light and mute the mic, in one click.",
                 symbol: "switch.2", group: .everyday, essential: true,

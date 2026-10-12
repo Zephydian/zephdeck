@@ -67,6 +67,22 @@ final class PackTimers {
         return id
     }
 
+    /// Every pack's timers, soonest first, paused ones after (the Dynamic Island).
+    func all() -> [Timer] {
+        load()
+        return timers.sorted { a, b in
+            switch (a.endsAt, b.endsAt) {
+            case let (x?, y?): x < y
+            case (_?, nil): true
+            case (nil, _?): false
+            default: a.remaining < b.remaining
+            }
+        }
+    }
+
+    /// Called when a timer ends while Zephydian runs (the Dynamic Island shows "… is done").
+    static var onFinished: (Timer) -> Void = { _ in }
+
     func list(packID: String) -> [Timer] {
         load()
         return timers.filter { $0.packID == packID }
@@ -164,7 +180,7 @@ final class PackTimers {
             anyEnded = true
             let t = timers[i]
             log(t.packID, Finished(label: t.label, at: end))
-            if !quietly { alert(t) }
+            if !quietly { alert(t); Self.onFinished(t) }
             if !quietly, let phase = t.next.first {
                 timers[i].label = phase.label
                 timers[i].seconds = phase.seconds

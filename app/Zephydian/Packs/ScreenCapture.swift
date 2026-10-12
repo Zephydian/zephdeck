@@ -169,12 +169,13 @@ final class ScreenCapture {
             return done(nil, "Allow Zephydian under Screen Recording in System Settings, then try again")
         }
         busy = true
+        Self.hold("shot", true)
         let prefs = prefs(packID)
         let freezing = freeze ?? prefs.freeze
         services.hidePanel()
         Task { @MainActor [weak self] in
             if self?.frozen == nil { try? await Task.sleep(for: .milliseconds(300)) }   // the panel's closing animation
-            guard let self else { return }
+            guard let self else { Self.hold("shot", false); return }
             let result: Result<CGImage, Failure>
             if freezing {
                 if self.frozen == nil {
@@ -189,6 +190,7 @@ final class ScreenCapture {
                 result = await self.run(mode: mode, prefs: prefs)
             }
             self.busy = false
+            Self.hold("shot", false)
             switch result {
             case .success(let image):
                 if prefs.sound { Self.shutter() }
@@ -197,6 +199,7 @@ final class ScreenCapture {
                 if self.shots.count > 20 { self.forget(self.shots.removeLast().id) }
                 self.services.changed()
                 if prefs.autoCopy { _ = self.copy(shot.id) }
+                Self.onShot(image, prefs.autoCopy)
                 self.showPreview(shot.id, packID: packID)
                 done(shot.id, nil)
             case .failure(let error):
@@ -212,12 +215,11 @@ final class ScreenCapture {
         do { content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true) } catch {
             return .failure(Failure(description: "Screen Recording isn't allowed for Zephydian"))
         }
-        let own = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
         switch mode {
         case .screen:
             guard let (display, screen) = Self.display(at: NSEvent.mouseLocation, in: content) else { return .failure(Failure(description: "No display found")) }
             await wait(prefs.delay, on: screen)
-            return await shoot(SCContentFilter(display: display, excludingApplications: own, exceptingWindows: []),
+            return await shoot(Self.filter(display, content),
                                rect: nil, size: screen.frame.size, scale: screen.backingScaleFactor, prefs: prefs)
         case .area:
             guard let rect = await pickArea() else { return .failure(Failure(description: "")) }
@@ -225,7 +227,7 @@ final class ScreenCapture {
             await wait(prefs.delay, on: screen)
             // The selection in the display's own top-left coordinates, in points.
             let local = CGRect(x: rect.minX - screen.frame.minX, y: screen.frame.maxY - rect.maxY, width: rect.width, height: rect.height)
-            return await shoot(SCContentFilter(display: display, excludingApplications: own, exceptingWindows: []),
+            return await shoot(Self.filter(display, content),
                                rect: local, size: rect.size, scale: screen.backingScaleFactor, prefs: prefs)
         case .window:
             // Front-most first, so the highlighted window is the one you see.
@@ -241,7 +243,7 @@ final class ScreenCapture {
     // MARK: Freeze
 
     /// Covers every screen with a still picture of itself, so nothing moves while picking.
-    /// Zephydian's own windows aren't in the picture. Does nothing if already frozen.
+    /// The capture tool's own windows aren't in the picture. Does nothing if already frozen.
     func freeze(showsCursor: Bool = false) async {
         guard frozen == nil, hasPermission else { return }
         let stills = await stills(showsCursor: showsCursor)
@@ -284,10 +286,59 @@ final class ScreenCapture {
         let order = ((CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]) ?? [])
             .compactMap { $0[kCGWindowNumber as String] as? CGWindowID }
         let rank = Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
-        return content.windows.filter { $0.windowLayer == 0 && $0.isOnScreen && $0.frame.width > 40 && $0.frame.height > 30
-            && $0.owningApplication?.processID != ProcessInfo.processInfo.processIdentifier }
+        return content.windows.filter { $0.isOnScreen && $0.frame.width > 40 && $0.frame.height > 30 && isPickable($0) }
             .sorted { (rank[$0.windowID] ?? .max) < (rank[$1.windowID] ?? .max) }
     }
+
+    /// Other apps' normal windows, and Zephydian's own (B-39): its windows at any level (the island
+    /// while open, the panel, Notes…), but never the capture tool's own pieces or the menu bar item.
+    private static func isPickable(_ window: SCWindow) -> Bool {
+        guard window.owningApplication?.processID == ProcessInfo.processInfo.processIdentifier else { return window.windowLayer == 0 }
+        guard let own = NSApp.window(withWindowNumber: Int(window.windowID)), own.isVisible, own.alphaValue > 0,
+              own.identifier != chromeID, !String(describing: type(of: own)).contains("StatusBar") else { return false }
+        return isOwnWindowPickable(own)
+    }
+
+    /// Whether one of Zephydian's windows can be picked now (the island only while open; set by it).
+    static var isOwnWindowPickable: (NSWindow) -> Bool = { _ in true }
+
+    // MARK: Leaving out the capture tool (B-39)
+
+    /// Marks the capture tool's own windows (the selection overlay, the bars, the countdown, the
+    /// preview card, the toast, the frozen screens): they're the only windows left out of captures.
+    static let chromeID = NSUserInterfaceItemIdentifier("zephydian.capture-tool")
+
+    static func markAsTool(_ window: NSWindow) { window.identifier = chromeID }
+
+    /// A screenshot was taken, and whether it was copied (the Dynamic Island's Captures indicator).
+    static var onShot: (CGImage, Bool) -> Void = { _, _ in }
+
+    /// A display with everything on it except the capture tool's own windows.
+    static func filter(_ display: SCDisplay, _ content: SCShareableContent) -> SCContentFilter {
+        let tool = Set(NSApp.windows.filter { $0.identifier == chromeID }.map { CGWindowID($0.windowNumber) })
+        return SCContentFilter(display: display, excludingWindows: content.windows.filter { tool.contains($0.windowID) })
+    }
+
+    // MARK: Holding the island open (B-39)
+
+    /// Reasons a capture is under way (picking, the delay, the bar). While any is set, the island
+    /// doesn't close when the pointer leaves it, so it can be in the picture.
+    static private(set) var holds: Set<String> = []
+    /// Called when the last hold ends (the island closes if the pointer is away). Set by the island.
+    static var holdsEnded: () -> Void = {}
+
+    static func hold(_ reason: String, _ on: Bool) {
+        let was = !holds.isEmpty
+        if on { holds.insert(reason) } else { holds.remove(reason) }
+        // A moment's grace: the bar hands over to the shot without letting go in between.
+        if was && holds.isEmpty {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(200))
+                if holds.isEmpty { holdsEnded() }
+            }
+        }
+    }
+    static var isHolding: Bool { !holds.isEmpty }
 
     func shoot(_ filter: SCContentFilter, rect: CGRect?, size: CGSize, scale: CGFloat, prefs: Prefs) async -> Result<CGImage, Failure> {
         let config = SCStreamConfiguration()
@@ -330,12 +381,13 @@ final class ScreenCapture {
         return picked.flatMap { id in windows.first { $0.windowID == id } }
     }
 
-    /// A small countdown in the middle of the screen (left out of the picture like every Zephydian window).
+    /// A small countdown in the middle of the screen (left out of the picture, as part of the capture tool).
     func wait(_ seconds: Int, on screen: NSScreen) async {
         guard seconds > 0 else { return }
         let size = NSSize(width: 96, height: 96)
         let panel = NSPanel(contentRect: NSRect(origin: NSPoint(x: screen.frame.midX - 48, y: screen.frame.midY - 48), size: size),
                             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(panel)
         panel.level = .screenSaver
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -539,6 +591,7 @@ final class SelectionOverlay {
         cursor = mode == .window ? .arrow : Self.crosshair(accent)
         for screen in NSScreen.screens {
             let window = OverlayWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
+            ScreenCapture.markAsTool(window)
             window.level = .screenSaver
             window.isOpaque = false
             window.backgroundColor = .clear

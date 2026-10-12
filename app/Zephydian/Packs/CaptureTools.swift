@@ -60,6 +60,7 @@ enum CaptureToast {
         let new = NSPanel(contentRect: NSRect(x: screen.visibleFrame.midX - size.width / 2, y: screen.visibleFrame.minY + 90,
                                               width: size.width, height: size.height),
                           styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(new)
         new.level = .statusBar
         new.isOpaque = false
         new.backgroundColor = .clear

@@ -145,55 +145,7 @@ struct RadialSlicesEditor: View {
 
     private var addMenu: some View {
         Menu {
-            Button("App…") { pick(apps: true) }
-            Button("File or Folder…") { pick(apps: false) }
-            Button("Link…") { startNew(RadialItem(kind: .url)) }
-            Divider()
-            let utilities = PackLibrary.shared.packs.filter { $0.kind == .utility }
-            Menu("Utility") {
-                ForEach(utilities, id: \.id) { bundle in
-                    Button(bundle.manifest.name) { add(RadialItem(kind: .utility, payload: bundle.id)) }
-                }
-            }
-            .disabled(utilities.isEmpty)
-            Menu("Zephydian") {
-                ForEach(RadialFeatureAction.allCases, id: \.self) { action in
-                    Button(action.title) { add(RadialItem(kind: .feature, payload: action.rawValue)) }
-                }
-            }
-            Menu("Quick Toggle") {
-                ForEach(QuickToggle.allCases) { toggle in
-                    Button(toggle.title) { add(RadialItem(kind: .quickToggle, payload: toggle.rawValue)) }
-                }
-            }
-            Menu("Window Layout") {
-                ForEach(WindowLayout.allCases) { layout in
-                    Button(layout.title) { add(RadialItem(kind: .windowLayout, payload: layout.rawValue)) }
-                }
-            }
-            Menu("Media") {
-                ForEach(RadialMediaKey.allCases, id: \.self) { key in
-                    Button(key.title) { add(RadialItem(kind: .media, payload: key.rawValue)) }
-                }
-                Button("Now Playing") { add(RadialItem(kind: .nowPlaying)) }
-            }
-            Divider()
-            Button("Keys…") { startNew(RadialItem(kind: .keys)) }
-            Menu("Shortcut") {
-                if shortcutNames.isEmpty { Text("No shortcuts in the Shortcuts app") }
-                ForEach(shortcutNames, id: \.self) { name in
-                    Button(name) { add(RadialItem(kind: .shortcut, payload: name)) }
-                }
-            }
-            Menu("Snippet") {
-                let snippets = InputSettings.shared.snippets
-                if snippets.isEmpty { Text("No snippets yet") }
-                ForEach(snippets) { snippet in
-                    Button("\(snippet.trigger) · \(String(snippet.text.prefix(30)))") {
-                        add(RadialItem(kind: .snippet, payload: snippet.id.uuidString))
-                    }
-                }
-            }
+            RadialAddMenuItems(shortcutNames: shortcutNames, add: add, startNew: startNew, pick: { pick(apps: $0) })
             Divider()
             Button("Folder") { addFolder() }
                 .disabled(path.count >= RadialWheel.maxFolderDepth)
@@ -294,6 +246,70 @@ struct RadialSlicesEditor: View {
             let names = await RadialItemEditor.shortcutNames()
             shortcutNames = names
         }
+    }
+}
+
+/// The Add menu's items for anything that runs a `RadialItem` (the Radial Menu's slices and the
+/// Dynamic Island's buttons): apps, files, links, utilities, Zephydian actions, quick toggles,
+/// window layouts, media, keys, Shortcuts shortcuts and snippets.
+struct RadialAddMenuItems: View {
+    let shortcutNames: [String]
+    let add: (RadialItem) -> Void
+    /// Kinds that need something typed or recorded first (a link, keys).
+    let startNew: (RadialItem) -> Void
+    /// An app (true) or a file or folder (false) chosen in an Open panel.
+    let pick: (Bool) -> Void
+
+    var body: some View {
+            Button("App…") { pick(true) }
+            Button("File or Folder…") { pick(false) }
+            Button("Link…") { startNew(RadialItem(kind: .url)) }
+            Divider()
+            let utilities = PackLibrary.shared.packs.filter { $0.kind == .utility }
+            Menu("Utility") {
+                ForEach(utilities, id: \.id) { bundle in
+                    Button(bundle.manifest.name) { add(RadialItem(kind: .utility, payload: bundle.id)) }
+                }
+            }
+            .disabled(utilities.isEmpty)
+            Menu("Zephydian") {
+                ForEach(RadialFeatureAction.allCases, id: \.self) { action in
+                    Button(action.title) { add(RadialItem(kind: .feature, payload: action.rawValue)) }
+                }
+            }
+            Menu("Quick Toggle") {
+                ForEach(QuickToggle.allCases) { toggle in
+                    Button(toggle.title) { add(RadialItem(kind: .quickToggle, payload: toggle.rawValue)) }
+                }
+            }
+            Menu("Window Layout") {
+                ForEach(WindowLayout.allCases) { layout in
+                    Button(layout.title) { add(RadialItem(kind: .windowLayout, payload: layout.rawValue)) }
+                }
+            }
+            Menu("Media") {
+                ForEach(RadialMediaKey.allCases, id: \.self) { key in
+                    Button(key.title) { add(RadialItem(kind: .media, payload: key.rawValue)) }
+                }
+                Button("Now Playing") { add(RadialItem(kind: .nowPlaying)) }
+            }
+            Divider()
+            Button("Keys…") { startNew(RadialItem(kind: .keys)) }
+            Menu("Shortcut") {
+                if shortcutNames.isEmpty { Text("No shortcuts in the Shortcuts app") }
+                ForEach(shortcutNames, id: \.self) { name in
+                    Button(name) { add(RadialItem(kind: .shortcut, payload: name)) }
+                }
+            }
+            Menu("Snippet") {
+                let snippets = InputSettings.shared.snippets
+                if snippets.isEmpty { Text("No snippets yet") }
+                ForEach(snippets) { snippet in
+                    Button("\(snippet.trigger) · \(String(snippet.text.prefix(30)))") {
+                        add(RadialItem(kind: .snippet, payload: snippet.id.uuidString))
+                    }
+                }
+            }
     }
 }
 

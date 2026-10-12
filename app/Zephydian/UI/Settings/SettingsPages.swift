@@ -11,6 +11,7 @@ struct SettingsPageView: View {
             case .appearance: AppearancePage()
             case .panel: PanelPage()
             case .shortcuts: ShortcutsPage()
+            case .island: IslandSettingsPage()
             case .notes: NotesPage()
             case .games: GamesPage()
             case .packs: PacksPage()
@@ -707,4 +708,9 @@ struct FeaturePage: View {
         .formStyle(.grouped)
         .toggleStyle(.switch)
     }
+}
+
+/// The Dynamic Island's page: Vorssaint's own layout (header with the switch, tabs, cards), kept above Notes.
+private struct IslandSettingsPage: View {
+    var body: some View { IslandSettingsView() }
 }

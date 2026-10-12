@@ -21,6 +21,7 @@
 - **Corner hover to open.** Pick any of the four screen corners. The panel appears when you hover and disappears when you're done.
 - **Quick Notes.** Tabbed notes that autosave as plain Markdown files you can open anywhere. Open them in their own window that stays on top of other apps, drag a single note out of it to pin it anywhere on screen, preview notes formatted (tick checkboxes right in them), search every note, and export them.
 - **Utilities you choose.** Add the ones you want from the **Library**: Clipboard (a private history of what you copy, pasted straight back), Capture (screenshots, screen recordings with an editor, text and colors from your screen), Markup (crop, annotate and pixelate screenshots or any image), Media (shrink videos, convert images, make GIFs), Dictionary (definitions and synonyms from your Mac's own dictionary, offline), Passwords, Colors, Timer, Calculator, Text tools, QR Code, Awake (keep your Mac awake, also by rules), System (CPU, GPU, memory, temperatures, battery and network), and for tidying your Mac: Uninstaller, Cleaner, Chat Files, Ports, App Updates and Homebrew. None come preinstalled, and more utilities are coming soon.
+- **Dynamic Island.** Turn the notch into an island that shows what's live (music, timers, recordings, your next event, battery and short notices) and opens into tabs: Home with up to three widgets, Music, an Up Next calendar, a Shelf for dragged files (with AirDrop), Timers, Capture and a Camera mirror. Add buttons beside it that open apps, links, utilities and features, and choose its size, look (black or Liquid Glass, translucent, outlined), how it opens (click, hover, a preview strip, or hidden until hover), which display it's on, and what it shows at rest. On a Mac without a notch it floats as a capsule.
 - **Mac features you switch on.** A **Features** page in Settings turns on only what you want; anything off costs nothing:
   - **Windows and Dock:** Dock Preview (hover an app in the Dock to see its windows), an App Switcher for ⌘Tab with live previews, Window Layout (snap windows with shortcuts, ⌥-drag to move), Maximize with the Green Button, Quit Protection, Quit on Close and Focus Follows Mouse.
   - **Keyboard and mouse:** Text Snippets, a Super Key on Caps Lock, smooth Scrolling, Mouse Buttons, Three-Finger Middle Click, No Mouse Acceleration, and filters for a worn mouse or keyboard.
@@ -39,12 +40,13 @@ Zephydian asks for a macOS permission only when you switch on something that nee
 
 | Permission | Used by |
 | --- | --- |
-| Accessibility | Most Mac features: Dock Preview, the App Switcher, window tools, keyboard and mouse features, Paste as Plain Text, Finder Shortcuts, Cleaning Mode, the Command Bar's menu search, and the Radial Menu's mouse buttons and the slices that press keys or move windows |
+| Accessibility | The Dynamic Island's "Show over the menus" switch when off (to see where the menus end), and most Mac features: Dock Preview, the App Switcher, window tools, keyboard and mouse features, Paste as Plain Text, Finder Shortcuts, Cleaning Mode, the Command Bar's menu search, and the Radial Menu's mouse buttons and the slices that press keys or move windows |
 | Screen Recording | Capture, and window previews in Dock Preview and the App Switcher |
 | Microphone | Capture's recordings, when you include the microphone |
-| Camera | Camera Mirror |
+| Camera | Camera Mirror, and the Dynamic Island's Camera tab |
+| Calendars and Reminders | The Dynamic Island's calendar, only after you click Allow Calendar Access |
 | System Audio Recording | Sound Mixer's per-app volume, and Capture recording your Mac's sound |
-| Automation (Finder) | Finder Shortcuts, and emptying the Trash from Quick Toggles |
+| Automation (Finder, Calendar) | Finder Shortcuts, emptying the Trash from Quick Toggles, and opening an event from the Dynamic Island in Calendar |
 | Notifications | Timer, System Alerts and Cleaner's reminder |
 | Full Disk Access (optional) | Chat Files, to reach some chat apps' downloads |
 
@@ -141,7 +143,7 @@ Bug reports, utility and game ideas, and pull requests are welcome. New games an
 
 Zephydian is free software under the [GNU General Public License v3.0 or later](LICENSE) © 2026 ahmastan. You may use, share and change it; if you share a changed version, it must stay under the same license with its source code available. Versions up to 0.6.0 were released under the MIT License, which still applies to those releases.
 
-The app switcher and Finder cut and paste (`app/SwitcherKit/`), the Radial Menu's slice geometry, and the Now Playing reader (`app/NowPlaying/`) come from [Vorssaint](https://github.com/vorssaint/vorssaint-utils) by Vorssaint, under the GPL-3.0-or-later. Zephydian is not affiliated with or endorsed by Vorssaint.
+The app switcher and Finder cut and paste (`app/SwitcherKit/`), the Radial Menu's slice geometry, the Now Playing reader (`app/NowPlaying/`), and the Dynamic Island's Settings page and side buttons come from [Vorssaint](https://github.com/vorssaint/vorssaint-utils) by Vorssaint, under the GPL-3.0-or-later. The Dynamic Island is built on code from [boring.notch](https://github.com/TheBoredTeam/boring.notch) by TheBoredTeam (GPL-3.0), whose calendar code comes from [Calendr](https://github.com/pakerwreah/Calendr) (MIT). Zephydian is not affiliated with or endorsed by Vorssaint, TheBoredTeam or Calendr's author. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Word lists are derived from [SCOWL](http://wordlist.aspell.net/) by Kevin Atkinson, and Passwords uses the [EFF Large Wordlist](https://www.eff.org/dice) (CC BY 3.0). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 

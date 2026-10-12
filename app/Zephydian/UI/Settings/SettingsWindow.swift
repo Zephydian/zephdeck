@@ -3,7 +3,7 @@ import SwiftUI
 /// A page of the Settings window, as the sidebar lists it.
 enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
     case general, appearance, panel, shortcuts
-    case notes, games, packs
+    case island, notes, games, packs
     case features, permissions
 
     var id: String { rawValue }
@@ -14,6 +14,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .appearance: "Appearance"
         case .panel: "Panel & Corner"
         case .shortcuts: "Shortcuts"
+        case .island: "Dynamic Island"
         case .notes: "Notes"
         case .games: "Games"
         case .packs: "Packs"
@@ -28,6 +29,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .appearance: "paintbrush.fill"
         case .panel: "rectangle.inset.topleft.filled"
         case .shortcuts: "keyboard.fill"
+        case .island: "rectangle.topthird.inset.filled"
         case .notes: "note.text"
         case .games: "gamecontroller.fill"
         case .packs: "shippingbox.fill"
@@ -43,6 +45,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .appearance: ["Mode", "Light", "Dark", "Panel style", "Liquid Glass", "Frosted", "Accent", "Color", "Menu bar icon"]
         case .panel: ["Corner", "Hot Corners", "Delay", "Display", "Panel size", "Small", "Medium", "Large", "Auto-hide", "Hide delay", "Tabs", "Order", "Hide tabs"]
         case .shortcuts: ["Keyboard shortcut", "Open the panel", "Hotkey", "Clipboard", "Screenshot", "Dictionary"]
+        case .island: ["Notch", "Look", "Black", "Liquid Glass", "Hover", "Click", "Swipe", "Haptic", "Displays without a notch", "Pill"]
         case .notes: ["Monospace font", "Notes window", "On top"]
         case .games: ["High-contrast colors", "Five", "Stats", "Library"]
         case .packs: ["Updates", "Check now", "Running now", "Stop", "Library", "Utilities"]
@@ -51,10 +54,13 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// The Dynamic Island's feature, which has its own page above Notes instead of a row under its group.
+    static let islandFeatureID = "dynamic-island"
+
     /// The sidebar's groups, in order. Feature groups and utilities join them in later stages.
     static let groups: [[SettingsPage]] = [
         [.general, .appearance, .panel, .shortcuts],
-        [.notes, .games, .packs],
+        [.island, .notes, .games, .packs],
         [.features, .permissions],
     ]
 }
@@ -216,6 +222,9 @@ struct SettingsWindowView: View {
         switch model.settingsSelection {
         case .page(let page):
             SettingsPageView(page: page).navigationTitle(page.title)
+        case .feature(let id) where id == SettingsPage.islandFeatureID:
+            // The Features page's Dynamic Island row opens the island's own page.
+            SettingsPageView(page: .island).navigationTitle(SettingsPage.island.title)
         case .feature(let id):
             if let feature = Features.shared.feature(id) {
                 FeaturePage(feature: feature).navigationTitle(feature.name)
@@ -251,7 +260,7 @@ struct SettingsWindowView: View {
         let features = Features.shared
         return FeatureGroup.allCases.compactMap { group in
             let list = features.all.filter { feature in
-                feature.group == group && features.isOn(feature.id)
+                feature.group == group && features.isOn(feature.id) && feature.id != SettingsPage.islandFeatureID
                     && (query.isEmpty || feature.name.localizedCaseInsensitiveContains(query)
                         || feature.summary.localizedCaseInsensitiveContains(query))
             }

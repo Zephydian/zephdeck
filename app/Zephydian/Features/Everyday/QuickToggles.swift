@@ -155,7 +155,10 @@ final class QuickToggles {
             KeyboardLight.shared.toggle()
         case .micMute:
             let muted = Microphone.setMuted(!Microphone.isMuted)
-            CaptureToast.show(muted ? "Microphone muted" : "Microphone on", symbol: muted ? "mic.slash.fill" : "mic.fill")
+            // The Dynamic Island shows it instead, when its Microphone indicator is on.
+            if !Microphone.onChange(muted) {
+                CaptureToast.show(muted ? "Microphone muted" : "Microphone on", symbol: muted ? "mic.slash.fill" : "mic.fill")
+            }
         }
         refresh()
     }
@@ -373,6 +376,9 @@ nonisolated enum Microphone {
         guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &where_, 0, nil, &size, &id) == noErr, id != 0 else { return nil }
         return id
     }
+
+    /// The mute shortcut or toggle changed it; returns true when something else showed it.
+    @MainActor static var onChange: (Bool) -> Bool = { _ in false }
 
     static var isMuted: Bool {
         guard let id = defaultInput else { return false }

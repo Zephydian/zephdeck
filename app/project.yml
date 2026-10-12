@@ -63,7 +63,11 @@ targets:
         NSMicrophoneUsageDescription: "Zephydian records your microphone with a screen recording, only when you switch it on (Capture)."
         NSCameraUsageDescription: "Zephydian shows your camera in a small floating mirror, only while you have it open (Camera Mirror)."
         NSAudioCaptureUsageDescription: "Zephydian changes the volume of each app (Sound Mixer) by passing that app's sound through itself. Nothing is recorded or saved."
-        NSAppleEventsUsageDescription: "Zephydian asks Finder to move the files you cut and paste, and which folder is open to save a pasted image there (Finder Shortcuts)."
+        NSCalendarsFullAccessUsageDescription: "Zephydian shows your calendar's events in the Dynamic Island, only after you allow it there."
+        NSCalendarsUsageDescription: "Zephydian shows your calendar's events in the Dynamic Island, only after you allow it there."
+        NSRemindersFullAccessUsageDescription: "Zephydian shows reminders due that day in the Dynamic Island's calendar and lets you tick them off."
+        NSRemindersUsageDescription: "Zephydian shows reminders due that day in the Dynamic Island's calendar and lets you tick them off."
+        NSAppleEventsUsageDescription: "Zephydian asks Finder to move the files you cut and paste, and which folder is open to save a pasted image there (Finder Shortcuts), and asks Calendar to show an event you click in the Dynamic Island."
         NSHumanReadableCopyright: "© 2026 ahmastan. GPL-3.0-or-later."
     entitlements:
       path: Config/Zephydian.entitlements
@@ -77,6 +81,8 @@ targets:
         # Capture's screen recording can include the microphone; Camera Mirror shows the camera.
         com.apple.security.device.audio-input: true
         com.apple.security.device.camera: true
+        # The Dynamic Island's calendar reads events and reminders (macOS asks the person once).
+        com.apple.security.personal-information.calendars: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ahmastan.zephydian

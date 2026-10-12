@@ -16,6 +16,48 @@ The GPL covers Vorssaint's code only. Vorssaint's name, logo, icon and branding 
 Zephydian (see Vorssaint's `TRADEMARKS.md`); Zephydian does not use them, and is not affiliated with or
 endorsed by Vorssaint.
 
+The Dynamic Island's Settings page, side buttons, layout editor, sizes, look options (translucent background,
+outline, notch and capsule fit), opening modes and hover preview, display choice, menu-room check and
+indicators in [`app/Zephydian/Features/DynamicIsland/`](app/Zephydian/Features/DynamicIsland) and
+`app/Zephydian/UI/Settings/PageCards.swift` are copied from or follow Vorssaint's island (commit `1d32501`),
+under the same terms; each such file says so at its top.
+
+## boring.notch
+
+The Dynamic Island in [`app/Zephydian/Features/DynamicIsland/`](app/Zephydian/Features/DynamicIsland) is built
+on code copied from **boring.notch** (<https://github.com/TheBoredTeam/boring.notch>, commit `e2654ee`) by
+TheBoredTeam and its contributors (Harsh Vardhan Goswami, Richard Kunkli, Alexander, Kai Azim and others),
+licensed under the GNU General Public License v3.0. Every copied file keeps its original header and author
+lines, and a note at its top says what Zephydian changed. boring.notch's name and logo are not used by
+Zephydian, which is not affiliated with or endorsed by TheBoredTeam.
+
+## Calendr
+
+The island's calendar models and EventKit service (in `IslandCalendar.swift`) come, through boring.notch,
+from **Calendr** (<https://github.com/pakerwreah/Calendr>), licensed under the MIT License:
+
+> MIT License
+>
+> Copyright (c) 2021 Carlos César Neves Enumo
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
+
 ## SCOWL word lists
 
 The word lists in `app/Zephydian/Resources/Words/` (used by Five and Spokes) are derived from
