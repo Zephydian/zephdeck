@@ -32,7 +32,7 @@
 - **Make it yours.** Light, dark, or system appearance, accent color themes (or your Mac's own accent color, followed live), a small, medium or large panel, the panel's tabs in your order (add your favorite games, utilities and features like Sound or Quick Toggles as tabs, hide the ones you don't use), Liquid Glass or frosted panel (macOS 26+), and a choice of menu bar icon (or none at all).
 - **Keyboard shortcuts you pick.** Record any key combination for the panel, the utilities and every feature. Zephydian tells you right under the field if something else on your Mac already uses it.
 - **Featherweight.** Native Swift and SwiftUI. A small app, ~30 MB memory, and ~0.1% CPU when idle with features off. Each feature runs only while it's switched on, and games pause the moment the panel hides.
-- **Private.** No accounts and no tracking. Zephydian goes online only to download games and utilities you pick from the Library and about once a day to update them (you can turn that off), and when you ask a utility to: System's public IP and speed test, App Updates checking versions, and Homebrew. Nothing about you is sent. Everything else stays on your Mac.
+- **Private.** No accounts and no tracking. Zephydian goes online only to download games and utilities you pick from the Library and about once a day to update them, to see about once a day whether a newer Zephydian is out (you can turn either off), and when you ask a utility to: System's public IP and speed test, App Updates checking versions, and Homebrew. Nothing about you is sent. Everything else stays on your Mac.
 
 ## Permissions
 
@@ -65,6 +65,10 @@ After that first install, plain `zephydian` works: update with `brew upgrade zep
 ### Download
 
 Grab the latest `.zip` (and later, a `.dmg`) from the [Releases](https://github.com/ahmastan/zephydian/releases) page and drag **Zephydian.app** into **Applications**.
+
+### Updating
+
+From 0.9.1, Zephydian checks for new versions itself (Settings → General → Updates). When one is out, click **Update…**, read what's new, and click **Update and Restart**: it updates through Homebrew if you installed it that way, otherwise it downloads the release, checks its fingerprint and replaces the app. You can also run `brew upgrade zephydian` or download the new zip yourself. Until Zephydian is signed, macOS may ask for its permissions again after an update.
 
 ### "Apple could not verify Zephydian…"
 

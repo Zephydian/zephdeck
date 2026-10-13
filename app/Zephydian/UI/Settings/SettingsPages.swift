@@ -61,6 +61,7 @@ private struct GeneralPage: View {
                     Button("Show Again") { model.startOnboarding() }
                 }
             }
+            UpdatesSection()
             Section("About") {
                 LabeledContent("Version", value: "\(version) (\(build))")
                 LabeledContent("Website") { Link("zephydian.com", destination: URL(string: "https://zephydian.com")!) }

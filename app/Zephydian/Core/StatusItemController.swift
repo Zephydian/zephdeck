@@ -63,6 +63,15 @@ final class StatusItemController: NSObject {
 
     private func showMenu() {
         let menu = NSMenu()
+        if let release = AppUpdater.shared.available {
+            // With a dot, so a waiting update stands out (Phase 26).
+            let item = menu.addItem(withTitle: "Update Zephydian to \(release.version)…", action: #selector(openUpdate), keyEquivalent: "")
+            item.target = self
+            let dot = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 7, weight: .regular).applying(.init(paletteColors: [.controlAccentColor])))
+            item.image = dot
+            menu.addItem(.separator())
+        }
         menu.addItem(withTitle: "Open Zephydian", action: #selector(openPanel), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
         if Features.shared.isOn("command-bar") {
@@ -88,6 +97,7 @@ final class StatusItemController: NSObject {
     }
 
     @objc private func openPanel() { onToggle() }
+    @objc private func openUpdate() { AppUpdater.shared.requestWhatsNew() }
     @objc private func openSettings() { onOpenSettings() }
     @objc private func toggleShelf() { ShelfEngine.current?.toggle() }
     @objc private func toggleMirror() { CameraMirrorEngine.current?.toggle() }
