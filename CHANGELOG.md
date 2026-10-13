@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-12
+
 ### Added
 - **Dynamic Island** (Settings → Dynamic Island): the notch becomes an island that shows what's live beside it (music with its cover and bars, a running timer, a screen recording, your next event 10 minutes before it starts, battery alerts) and opens into tabs when you hover or click. Tabs: Home (up to three widgets of your choice), Music (a full player that follows any music app, or every player if you like), Calendar (an iPhone-style Up Next widget with day arrows; click an event to see it in Calendar), Shelf (drop files on the notch to keep them, drag them out again, AirDrop them), Timers, Capture and Camera. Choose which tabs show and their order, open all of them from a grid, or keep the island open.
 - **Buttons beside the island**: up to three on each side, opening apps, files, links, shortcuts, utilities, features or an island tab; set them up on a picture of the island in Settings (drag them between sides, rename them).
