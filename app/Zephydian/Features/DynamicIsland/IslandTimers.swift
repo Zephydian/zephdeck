@@ -172,9 +172,12 @@ struct IslandTimerRing: View {
 
     var body: some View {
         let progress = timer.seconds > 0 ? min(1, max(0, timer.remaining / timer.seconds)) : 0
+        // Drawn inside its frame (B-49: a centred 3 pt line put half of it outside, where the timer
+        // list's scroll area cut it off).
         ZStack {
-            Circle().stroke(Color.orange.opacity(0.25), lineWidth: 3)
+            Circle().strokeBorder(Color.orange.opacity(0.25), lineWidth: 3)
             Circle()
+                .inset(by: 1.5)
                 .trim(from: 0, to: progress)
                 .stroke(Color.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .rotationEffect(.degrees(-90))

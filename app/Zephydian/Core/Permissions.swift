@@ -109,21 +109,21 @@ final class Permissions {
         !isGranted(permission) && defaults.bool(forKey: everKey(permission))
     }
 
-    /// Shows macOS's own prompt (which has its own Open System Settings button). Only when macOS
-    /// won't show it any more does this open the right pane of System Settings itself.
+    /// Shows macOS's own prompt (which has its own Open System Settings button). Accessibility and
+    /// Screen Recording only ever get macOS's box (B-47: opening Settings as well showed two windows);
+    /// for the camera and microphone, which macOS asks about once, Settings opens after that.
     func request(_ permission: Permission) {
         let prompted: Bool
         switch permission {
         case .accessibility:
             // macOS shows its prompt every time it's asked while Zephydian isn't allowed.
-            // (The return value is "already allowed", not "a prompt was shown".)
             let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
-            prompted = !AXIsProcessTrustedWithOptions(options)
+            _ = AXIsProcessTrustedWithOptions(options)
+            prompted = true
         case .screenRecording:
-            // macOS shows this prompt only once per build; after that it stays quiet.
-            prompted = !defaults.bool(forKey: askedKey(permission))
             defaults.set(true, forKey: askedKey(permission))
             _ = CGRequestScreenCaptureAccess()
+            prompted = true
         case .microphone, .camera:
             let media: AVMediaType = permission == .camera ? .video : .audio
             // macOS asks once; after that (allowed or not) System Settings is where it's changed.

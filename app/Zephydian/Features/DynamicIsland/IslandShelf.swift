@@ -59,8 +59,8 @@ struct IslandShelfPage: View {
             IslandAirDropZone(selected: selected)
                 .aspectRatio(1, contentMode: .fit)
             RoundedRectangle(cornerRadius: 16)
-                .stroke(targeted ? Color.accentColor.opacity(0.9) : Color.white.opacity(0.1),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [10]))
+                .strokeBorder(targeted ? Color.accentColor.opacity(0.9) : Color.white.opacity(0.1),
+                              style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [10]))
                 .overlay { content.padding() }
                 .contentShape(Rectangle())
                 .onTapGesture { selected = nil }

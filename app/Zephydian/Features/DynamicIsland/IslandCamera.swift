@@ -97,7 +97,7 @@ struct IslandCameraView: View {
                 if !camera.isRunning || preview {
                     shape
                         .fill(Color(red: 20/255, green: 20/255, blue: 20/255))
-                        .overlay(shape.stroke(.white.opacity(0.06), lineWidth: 1))
+                        .overlay(shape.stroke(.white.opacity(0.06), lineWidth: 1).padding(0.5))
                     VStack(spacing: 6) {
                         Image(systemName: denied ? "exclamationmark.triangle" : "web.camera")
                             .font(.system(size: side / 4))

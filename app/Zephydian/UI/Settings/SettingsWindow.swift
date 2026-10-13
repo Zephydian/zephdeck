@@ -162,6 +162,11 @@ struct SettingsWindowView: View {
     @Environment(AppModel.self) private var model
     @Environment(PackLibrary.self) private var library
     @State private var query = ""
+    /// The pages visited, for ‹ and › like System Settings (B-46).
+    @State private var history: [SettingsSelection] = []
+    @State private var position = 0
+    /// Set while ‹ or › moves, so that move isn't recorded as a new visit.
+    @State private var stepping = false
 
     var body: some View {
         let features = Features.shared
@@ -204,6 +209,28 @@ struct SettingsWindowView: View {
             detail
         }
         .frame(minWidth: 640, minHeight: 440)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigation) {
+                Button { step(-1) } label: { Image(systemName: "chevron.left") }
+                    .disabled(position <= 0)
+                    .keyboardShortcut("[", modifiers: .command)
+                    .help("Back")
+                    .accessibilityLabel("Back")
+                Button { step(1) } label: { Image(systemName: "chevron.right") }
+                    .disabled(position >= history.count - 1)
+                    .keyboardShortcut("]", modifiers: .command)
+                    .help("Forward")
+                    .accessibilityLabel("Forward")
+            }
+        }
+        .onAppear { if history.isEmpty { history = [model.settingsSelection]; position = 0 } }
+        .onChange(of: model.settingsSelection) { _, new in
+            if stepping { stepping = false; return }
+            guard history.indices.contains(position), history[position] != new else { return }
+            // A new visit drops the pages ahead, as a browser does.
+            history = Array(history.prefix(position + 1)) + [new]
+            position = history.count - 1
+        }
         // A feature switched off leaves the sidebar; its page goes back to Features.
         .onChange(of: features.enabled) {
             if case .feature(let id) = model.settingsSelection, !features.isOn(id) {
@@ -216,6 +243,15 @@ struct SettingsWindowView: View {
                 model.settingsSelection = .page(.packs)
             }
         }
+    }
+
+    /// Goes back (-1) or forward (+1) through the pages visited.
+    private func step(_ offset: Int) {
+        let target = position + offset
+        guard history.indices.contains(target) else { return }
+        position = target
+        stepping = true
+        model.settingsSelection = history[target]
     }
 
     @ViewBuilder private var detail: some View {
