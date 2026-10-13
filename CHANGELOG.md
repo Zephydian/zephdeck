@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-13
+
+### Added
+- **Zephydian updates itself.** It checks about once a day whether a newer version is out (Settings → General → Updates, where you can also turn that off or Check Now). When there is one, it says so in Settings, in the menu bar menu, at the top of the panel's Settings tab and with a notification. Update… shows what's new, then Update and Restart installs it: through Homebrew if that's how you installed Zephydian, otherwise by downloading the release, checking its fingerprint and swapping it in. The old version stays if anything goes wrong.
+
 ## [0.9.0] - 2026-10-12
 
 ### Added

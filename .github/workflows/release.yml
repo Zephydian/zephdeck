@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write   # needed to create the release
 
+# Runs for the same tag wait for each other (a doubled tag push), so only one builds at a time.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: macos-26
@@ -33,10 +38,18 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           SHA=$(cat dist/Zephydian-$VERSION.zip.sha256)
+          # A tag pushed twice starts two runs; the second finds the release made and stops here.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "The release $GITHUB_REF_NAME already exists."
+            exit 0
+          fi
+          # The notes are this version's CHANGELOG section (the app's "What's new" shows them), after
+          # the SHA-256 line the app checks downloads against.
+          NOTES=$(awk -v v="$VERSION" 'index($0, "## [" v "]") == 1 {f=1; next} f && /^## \[/ {exit} f {print}' CHANGELOG.md)
+          printf 'SHA-256 of the zip: `%s`\n\n%s\n' "$SHA" "$NOTES" > release-notes.md
           gh release create "$GITHUB_REF_NAME" "dist/Zephydian-$VERSION.zip" \
             --title "Zephydian $VERSION" \
-            --generate-notes \
-            --notes "SHA-256 of the zip: \`$SHA\`"
+            --notes-file release-notes.md
       - name: Update the Homebrew tap
         env:
           TAP_TOKEN: ${{ secrets.TAP_TOKEN }}

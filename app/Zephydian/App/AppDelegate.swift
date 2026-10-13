@@ -105,6 +105,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.gameDidClose = { id in packs.packClosed(id) }
         PackLibrary.shared.refresh()
         packs.scheduleDailyCheck()
+        AppUpdater.shared.openSettingsGeneral = { [weak self] in self?.model.openSettingsWindow(SettingsPage.general.rawValue) }
+        AppUpdater.shared.start()   // the daily check for a newer Zephydian (Phase 26)
 
         // Utilities' background services come back as they were: timers, clipboard recording, shortcuts.
         let services = PackServices.shared
@@ -249,10 +251,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// Shows timer notifications even while Zephydian is the active app (macOS hides them otherwise).
+/// Shows timer notifications even while Zephydian is the active app (macOS hides them otherwise),
+/// and opens What's new when the update notification is clicked.
 final class NotificationPresenter: NSObject, UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification)
         async -> UNNotificationPresentationOptions {
         [.banner, .list]
+    }
+
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        guard response.notification.request.identifier == AppUpdater.notificationID else { return }
+        await MainActor.run { AppUpdater.shared.requestWhatsNew() }
     }
 }

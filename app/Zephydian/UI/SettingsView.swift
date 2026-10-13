@@ -10,6 +10,7 @@ struct SettingsView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                UpdateBanner()
                 SettingsSection(title: "Quick settings") {
                     SettingsRow(label: "Corner") {
                         CornerPicker(corner: $settings.corner)
