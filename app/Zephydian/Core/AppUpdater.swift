@@ -4,10 +4,13 @@ import Foundation
 import Observation
 import UserNotifications
 
-/// Finds out whether a newer Zephydian has been released, and (from 26.3) installs it.
-/// The check reads only GitHub's public "latest release" record for the repository: the version,
-/// its notes and the zip's address. Nothing about the Mac or the person is sent (an ephemeral
-/// session, a plain User-Agent). It runs about once a day while the switch is on, and on Check Now.
+/// Finds out whether a newer Zephydian has been released, and installs it.
+/// The check never uses GitHub's API, which allows only 60 anonymous requests an hour per internet
+/// connection (B-53): the version comes from where the releases page's "latest" link leads, and
+/// only when it's newer are the Homebrew cask (the zip's SHA-256) and that version's CHANGELOG
+/// section read, both plain files. Nothing about the Mac or the person is sent (an ephemeral
+/// session, a plain User-Agent). It runs about once a day while the switch is on, and on Check Now;
+/// a failed check retries by itself after half an hour.
 @Observable
 final class AppUpdater {
     static let shared = AppUpdater()
@@ -28,7 +31,14 @@ final class AppUpdater {
         case idle, checking, upToDate, failed(String)
     }
 
-    static let latestURL = URL(string: "https://api.github.com/repos/ahmastan/zephydian/releases/latest")!
+    static let latestURL = URL(string: "https://github.com/ahmastan/zephydian/releases/latest")!
+    static let caskURL = URL(string: "https://raw.githubusercontent.com/ahmastan/homebrew-tap/main/Casks/zephydian.rb")!
+    static func changelogURL(_ version: String) -> URL {
+        URL(string: "https://raw.githubusercontent.com/ahmastan/zephydian/v\(version)/CHANGELOG.md")!
+    }
+    static func zipURL(_ version: String) -> URL {
+        URL(string: "https://github.com/ahmastan/zephydian/releases/download/v\(version)/Zephydian-\(version).zip")!
+    }
 
     private(set) var available: Release?
     private(set) var state: State = .idle
@@ -77,7 +87,7 @@ final class AppUpdater {
     private init() {
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 30
-        config.httpAdditionalHeaders = ["User-Agent": "Zephydian", "Accept": "application/vnd.github+json"]
+        config.httpAdditionalHeaders = ["User-Agent": "Zephydian"]
         session = URLSession(configuration: config)
         autoCheck = defaults.object(forKey: "app.updates.auto") as? Bool ?? true
         lastChecked = defaults.object(forKey: "app.updates.lastChecked") as? Date
@@ -92,73 +102,121 @@ final class AppUpdater {
         }
     }
 
-    /// Reads the latest release and notes whether it's newer than this copy.
+    /// Finds the latest version and, when it's newer than this copy, its details.
     func check() async {
         guard state != .checking else { return }
         state = .checking
+        retry?.cancel()
         do {
-            var request = URLRequest(url: Self.latestURL)
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            let (data, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                throw Failure(description: "GitHub didn't answer (\((response as? HTTPURLResponse)?.statusCode ?? 0)).")
-            }
-            let release = try Self.parse(data)
+            let latest = try await latestVersion()
             lastChecked = Date()
             defaults.set(lastChecked, forKey: "app.updates.lastChecked")
-            if let release, Self.isNewer(release.version, than: Self.currentVersion) {
-                let isNew = available?.version != release.version
-                available = release
-                state = .idle
-                if isNew, defaults.string(forKey: "app.updates.announced") != release.version {
-                    defaults.set(release.version, forKey: "app.updates.announced")
-                    notify(release)
-                }
-            } else {
+            guard Self.isNewer(latest, than: Self.currentVersion) else {
                 available = nil
                 state = .upToDate
+                return
             }
-        } catch let error as URLError where [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost].contains(error.code) {
-            state = .failed("You're offline.")
-        } catch let failure as Failure {
-            state = .failed(failure.description)
+            let release = try await details(latest)
+            let isNew = available?.version != release.version
+            available = release
+            state = .idle
+            if isNew, defaults.string(forKey: "app.updates.announced") != release.version {
+                defaults.set(release.version, forKey: "app.updates.announced")
+                notify(release)
+            }
         } catch {
-            state = .failed("The check didn't work: \(error.localizedDescription)")
+            let message: String
+            if let error = error as? URLError,
+               [.notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost, .dnsLookupFailed].contains(error.code) {
+                message = "You're offline."
+            } else if let failure = error as? Failure {
+                message = failure.description
+            } else {
+                message = error.localizedDescription
+            }
+            state = .failed(message)
+            scheduleRetry()
         }
+    }
+
+    /// Retries a failed check after half an hour (while the daily check is on).
+    @ObservationIgnored private var retry: Task<Void, Never>?
+    private func scheduleRetry() {
+        retry?.cancel()
+        guard autoCheck else { return }
+        retryAt = Date().addingTimeInterval(30 * 60)
+        retry = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(30 * 60))
+            guard !Task.isCancelled else { return }
+            await self?.check()
+        }
+    }
+
+    /// When a failed check will be tried again.
+    private(set) var retryAt: Date?
+
+    /// The newest version: where github.com's "latest release" link leads (…/releases/tag/v0.9.1).
+    private func latestVersion() async throws -> String {
+        var request = URLRequest(url: Self.latestURL)
+        request.httpMethod = "HEAD"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        let (_, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let tag = http.url?.lastPathComponent, tag.hasPrefix("v") else {
+            throw Failure(description: "GitHub didn't say which version is the latest.")
+        }
+        return String(tag.dropFirst())
+    }
+
+    /// The zip's fingerprint from the Homebrew cask, and the notes from that version's CHANGELOG.
+    private func details(_ version: String) async throws -> Release {
+        let cask = try await text(Self.caskURL)
+        guard let sha = Self.caskValue("sha256", in: cask), Self.caskValue("version", in: cask) == version else {
+            throw Failure(description: "Zephydian \(version) is still being published.")
+        }
+        let changelog = (try? await text(Self.changelogURL(version))) ?? ""
+        return Release(version: version, notes: Self.changelogSection(version, in: changelog),
+                       zipURL: Self.zipURL(version), zipSize: 0, sha256: sha.count == 64 ? sha.lowercased() : nil,
+                       pageURL: URL(string: "https://github.com/ahmastan/zephydian/releases/tag/v\(version)")!)
+    }
+
+    private func text(_ url: URL) async throws -> String {
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        let (data, response) = try await session.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw Failure(description: "GitHub didn't answer.")
+        }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// `version "0.9.1"` → 0.9.1 (the cask's own lines).
+    nonisolated static func caskValue(_ key: String, in cask: String) -> String? {
+        for line in cask.split(separator: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.hasPrefix(key + " \""), let start = trimmed.firstIndex(of: "\""),
+                  let end = trimmed[trimmed.index(after: start)...].firstIndex(of: "\"") else { continue }
+            return String(trimmed[trimmed.index(after: start)..<end])
+        }
+        return nil
+    }
+
+    /// The lines under "## [0.9.1] - …" up to the next "## [".
+    nonisolated static func changelogSection(_ version: String, in changelog: String) -> String {
+        var out: [Substring] = []
+        var inside = false
+        for line in changelog.split(separator: "\n", omittingEmptySubsequences: false) {
+            if line.hasPrefix("## [") {
+                if inside { break }
+                inside = line.hasPrefix("## [\(version)]")
+                continue
+            }
+            if inside { out.append(line) }
+        }
+        return out.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     struct Failure: Error, CustomStringConvertible { let description: String }
-
-    /// The release from GitHub's JSON; nil if it has no zip.
-    nonisolated static func parse(_ data: Data) throws -> Release? {
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let tag = json["tag_name"] as? String else {
-            throw Failure(description: "GitHub's answer wasn't understood.")
-        }
-        let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
-        let body = json["body"] as? String ?? ""
-        let assets = json["assets"] as? [[String: Any]] ?? []
-        guard let zip = assets.first(where: { ($0["name"] as? String)?.hasSuffix(".zip") == true }),
-              let urlText = zip["browser_download_url"] as? String, let zipURL = URL(string: urlText),
-              zipURL.scheme == "https", zipURL.host == "github.com" else { return nil }
-        // "SHA-256 of the zip: `621b…`"
-        var sha: String?
-        var lines: [Substring] = []
-        for line in body.split(separator: "\n", omittingEmptySubsequences: false) {
-            if line.hasPrefix("SHA-256 of the zip:"), let start = line.firstIndex(of: "`"),
-               let end = line[line.index(after: start)...].firstIndex(of: "`") {
-                sha = String(line[line.index(after: start)..<end]).lowercased()
-            } else {
-                lines.append(line)
-            }
-        }
-        let page = (json["html_url"] as? String).flatMap(URL.init(string:))
-            ?? URL(string: "https://github.com/ahmastan/zephydian/releases/tag/\(tag)")!
-        return Release(version: version,
-                       notes: lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines),
-                       zipURL: zipURL, zipSize: zip["size"] as? Int ?? 0,
-                       sha256: sha.flatMap { $0.count == 64 ? $0 : nil }, pageURL: page)
-    }
 
     /// "0.10.0" is newer than "0.9.1": compared number by number.
     nonisolated static func isNewer(_ a: String, than b: String) -> Bool {

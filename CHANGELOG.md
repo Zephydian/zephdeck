@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-10-13
+
+### Fixed
+- The update check no longer stops working when GitHub is asked too often from one internet connection: it reads the newest version from the releases page and the download's fingerprint from the Homebrew cask instead of GitHub's rate-limited API. When a check can't finish, Settings says "Couldn't check for updates" (never "up to date") and tries again by itself half an hour later.
+
 ## [0.9.1] - 2026-10-13
 
 ### Added

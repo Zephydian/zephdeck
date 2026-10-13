@@ -21,11 +21,7 @@ struct UpdatesSection: View {
                         .frame(width: 18, height: 18)
                         .foregroundStyle(settings.accentColor)
                         .accessibilityHidden(true)
-                    if let release = updater.available {
-                        Text("Zephydian \(release.version) is available")
-                    } else {
-                        Text("Zephydian is up to date")
-                    }
+                    Text(headline)
                 }
             }
             Toggle("Check for updates daily", isOn: $updater.autoCheck)
@@ -41,10 +37,23 @@ struct UpdatesSection: View {
         }
     }
 
+    /// Never "up to date" unless a check said so (B-53: a refused check showed it).
+    private var headline: String {
+        if let release = updater.available { return "Zephydian \(release.version) is available" }
+        switch updater.state {
+        case .checking: return "Checking for updates…"
+        case .failed: return "Couldn't check for updates"
+        case .upToDate: return "Zephydian is up to date"
+        case .idle: return updater.lastChecked == nil ? "Not checked yet" : "Zephydian is up to date"
+        }
+    }
+
     private var statusLine: String {
         switch updater.state {
         case .checking: return "Checking…"
-        case .failed(let message): return message
+        case .failed(let message):
+            guard let retry = updater.retryAt, updater.autoCheck else { return message }
+            return message + " Trying again at " + retry.formatted(date: .omitted, time: .shortened) + "."
         default:
             guard let date = updater.lastChecked else { return "Not checked yet" }
             return "Checked " + date.formatted(.relative(presentation: .named))
