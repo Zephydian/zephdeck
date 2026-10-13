@@ -1,4 +1,4 @@
-# Builds the app on every pull request (and every push to main) to catch breakage.
+# Builds the app (Release, as shipped) on every pull request and every push to main to catch breakage.
 name: build
 
 on:
@@ -22,7 +22,9 @@ jobs:
         run: brew install xcodegen
       - name: Generate the Xcode project
         run: cd app && xcodegen
-      - name: Build (warnings count as errors)
+      # Release (optimized, both architectures), as a release ships it: an optimizer-only compiler
+      # crash once passed the Debug check and failed the v0.9.0 release.
+      - name: Build Release (warnings count as errors)
         run: |
-          xcodebuild -project app/Zephydian.xcodeproj -scheme Zephydian -configuration Debug \
+          xcodebuild -project app/Zephydian.xcodeproj -scheme Zephydian -configuration Release \
             -destination 'generic/platform=macOS' -derivedDataPath app/build build SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
