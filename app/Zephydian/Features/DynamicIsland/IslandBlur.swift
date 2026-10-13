@@ -7,8 +7,8 @@ import SwiftUI
 struct IslandBehindBlur<S: Shape>: NSViewRepresentable {
     let shape: S
 
-    func makeNSView(context: Context) -> BlurView {
-        let view = BlurView()
+    func makeNSView(context: Context) -> IslandBlurView {
+        let view = IslandBlurView()
         view.material = .hudWindow
         view.blendingMode = .behindWindow
         view.state = .active
@@ -17,22 +17,24 @@ struct IslandBehindBlur<S: Shape>: NSViewRepresentable {
         return view
     }
 
-    func updateNSView(_ view: BlurView, context: Context) {
+    func updateNSView(_ view: IslandBlurView, context: Context) {
         view.makeMask = { rect in shape.path(in: rect).cgPath }
         view.needsLayout = true
     }
+}
 
-    final class BlurView: NSVisualEffectView {
-        var makeMask: (CGRect) -> CGPath = { CGPath(rect: $0, transform: nil) }
-        private let maskLayer = CAShapeLayer()
+/// The blur view itself, a plain (non-generic) class: nested in the generic representable it crashed
+/// the optimizer of the Swift 6.3 compiler GitHub builds releases with (B-52).
+final class IslandBlurView: NSVisualEffectView {
+    var makeMask: (CGRect) -> CGPath = { CGPath(rect: $0, transform: nil) }
+    private let maskLayer = CAShapeLayer()
 
-        override func layout() {
-            super.layout()
-            wantsLayer = true
-            // SwiftUI's shapes are drawn top-down; AppKit layers here are bottom-up.
-            var flip = CGAffineTransform(translationX: 0, y: bounds.height).scaledBy(x: 1, y: -1)
-            maskLayer.path = isFlipped ? makeMask(bounds) : makeMask(bounds).copy(using: &flip)
-            layer?.mask = maskLayer
-        }
+    override func layout() {
+        super.layout()
+        wantsLayer = true
+        // SwiftUI's shapes are drawn top-down; AppKit layers here are bottom-up.
+        var flip = CGAffineTransform(translationX: 0, y: bounds.height).scaledBy(x: 1, y: -1)
+        maskLayer.path = isFlipped ? makeMask(bounds) : makeMask(bounds).copy(using: &flip)
+        layer?.mask = maskLayer
     }
 }
