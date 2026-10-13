@@ -11,6 +11,7 @@ struct SettingsPageView: View {
             case .appearance: AppearancePage()
             case .panel: PanelPage()
             case .shortcuts: ShortcutsPage()
+            case .island: IslandSettingsPage()
             case .notes: NotesPage()
             case .games: GamesPage()
             case .packs: PacksPage()
@@ -569,11 +570,7 @@ private struct FeaturesPage: View {
                     Text("Switch on what you use. A feature that's off doesn't run at all, and it keeps its settings for when you switch it back on.")
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    HStack {
-                        ForEach(FeaturePreset.allCases) { preset in
-                            Button(preset.title) { features.apply(preset) }
-                        }
-                    }
+                    PresetCards()
                     HStack(spacing: 10) {
                         ProgressView(value: Double(on), total: Double(max(features.all.count, 1)))
                         Text("\(on) of \(features.all.count) on")
@@ -707,4 +704,9 @@ struct FeaturePage: View {
         .formStyle(.grouped)
         .toggleStyle(.switch)
     }
+}
+
+/// The Dynamic Island's page: Vorssaint's own layout (header with the switch, tabs, cards), kept above Notes.
+private struct IslandSettingsPage: View {
+    var body: some View { IslandSettingsView() }
 }

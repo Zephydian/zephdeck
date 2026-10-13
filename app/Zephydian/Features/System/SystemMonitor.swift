@@ -13,17 +13,23 @@ final class SystemSampler {
     @ObservationIgnored private var clients: [String: TimeInterval] = [:]
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var listeners: [String: () -> Void] = [:]
+    /// What each client shows or checks, asked on every reading (settings can change in between).
+    @ObservationIgnored private var needs: [String: () -> SystemStats.Parts] = [:]
 
-    /// Starts (or retimes) the readings for a client; the fastest client sets the pace.
-    func add(_ client: String, every interval: TimeInterval, onReading: @escaping () -> Void) {
+    /// Starts (or retimes) the readings for a client; the fastest client sets the pace, and a reading
+    /// covers only the figures the clients use.
+    func add(_ client: String, every interval: TimeInterval, needs: @escaping () -> SystemStats.Parts,
+             onReading: @escaping () -> Void) {
         clients[client] = interval
         listeners[client] = onReading
+        self.needs[client] = needs
         restart()
     }
 
     func remove(_ client: String) {
         clients[client] = nil
         listeners[client] = nil
+        needs[client] = nil
         restart()
     }
 
@@ -34,7 +40,8 @@ final class SystemSampler {
         task = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
-                self.latest = self.stats.read(apps: false)
+                let parts = self.needs.values.reduce(into: SystemStats.Parts()) { $0.formUnion($1()) }
+                self.latest = self.stats.read(apps: false, parts: parts)
                 for listener in self.listeners.values { listener() }
                 try? await Task.sleep(for: .seconds(interval))
             }
@@ -134,8 +141,26 @@ final class MenuBarStatsEngine: FeatureEngine {
             Task { @MainActor in self?.follow() }
         }
         model.shown = settings.shown
-        SystemSampler.shared.add("readouts", every: max(1, settings.interval)) { [weak self] in self?.refresh() }
+        SystemSampler.shared.add("readouts", every: max(1, settings.interval),
+                                 needs: { Self.parts(for: ReadoutSettings.shared.shown) }) { [weak self] in self?.refresh() }
         refresh()
+    }
+
+    /// The figures the shown readouts need.
+    private static func parts(for shown: [Readout]) -> SystemStats.Parts {
+        var parts: SystemStats.Parts = []
+        for readout in shown {
+            switch readout {
+            case .cpu: parts.insert(.cpu)
+            case .gpu: parts.insert(.gpu)
+            case .memory: parts.insert(.memory)
+            case .temperature: parts.insert(.temperatures)
+            case .network: parts.insert(.network)
+            case .battery: parts.insert(.battery)
+            case .power: parts.insert(.power)
+            }
+        }
+        return parts
     }
 
     private func refresh() {
@@ -287,7 +312,17 @@ final class SystemAlertsEngine: FeatureEngine {
 
     func start() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
-        SystemSampler.shared.add("alerts", every: 10) { [weak self] in self?.check() }
+        SystemSampler.shared.add("alerts", every: 10, needs: {
+            // Only what the switched-on alerts check.
+            let s = AlertSettings.shared
+            var parts: SystemStats.Parts = []
+            if s.cpu { parts.insert(.cpu) }
+            if s.heat { parts.insert(.temperatures) }
+            if s.memory { parts.insert(.memory) }
+            if s.disk { parts.insert(.disk) }
+            if s.battery { parts.insert(.battery) }
+            return parts
+        }) { [weak self] in self?.check() }
     }
 
     func stop() {

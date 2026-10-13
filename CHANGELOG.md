@@ -7,6 +7,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-12
+
+### Added
+- **Dynamic Island** (Settings → Dynamic Island): the notch becomes an island that shows what's live beside it (music with its cover and bars, a running timer, a screen recording, your next event 10 minutes before it starts, battery alerts) and opens into tabs when you hover or click. Tabs: Home (up to three widgets of your choice), Music (a full player that follows any music app, or every player if you like), Calendar (an iPhone-style Up Next widget with day arrows; click an event to see it in Calendar), Shelf (drop files on the notch to keep them, drag them out again, AirDrop them), Timers, Capture and Camera. Choose which tabs show and their order, open all of them from a grid, or keep the island open.
+- **Buttons beside the island**: up to three on each side, opening apps, files, links, shortcuts, utilities, features or an island tab; set them up on a picture of the island in Settings (drag them between sides, rename them).
+- **Island settings**: three sizes (Compact, Spacious, Custom with a corner grip), black or Liquid Glass, a translucent background, an outline in your accent color, notch and capsule fit, a floating capsule on displays without a notch, four ways to open (click, preview on hover, expand on hover, hidden until hover), where it reopens, which display it's on (automatic, built-in, main, following the pointer, or all displays), hiding in full screen, what it shows at rest (music, battery or nothing), giving way to the menus, and whether it appears in screenshots.
+- **Indicators**: short notices beside the notch for a screenshot (copied), a saved recording, a new song, the microphone muted or on, and something copied while Clipboard history records.
+- **Three presets: Lite, Essential and Everything** (Settings → Features, and the welcome tour). Lite keeps Zephydian lightest: games, Notes, six utilities and two features. Essential adds every utility and the main Mac features. Everything turns on almost every feature and the Dynamic Island, leaving off the extras not everyone wants (like No Mouse Acceleration). A preset shows what it changes and the utilities it adds (with what each can do) before it does anything, and never removes anything.
+- **Back and forward in Settings**: ‹ and › in the Settings window's toolbar (and ⌘[ / ⌘]) step through the pages you've visited, like System Settings.
+
+### Changed
+- **Capture can photograph Zephydian itself**: screenshots and recordings now include Zephydian's own windows (the island, the panel, Notes…); only the capture tool's own overlay, bars and preview stay out. While a capture is under way, an open island stays open so it can be in the picture.
+- **Menu Bar Stats and System Alerts use less power**: they read only the figures they show or check (disk space at most once a minute), which cut Zephydian's idle CPU with every feature on from about 1.6% to 0.4%.
+- With the island's Shelf on, it takes over from the floating Shelf: dragging a file opens the island on its Shelf.
+
+### Fixed
+- Pinning a screenshot no longer quits Zephydian.
+- Pinned screenshots have an outline in your accent color, drag from anywhere on the picture, and resize with a corner grip or a pinch (scrolling no longer resizes them by accident).
+- Allow (Settings → Permissions) shows only macOS's own box for Accessibility and Screen Recording, instead of also opening System Settings.
+
 ## [0.8.0] - 2026-10-06
 
 ### Added

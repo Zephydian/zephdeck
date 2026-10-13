@@ -59,6 +59,10 @@ final class ScreenRecorder {
     let editors = RecordingEditors()
 
     var isRecording: Bool { stream != nil }
+    /// When the recording in progress began (the Dynamic Island's time).
+    var startedAt: Date? { isRecording ? started : nil }
+    /// False while the Dynamic Island shows the recording, so there's no second pill.
+    static var showsPill: () -> Bool = { true }
 
     init(capture: ScreenCapture) { self.capture = capture }
 
@@ -80,28 +84,29 @@ final class ScreenRecorder {
 
     private func begin(target: Target, prefs: RecordPrefs, packID: String) async throws {
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-        let own = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
         let filter: SCContentFilter
         let config = SCStreamConfiguration()
         var scale: CGFloat = 2
+        // The island stays open while you pick (B-39).
+        ScreenCapture.hold("record", true)
+        defer { ScreenCapture.hold("record", false) }
         switch target {
         case .area:
             guard let rect = await capture.pickArea(),
                   let (display, screen) = ScreenCapture.display(at: NSPoint(x: rect.midX, y: rect.midY), in: content) else { return }
             scale = screen.backingScaleFactor
-            filter = SCContentFilter(display: display, excludingApplications: own, exceptingWindows: [])
+            filter = ScreenCapture.filter(display, content)
             config.sourceRect = CGRect(x: rect.minX - screen.frame.minX, y: screen.frame.maxY - rect.maxY, width: rect.width, height: rect.height)
             area = rect
         case .window:
-            let windows = content.windows.filter { $0.windowLayer == 0 && $0.isOnScreen && $0.frame.width > 40 && $0.frame.height > 30
-                && $0.owningApplication?.processID != ProcessInfo.processInfo.processIdentifier }
+            let windows = ScreenCapture.pickableWindows(content)
             guard let window = await capture.pickWindow(windows) else { return }
             filter = SCContentFilter(desktopIndependentWindow: window)
             area = ScreenCapture.cocoaRect(window.frame)
             scale = NSScreen.screens.first { $0.frame.intersects(area) }?.backingScaleFactor ?? 2
         case .screen:
             guard let (display, screen) = ScreenCapture.display(at: NSEvent.mouseLocation, in: content) else { return }
-            filter = SCContentFilter(display: display, excludingApplications: own, exceptingWindows: [])
+            filter = ScreenCapture.filter(display, content)
             area = screen.frame
             scale = screen.backingScaleFactor
         }
@@ -138,9 +143,12 @@ final class ScreenRecorder {
         self.stream = stream
         self.writer = writer
         started = Date()
+        capture.services.changed()   // the Dynamic Island shows it
         clicks = []
         watchClicks()
-        pill = RecordingPill(started: started, stop: { [weak self] in self?.stop() }, discard: { [weak self] in self?.stop(keep: false) })
+        if Self.showsPill() {
+            pill = RecordingPill(started: started, stop: { [weak self] in self?.stop() }, discard: { [weak self] in self?.stop(keep: false) })
+        }
     }
 
     /// Stops; the recording opens in the editor (or is thrown away).
@@ -158,15 +166,20 @@ final class ScreenRecorder {
             let recording = Recording(id: String(UUID().uuidString.prefix(8)).lowercased(), url: url, date: Date(), clicks: clicks)
             recordings.insert(recording, at: 0)
             capture.services.changed()
+            Self.onSaved()
             editors.open(recording)
         }
     }
 
     func recording(_ id: String) -> Recording? { recordings.first { $0.id == id } }
 
+    /// A recording was kept (the Dynamic Island's Captures indicator listens).
+    static var onSaved: () -> Void = {}
+
     private func cleanUp() {
         stream = nil
         writer = nil
+        capture.services.changed()
         pill?.close()
         pill = nil
         clickMonitors.forEach(NSEvent.removeMonitor)
@@ -264,7 +277,7 @@ nonisolated final class RecordingWriter: NSObject, SCStreamOutput, @unchecked Se
 }
 
 /// The pill at the top of the screen while recording: a red dot, the time, Stop and discard.
-/// Left out of the recording itself, like all of Zephydian's windows.
+/// Left out of the recording itself, as part of the capture tool.
 @MainActor
 private final class RecordingPill {
     @Observable final class Model { var elapsed = 0 }
@@ -277,6 +290,7 @@ private final class RecordingPill {
         let screen = NSScreen.main ?? NSScreen.screens[0]
         panel = NSPanel(contentRect: NSRect(x: screen.visibleFrame.midX - 110, y: screen.visibleFrame.maxY - 56, width: 220, height: 44),
                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(panel)
         panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear

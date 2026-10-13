@@ -3,7 +3,7 @@ import SwiftUI
 /// A page of the Settings window, as the sidebar lists it.
 enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
     case general, appearance, panel, shortcuts
-    case notes, games, packs
+    case island, notes, games, packs
     case features, permissions
 
     var id: String { rawValue }
@@ -14,6 +14,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .appearance: "Appearance"
         case .panel: "Panel & Corner"
         case .shortcuts: "Shortcuts"
+        case .island: "Dynamic Island"
         case .notes: "Notes"
         case .games: "Games"
         case .packs: "Packs"
@@ -28,6 +29,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .appearance: "paintbrush.fill"
         case .panel: "rectangle.inset.topleft.filled"
         case .shortcuts: "keyboard.fill"
+        case .island: "rectangle.topthird.inset.filled"
         case .notes: "note.text"
         case .games: "gamecontroller.fill"
         case .packs: "shippingbox.fill"
@@ -43,18 +45,22 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .appearance: ["Mode", "Light", "Dark", "Panel style", "Liquid Glass", "Frosted", "Accent", "Color", "Menu bar icon"]
         case .panel: ["Corner", "Hot Corners", "Delay", "Display", "Panel size", "Small", "Medium", "Large", "Auto-hide", "Hide delay", "Tabs", "Order", "Hide tabs"]
         case .shortcuts: ["Keyboard shortcut", "Open the panel", "Hotkey", "Clipboard", "Screenshot", "Dictionary"]
+        case .island: ["Notch", "Look", "Black", "Liquid Glass", "Hover", "Click", "Swipe", "Haptic", "Displays without a notch", "Pill"]
         case .notes: ["Monospace font", "Notes window", "On top"]
         case .games: ["High-contrast colors", "Five", "Stats", "Library"]
         case .packs: ["Updates", "Check now", "Running now", "Stop", "Library", "Utilities"]
-        case .features: ["Presets", "Essentials", "Everything", "Turn on", "Turn off"]
+        case .features: ["Presets", "Lite", "Essential", "Everything", "Turn on", "Turn off", "Turn All Off"]
         case .permissions: ["Accessibility", "Screen Recording", "Repair", "Privacy"]
         }
     }
 
+    /// The Dynamic Island's feature, which has its own page above Notes instead of a row under its group.
+    static let islandFeatureID = "dynamic-island"
+
     /// The sidebar's groups, in order. Feature groups and utilities join them in later stages.
     static let groups: [[SettingsPage]] = [
         [.general, .appearance, .panel, .shortcuts],
-        [.notes, .games, .packs],
+        [.island, .notes, .games, .packs],
         [.features, .permissions],
     ]
 }
@@ -156,6 +162,11 @@ struct SettingsWindowView: View {
     @Environment(AppModel.self) private var model
     @Environment(PackLibrary.self) private var library
     @State private var query = ""
+    /// The pages visited, for ‹ and › like System Settings (B-46).
+    @State private var history: [SettingsSelection] = []
+    @State private var position = 0
+    /// Set while ‹ or › moves, so that move isn't recorded as a new visit.
+    @State private var stepping = false
 
     var body: some View {
         let features = Features.shared
@@ -198,6 +209,28 @@ struct SettingsWindowView: View {
             detail
         }
         .frame(minWidth: 640, minHeight: 440)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigation) {
+                Button { step(-1) } label: { Image(systemName: "chevron.left") }
+                    .disabled(position <= 0)
+                    .keyboardShortcut("[", modifiers: .command)
+                    .help("Back")
+                    .accessibilityLabel("Back")
+                Button { step(1) } label: { Image(systemName: "chevron.right") }
+                    .disabled(position >= history.count - 1)
+                    .keyboardShortcut("]", modifiers: .command)
+                    .help("Forward")
+                    .accessibilityLabel("Forward")
+            }
+        }
+        .onAppear { if history.isEmpty { history = [model.settingsSelection]; position = 0 } }
+        .onChange(of: model.settingsSelection) { _, new in
+            if stepping { stepping = false; return }
+            guard history.indices.contains(position), history[position] != new else { return }
+            // A new visit drops the pages ahead, as a browser does.
+            history = Array(history.prefix(position + 1)) + [new]
+            position = history.count - 1
+        }
         // A feature switched off leaves the sidebar; its page goes back to Features.
         .onChange(of: features.enabled) {
             if case .feature(let id) = model.settingsSelection, !features.isOn(id) {
@@ -212,10 +245,22 @@ struct SettingsWindowView: View {
         }
     }
 
+    /// Goes back (-1) or forward (+1) through the pages visited.
+    private func step(_ offset: Int) {
+        let target = position + offset
+        guard history.indices.contains(target) else { return }
+        position = target
+        stepping = true
+        model.settingsSelection = history[target]
+    }
+
     @ViewBuilder private var detail: some View {
         switch model.settingsSelection {
         case .page(let page):
             SettingsPageView(page: page).navigationTitle(page.title)
+        case .feature(let id) where id == SettingsPage.islandFeatureID:
+            // The Features page's Dynamic Island row opens the island's own page.
+            SettingsPageView(page: .island).navigationTitle(SettingsPage.island.title)
         case .feature(let id):
             if let feature = Features.shared.feature(id) {
                 FeaturePage(feature: feature).navigationTitle(feature.name)
@@ -251,7 +296,7 @@ struct SettingsWindowView: View {
         let features = Features.shared
         return FeatureGroup.allCases.compactMap { group in
             let list = features.all.filter { feature in
-                feature.group == group && features.isOn(feature.id)
+                feature.group == group && features.isOn(feature.id) && feature.id != SettingsPage.islandFeatureID
                     && (query.isEmpty || feature.name.localizedCaseInsensitiveContains(query)
                         || feature.summary.localizedCaseInsensitiveContains(query))
             }

@@ -82,11 +82,12 @@ nonisolated enum SystemSensors {
     private static let cache = TemperatureCache()
 
     /// Averages in °C: "cpu" (the chip's die sensors), "battery", "ssd". Missing ones are left out.
-    /// The values are at most a couple of seconds old (empty on the very first call).
-    static func temperatures() -> [String: Double] {
+    /// The values are at most `maxAge` seconds old, plus a reading (empty on the very first call):
+    /// the System utility's graphs want them fresh, the menu bar readout and the heat alert don't.
+    static func temperatures(maxAge: TimeInterval = 1.5) -> [String: Double] {
         cache.lock.lock()
         let values = cache.values
-        let stale = !cache.reading && Date().timeIntervalSince(cache.at) > 1.5
+        let stale = !cache.reading && Date().timeIntervalSince(cache.at) > maxAge
         if stale { cache.reading = true }
         cache.lock.unlock()
         if stale {

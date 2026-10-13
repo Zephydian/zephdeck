@@ -23,6 +23,7 @@ final class ScreenshotPreview {
         let size = NSSize(width: 290, height: 216)
         let frame = NSRect(x: screen.visibleFrame.maxX - size.width - 16, y: screen.visibleFrame.minY + 16, width: size.width, height: size.height)
         panel = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(panel)   // left out of later shots (B-39)
         panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear

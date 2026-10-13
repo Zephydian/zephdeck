@@ -46,10 +46,9 @@ extension ScreenCapture {
 
     // MARK: Pictures of each screen, for the magnifier
 
-    /// Each screen as it looks now (Zephydian's own windows left out), by its frame.
+    /// Each screen as it looks now (the capture tool's own windows left out), by its frame.
     func stills(showsCursor: Bool = false) async -> [(NSRect, CGImage)] {
         guard hasPermission, let content = try? await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true) else { return [] }
-        let own = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
         var out: [(NSRect, CGImage)] = []
         for display in content.displays {
             guard let screen = NSScreen.screens.first(where: {
@@ -59,7 +58,7 @@ extension ScreenCapture {
             config.width = Int(screen.frame.width * screen.backingScaleFactor)
             config.height = Int(screen.frame.height * screen.backingScaleFactor)
             config.showsCursor = showsCursor
-            let filter = SCContentFilter(display: display, excludingApplications: own, exceptingWindows: [])
+            let filter = Self.filter(display, content)
             if let image = try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config) {
                 out.append((screen.frame, image))
             }
@@ -77,11 +76,10 @@ extension ScreenCapture {
     func image(of rect: CGRect, showsCursor: Bool = false) async -> CGImage? {
         guard let content = try? await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true),
               let (display, screen) = Self.display(at: NSPoint(x: rect.midX, y: rect.midY), in: content) else { return nil }
-        let own = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
         let local = CGRect(x: rect.minX - screen.frame.minX, y: screen.frame.maxY - rect.maxY, width: rect.width, height: rect.height)
         var prefs = Prefs()
         prefs.pointer = showsCursor
-        if case .success(let image) = await shoot(SCContentFilter(display: display, excludingApplications: own, exceptingWindows: []),
+        if case .success(let image) = await shoot(Self.filter(display, content),
                                                   rect: local, size: rect.size, scale: screen.backingScaleFactor, prefs: prefs) {
             return image
         }
@@ -210,6 +208,7 @@ private final class ScrollStopper {
         let screen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main ?? NSScreen.screens[0]
         panel = NSPanel(contentRect: NSRect(x: screen.visibleFrame.midX - 140, y: screen.visibleFrame.maxY - 70, width: 280, height: 46),
                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(panel)
         panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -362,6 +361,8 @@ final class CaptureBar {
         panel = KeyPanel(contentRect: NSRect(x: screen.visibleFrame.midX - size.width / 2, y: screen.visibleFrame.maxY - size.height - 12,
                                              width: size.width, height: size.height),
                          styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(panel)
+        ScreenCapture.hold("bar", true)
         panel.level = .popUpMenu   // above a frozen screen
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -388,6 +389,7 @@ final class CaptureBar {
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
         panel.orderOut(nil)
+        ScreenCapture.hold("bar", false)
     }
 
     /// Closes the bar without capturing (Esc, ×, the shortcut again); a frozen screen moves again.
@@ -554,6 +556,7 @@ final class FrozenScreens {
         self.stills = stills
         for (frame, image) in stills {
             let window = NSWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
+            ScreenCapture.markAsTool(window)
             window.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
             window.isOpaque = true
             window.hasShadow = false

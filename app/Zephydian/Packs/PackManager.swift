@@ -73,7 +73,10 @@ final class PackManager {
         let testLibrary = PackLibrary.packsDirectory.appending(path: "dev-library", directoryHint: .isDirectory)
         if let key = try? String(contentsOf: testLibrary.appending(path: "public-key.txt"), encoding: .utf8) {
             print("Using the test Library in \(testLibrary.path)")
-            return PackManager(baseURL: testLibrary, publicKey: key.trimmingCharacters(in: .whitespacesAndNewlines))
+            // Its own sequence and cache, so it never clashes with the published Library's (B-45: a
+            // Release build that read the real Library made every older test catalog look replayed).
+            return PackManager(baseURL: testLibrary, publicKey: key.trimmingCharacters(in: .whitespacesAndNewlines),
+                               namespace: "dev")
         }
         #endif
         return PackManager()
@@ -109,12 +112,16 @@ final class PackManager {
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let baseURL: URL
     @ObservationIgnored private let publicKey: String
+    /// Empty for the published Library; "dev" for Debug's test Library.
+    @ObservationIgnored private let namespace: String
     @ObservationIgnored private let session: URLSession
     @ObservationIgnored private var pendingUpdates: Set<String> = []
     @ObservationIgnored private var scheduler: NSBackgroundActivityScheduler?
 
     init(directory: URL = PackLibrary.packsDirectory, dataDirectory: URL = PackStorage.defaultDirectory(),
-         defaults: UserDefaults = .standard, baseURL: URL = PackManager.releaseURL, publicKey: String = PackTrust.publicKey) {
+         defaults: UserDefaults = .standard, baseURL: URL = PackManager.releaseURL, publicKey: String = PackTrust.publicKey,
+         namespace: String = "") {
+        self.namespace = namespace
         self.directory = directory
         self.dataDirectory = dataDirectory
         self.defaults = defaults
@@ -131,7 +138,9 @@ final class PackManager {
         reloadInstalled()
     }
 
-    private var cacheFolder: URL { directory.appending(path: ".catalog", directoryHint: .isDirectory) }
+    private var cacheFolder: URL { directory.appending(path: namespace.isEmpty ? ".catalog" : ".catalog-\(namespace)", directoryHint: .isDirectory) }
+    /// Where the newest catalog sequence seen is kept (the test Library keeps its own).
+    private var sequenceKey: String { namespace.isEmpty ? "packs.catalogSequence" : "packs.\(namespace).catalogSequence" }
 
     // MARK: Catalog
 
@@ -143,11 +152,11 @@ final class PackManager {
             async let signature = fetch(baseURL.appending(path: "catalog.json.sig"))
             let (data, sigData) = try await (body, signature)
             let fresh = try PackTrust.verifyCatalog(data, signature: String(decoding: sigData, as: UTF8.self), publicKey: publicKey)
-            let seen = defaults.integer(forKey: "packs.catalogSequence")
+            let seen = defaults.integer(forKey: sequenceKey)
             guard fresh.sequence >= seen else {
                 throw PackTrust.Failure(description: "The Library's list is older than the one you already have, so it was ignored.")
             }
-            defaults.set(fresh.sequence, forKey: "packs.catalogSequence")
+            defaults.set(fresh.sequence, forKey: sequenceKey)
             try? FileManager.default.createDirectory(at: cacheFolder, withIntermediateDirectories: true)
             try? data.write(to: cacheFolder.appending(path: "catalog.json"), options: .atomic)
             try? sigData.write(to: cacheFolder.appending(path: "catalog.json.sig"), options: .atomic)

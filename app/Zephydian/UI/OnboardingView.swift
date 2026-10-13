@@ -5,10 +5,12 @@ struct OnboardingView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(AppModel.self) private var model
     @State private var step = 0
+    /// The preset picked in the second step, confirmed (and its utilities added) in the third.
+    @State private var run: PresetRun?
 
     var body: some View {
         Group {
-            if step == 0 { cornerStep } else { featuresStep }
+            if step == 0 { cornerStep } else if let run { confirmStep(run) } else { featuresStep }
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -79,9 +81,20 @@ struct OnboardingView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 8)
 
-            choice(.essentials, title: "Essentials", detail: "The most popular features.", prominent: true)
-            choice(.everything, title: "Everything", detail: "Every feature, switched on.", prominent: false)
-            choice(.none, title: "Not now", detail: "Keep Zephydian to its panel.", prominent: false)
+            choice(.essential, prominent: true)
+            choice(.lite, prominent: false)
+            choice(.everything, prominent: false)
+            Button {
+                model.finishOnboarding()
+            } label: {
+                VStack(spacing: 1) {
+                    Text("Not now").font(.system(size: 13, weight: .semibold))
+                    Text("Keep Zephydian to its panel.").font(.system(size: 11)).opacity(0.8)
+                }
+                .frame(maxWidth: 220)
+            }
+            .panelButtonStyle()
+            .controlSize(.large)
 
             Button("Choose one by one in Settings") {
                 model.finishOnboarding()
@@ -98,18 +111,30 @@ struct OnboardingView: View {
         }
     }
 
-    private func choice(_ preset: FeaturePreset, title: String, detail: String, prominent: Bool) -> some View {
-        Button {
-            model.finishOnboarding()
-            // After the panel closes, so macOS's permission prompts don't land on top of it.
-            Task {
-                try? await Task.sleep(for: .milliseconds(400))
-                Features.shared.apply(preset)
+    /// The preset's details and its utilities' downloads; the features switch on once the tour closes.
+    private func confirmStep(_ run: PresetRun) -> some View {
+        PresetConfirmView(run: run, appliesFeatures: false, onClose: {
+            if case .finished = run.phase {
+                model.finishOnboarding()
+                // After the panel closes, so macOS's permission prompts don't land on top of it.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    Features.shared.apply(run.preset)
+                }
+            } else {
+                self.run = nil
             }
+        })
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Tokens.fill))
+    }
+
+    private func choice(_ preset: FeaturePreset, prominent: Bool) -> some View {
+        Button {
+            run = PresetRun(preset)
         } label: {
             VStack(spacing: 1) {
-                Text(title).font(.system(size: 13, weight: .semibold))
-                Text(detail).font(.system(size: 11)).opacity(0.8)
+                Text(preset.title).font(.system(size: 13, weight: .semibold))
+                Text(preset.summary).font(.system(size: 11)).opacity(0.8)
             }
             .frame(maxWidth: 220)
         }

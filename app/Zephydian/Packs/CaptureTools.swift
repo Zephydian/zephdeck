@@ -60,6 +60,7 @@ enum CaptureToast {
         let new = NSPanel(contentRect: NSRect(x: screen.visibleFrame.midX - size.width / 2, y: screen.visibleFrame.minY + 90,
                                               width: size.width, height: size.height),
                           styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        ScreenCapture.markAsTool(new)
         new.level = .statusBar
         new.isOpaque = false
         new.backgroundColor = .clear
@@ -80,8 +81,8 @@ enum CaptureToast {
 
 // MARK: - Pinned screenshots
 
-/// A screenshot floating above everything while you work: drag it to move, scroll (or pinch) to
-/// resize, double-click (or its ×) to close, ⌘C copies it.
+/// A screenshot floating above everything while you work: drag it to move, pinch or drag its corner
+/// grip to resize, double-click (or its ×) to close, ⌘C copies it.
 @MainActor
 final class PinnedShots {
     private var windows: [NSPanel] = []
@@ -95,7 +96,7 @@ final class PinnedShots {
         size = NSSize(width: size.width * fit, height: size.height * fit)
         let panel = PinPanel(contentRect: NSRect(x: screen.visibleFrame.midX - size.width / 2, y: screen.visibleFrame.midY - size.height / 2,
                                                  width: size.width, height: size.height),
-                             styleMask: [.borderless, .nonactivatingPanel, .resizable], backing: .buffered, defer: false)
+                             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.level = .floating
         panel.isMovableByWindowBackground = true
         panel.hasShadow = true
@@ -110,7 +111,12 @@ final class PinnedShots {
             panel.orderOut(nil)
             self?.windows.removeAll { $0 === panel }
         }
-        panel.contentView = NSHostingView(rootView: PinView(image: NSImage(cgImage: image, size: size), close: { [weak panel] in panel?.onClose() }))
+        // Its × uses the glass button style, which reads the app's settings (B-48: without them the
+        // pin crashed the moment it appeared).
+        let settings = Features.shared.appSettings ?? SettingsStore()
+        panel.contentView = NSHostingView(rootView: PinView(image: NSImage(cgImage: image, size: size), close: { [weak panel] in panel?.onClose() })
+            .environment(settings)
+            .tint(settings.accentColor))
         panel.orderFrontRegardless()
         windows.append(panel)
     }
@@ -120,31 +126,23 @@ final class PinnedShots {
         var onClose: () -> Void = {}
         override var canBecomeKey: Bool { true }
 
-        override func scrollWheel(with event: NSEvent) {
-            let factor = 1 - event.scrollingDeltaY / 300
-            var frame = self.frame
-            let newWidth = min(max(frame.width * factor, 80), 4000)
-            let newHeight = newWidth / (frame.width / frame.height)
-            frame.origin.x += (frame.width - newWidth) / 2
-            frame.origin.y += (frame.height - newHeight) / 2
-            frame.size = NSSize(width: newWidth, height: newHeight)
-            setFrame(frame, display: true)
-        }
-
+        /// Pinch resizes around the pointer, in proportion to the pinch (B-51); scrolling no longer
+        /// resizes, so it can't happen by accident.
         override func magnify(with event: NSEvent) {
-            var frame = self.frame
-            let factor = 1 + event.magnification
-            let newWidth = min(max(frame.width * factor, 80), 4000)
-            let newHeight = newWidth / (frame.width / frame.height)
-            frame.origin.x += (frame.width - newWidth) / 2
-            frame.origin.y += (frame.height - newHeight) / 2
-            frame.size = NSSize(width: newWidth, height: newHeight)
-            setFrame(frame, display: true)
+            resize(by: 1 + event.magnification, around: NSEvent.mouseLocation)
         }
 
-        override func mouseDown(with event: NSEvent) {
-            if event.clickCount == 2 { onClose(); return }
-            super.mouseDown(with: event)
+        func resize(by factor: CGFloat, around point: NSPoint) {
+            var frame = self.frame
+            let aspect = frame.width / max(1, frame.height)
+            let newWidth = min(max(frame.width * factor, PinnedShots.minimumWidth), 4000)
+            let newHeight = newWidth / aspect
+            // Keep the point under the pointer where it is.
+            let fx = (point.x - frame.minX) / max(1, frame.width), fy = (point.y - frame.minY) / max(1, frame.height)
+            frame.origin.x = point.x - newWidth * min(max(fx, 0), 1)
+            frame.origin.y = point.y - newHeight * min(max(fy, 0), 1)
+            frame.size = NSSize(width: newWidth, height: newHeight)
+            setFrame(frame, display: true)
         }
 
         override func keyDown(with event: NSEvent) {
@@ -160,16 +158,27 @@ final class PinnedShots {
         }
     }
 
+    static let minimumWidth: CGFloat = 80
+
     private struct PinView: View {
         let image: NSImage
         let close: () -> Void
         @State private var hovering = false
+        @Environment(SettingsStore.self) private var settings
 
         var body: some View {
             Image(nsImage: image)
                 .resizable()
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
+                // Anywhere on the picture drags it; a double-click closes it (B-50: the picture took the
+                // mouse-down, so the window never moved).
+                .overlay { PinDragArea(close: close) }
+                // An outline in the accent color (B-50, the owner's choice).
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(settings.accentColor.opacity(0.9), lineWidth: 1.5)
+                        .allowsHitTesting(false)
+                }
                 .overlay(alignment: .topLeading) {
                     if hovering {
                         Button(action: close) { Image(systemName: "xmark") }
@@ -179,8 +188,71 @@ final class PinnedShots {
                             .accessibilityLabel("Close the pinned screenshot")
                     }
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    // Drag the corner to resize, keeping the picture's shape (B-51).
+                    if hovering {
+                        PinResizeGrip()
+                            .frame(width: 22, height: 22)
+                            .overlay {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .allowsHitTesting(false)
+                            }
+                            .background(Circle().fill(settings.accentColor))
+                            .padding(5)
+                            .help("Drag to resize")
+                            .accessibilityLabel("Resize")
+                    }
+                }
+                .padding(1)
                 .onHover { hovering = $0 }
                 .accessibilityLabel("Pinned screenshot")
+        }
+    }
+
+    /// Moves the pin with the mouse (a window that never activates the app can't use the usual
+    /// background drag through SwiftUI), and closes it on a double-click.
+    private struct PinDragArea: NSViewRepresentable {
+        let close: () -> Void
+        func makeNSView(context: Context) -> DragView { DragView() }
+        func updateNSView(_ view: DragView, context: Context) { view.close = close }
+
+        final class DragView: NSView {
+            var close: () -> Void = {}
+            override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+            override func mouseDown(with event: NSEvent) {
+                if event.clickCount == 2 { close(); return }
+                window?.performDrag(with: event)
+            }
+        }
+    }
+
+    /// The corner grip: dragging it resizes the pin from its top-left corner, keeping its shape.
+    private struct PinResizeGrip: NSViewRepresentable {
+        func makeNSView(context: Context) -> GripView { GripView() }
+        func updateNSView(_ view: GripView, context: Context) {}
+
+        final class GripView: NSView {
+            private var start: (frame: NSRect, mouse: NSPoint)?
+            override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+            override func resetCursorRects() { addCursorRect(bounds, cursor: .crosshair) }
+            override func mouseDown(with event: NSEvent) {
+                guard let window else { return }
+                start = (window.frame, NSEvent.mouseLocation)
+            }
+            override func mouseDragged(with event: NSEvent) {
+                guard let window, let start else { return }
+                let mouse = NSEvent.mouseLocation
+                let aspect = start.frame.width / max(1, start.frame.height)
+                // Right and down both grow it; whichever moved more decides.
+                let dx = mouse.x - start.mouse.x, dy = start.mouse.y - mouse.y
+                let grow = abs(dx) >= abs(dy * aspect) ? dx : dy * aspect
+                let width = min(max(start.frame.width + grow, PinnedShots.minimumWidth), 4000)
+                let height = width / aspect
+                window.setFrame(NSRect(x: start.frame.minX, y: start.frame.maxY - height, width: width, height: height), display: true)
+            }
+            override func mouseUp(with event: NSEvent) { start = nil }
         }
     }
 }

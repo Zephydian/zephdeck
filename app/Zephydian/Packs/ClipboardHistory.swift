@@ -92,6 +92,9 @@ final class ClipboardHistory {
         capture(from: board, packID: packID, app: NSWorkspace.shared.frontmostApplication)
     }
 
+    /// Something copied was recorded: "text", "image" or "file" (the Dynamic Island's indicator).
+    static var onCaptured: (String) -> Void = { _ in }
+
     /// Reads the clipboard once and adds what's worth keeping. Internal so tests can call it.
     func capture(from board: NSPasteboard, packID: String, app: NSRunningApplication?) {
         let types = board.types ?? []
@@ -132,6 +135,7 @@ final class ClipboardHistory {
         }
         trim(&s, packID: packID)
         save(s, packID: packID)
+        if let kind = s.items.first?.kind { Self.onCaptured(kind) }
         services.update(packID: packID, kind: "clipboard", detail: detail(packID))
         services.changed()
     }

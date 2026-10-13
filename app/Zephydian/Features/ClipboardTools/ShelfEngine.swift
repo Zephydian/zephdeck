@@ -105,8 +105,14 @@ final class ShelfEngine: FeatureEngine {
         shelf.close()
     }
 
-    /// Opens or closes the Shelf (the shortcut and the menu bar's Shelf item).
+    /// Opens or closes the Shelf (the shortcut and the menu bar's Shelf item). With the Dynamic
+    /// Island's Shelf on, the island's opens instead (the island wins).
     func toggle() {
+        if IslandEngine.handlesShelf, let island = IslandEngine.current {
+            shelf.close()
+            island.openShelf()
+            return
+        }
         if shelf.isOpen { shelf.close() } else { shelf.show(near: NSEvent.mouseLocation) }
     }
 
@@ -140,6 +146,8 @@ final class ShelfEngine: FeatureEngine {
     /// While something is being dragged: the corner panel opens on the Shelf right away, or a shake
     /// (three quick changes of direction) opens the floating shelf.
     private func dragged() {
+        // The Dynamic Island's Shelf takes drags while it's on (the island opens itself).
+        guard !IslandEngine.handlesShelf else { return }
         guard NSPasteboard(name: .drag).changeCount != dragChange else { return }   // a real drag, not a selection
         if settings.shelfOpening == .corner {
             if !openedPanelForDrag {
