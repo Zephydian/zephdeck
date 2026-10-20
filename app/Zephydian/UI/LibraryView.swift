@@ -140,16 +140,21 @@ struct LibraryView: View {
                 ScrollView {
                     VStack(spacing: 8) {
                         statusBanner
-                        VStack(spacing: 0) {
-                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                                LibraryRow(item: item, isSelected: selection == item.id,
-                                           remove: { removing = item }, showNews: { showingNews = item },
-                                           confirm: { confirming = item })
-                                    .id(item.id)
-                                if index < items.count - 1 { Divider().padding(.leading, 56) }
+                        if model.libraryFilter == .game {
+                            // Games are grouped like the Games grid (Arcade, Puzzles, Words).
+                            ForEach(GameCategory.allCases, id: \.self) { category in
+                                let rows = items.filter { $0.category == category }
+                                if !rows.isEmpty {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        GameSectionHeader(title: category.title)
+                                        card(rows)
+                                    }
+                                    .padding(.top, category == items.first?.category ? 0 : 6)
+                                }
                             }
+                        } else {
+                            card(items)
                         }
-                        .background(RoundedRectangle(cornerRadius: Tokens.cardRadius, style: .continuous).fill(Tokens.fill))
                     }
                 }
                 .contentMargins(.horizontal, 16, for: .scrollContent)
@@ -159,6 +164,19 @@ struct LibraryView: View {
                 }
             }
         }
+    }
+
+    private func card(_ rows: [LibraryItem]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
+                LibraryRow(item: item, isSelected: selection == item.id,
+                           remove: { removing = item }, showNews: { showingNews = item },
+                           confirm: { confirming = item })
+                    .id(item.id)
+                if index < rows.count - 1 { Divider().padding(.leading, 56) }
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: Tokens.cardRadius, style: .continuous).fill(Tokens.fill))
     }
 
     /// A small note above the list when the list shown is the saved copy.
@@ -220,7 +238,12 @@ struct LibraryView: View {
         let query = search.trimmingCharacters(in: .whitespaces)
         return result.values
             .filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) || $0.description.localizedCaseInsensitiveContains(query) }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            .sorted { a, b in
+                // Games by section first (as shown), so ↑/↓ follow the rows on screen.
+                let ca = GameCategory.allCases.firstIndex(of: a.category ?? .words) ?? 0
+                let cb = GameCategory.allCases.firstIndex(of: b.category ?? .words) ?? 0
+                return ca != cb ? ca < cb : a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+            }
     }
 
     // MARK: Keyboard
@@ -267,12 +290,15 @@ struct LibraryItem: Identifiable {
     var capabilities: [PackCapability] = []
     /// An SF Symbol icon (utilities), so nothing has to be downloaded to show it.
     var symbol: String?
+    /// A game's section (nil for utilities).
+    var category: GameCategory?
 
     init(entry: PackCatalog.Entry, installedVersion: String?) {
         id = entry.id; name = entry.name; description = entry.description; version = entry.version
         size = entry.size; sdkVersion = entry.sdkVersion; whatsNew = entry.whatsNew
         self.installedVersion = installedVersion; self.entry = entry; symbol = entry.symbol
         capabilities = PackCapability.list(entry.capabilities)
+        if entry.kind == PackBundle.Kind.game.rawValue { category = GameCategory(manifest: entry.category) }
     }
 
     init(bundle: PackBundle) {
@@ -281,12 +307,14 @@ struct LibraryItem: Identifiable {
         whatsNew = bundle.manifest.whatsNew; installedVersion = bundle.manifest.version; entry = nil
         symbol = bundle.manifest.symbol
         capabilities = PackCapability.list(bundle.manifest.capabilities)
+        if bundle.kind == .game { category = GameCategory(manifest: bundle.manifest.category) }
     }
 
     init(builtIn info: GameInfo, installed: Bool) {
         id = info.id; name = info.name; description = info.summary; version = ""; size = nil
         sdkVersion = 0; whatsNew = nil; installedVersion = installed ? "" : nil; entry = nil
         builtInIcon = info.icon
+        category = info.category
     }
 
     var isBuiltIn: Bool { builtInIcon != nil }

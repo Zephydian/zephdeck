@@ -35,6 +35,16 @@ struct GameScreen: View {
                                     .accessibilityLabel("Score: \(session.scoreText)")
                             }
 
+                            // A game with sounds (SDK 10): the speaker switches them on and off.
+                            if let pack = session as? PackSession, pack.hasSound {
+                                Button { pack.toggleSound() } label: {
+                                    Image(systemName: pack.isSoundOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                                }
+                                .glassIconButtonStyle()
+                                .help(pack.isSoundOn ? "Turn sound off" : "Turn sound on")
+                                .accessibilityLabel(pack.isSoundOn ? "Sound on" : "Sound off")
+                            }
+
                             // A utility with a settings page (SDK 5): the gear opens it in the Settings window.
                             if let pack = (session as? PackSession)?.bundle, pack.hasSettings {
                                 Button { model.openSettingsWindow(SettingsSelection.utility(pack.id).rawValue) } label: {

@@ -1,0 +1,183 @@
+for (const x of items) {
+  total += x.price;
+}
+
+def greet(name):
+  return f"hi {name}"
+
+let mut count = 0;
+count += 1;
+
+fmt.Println("done")
+
+SELECT name FROM users;
+
+if err != nil {
+  return err
+}
+
+const sum = (a, b) => a + b;
+
+print(len(words))
+
+guard let url else { return }
+
+echo "$HOME"
+
+int main(void) {
+  return 0;
+}
+
+for i in range(10):
+  print(i * i)
+
+while (queue.length > 0) {
+  const job = queue.shift();
+  run(job);
+}
+
+let names = users.map(\.name)
+
+fn add(a: i32, b: i32) -> i32 {
+  a + b
+}
+
+UPDATE tasks SET done = 1;
+
+import os
+
+x = [n for n in nums if n]
+
+func hello() string {
+  return "hello"
+}
+
+var total = 0
+
+console.log(`id: ${id}`);
+
+class Point:
+  def __init__(self, x):
+    self.x = x
+
+ls -la | grep log
+
+DELETE FROM cache;
+
+struct Size {
+  var width: Double
+}
+
+match value {
+  Some(v) => v,
+  None => 0,
+}
+
+if (ready && !busy) {
+  start();
+}
+
+items.sort(key=len)
+
+const el = document.body;
+
+defer file.Close()
+
+try {
+  load();
+} catch (e) {
+  log(e);
+}
+
+print("hello, world")
+
+let x = y ?? 0
+
+git commit -m "fix"
+
+#include <stdio.h>
+
+return a > b ? a : b;
+
+with open(path) as f:
+  data = f.read()
+
+switch mode {
+case "on":
+  enable()
+}
+
+let v: Vec<u8> = vec![];
+
+mkdir -p build && cd build
+
+export default App;
+
+for k, v := range m {
+  fmt.Println(k, v)
+}
+
+enum Color { Red, Green }
+
+nums.filter { $0 > 2 }
+
+SELECT * FROM logs LIMIT 5;
+
+user = {"name": "ada"}
+
+while True:
+  if done():
+    break
+
+printf("%d\n", n);
+
+async function load() {
+  await fetch(url);
+}
+
+impl Shape for Circle {}
+
+const [a, setA] = useState(0);
+
+if x is None:
+  x = []
+
+ch := make(chan int)
+
+.card { color: red; }
+
+npm install --save-dev
+
+let id = UUID()
+
+lambda x: x + 1
+
+for (int i = 0; i < n; i++)
+  sum += a[i];
+
+do {
+  try task.run()
+}
+
+json.dumps(data)
+
+println!("{}", total);
+
+throw new Error("oops");
+
+brew upgrade
+
+if let first = list.first {
+  show(first)
+}
+
+def __repr__(self):
+  return "Node()"
+
+go func() { work() }()
+
+type Id = string | number;
+
+assert x == 42
+
+const PI = 3.14;

@@ -15,12 +15,12 @@ import CryptoKit
 import Foundation
 import JavaScriptCore
 
-let sdkVersion = 9                       // the newest SDK version the tools (and app) know
+let sdkVersion = 10                      // the newest SDK version the tools (and app) know
 let utilitySDK = 2                       // utilities need SDK 2 or newer
 let maxPackBytes = 5 * 1024 * 1024
 let maxScriptBytes = 512 * 1024
 let kinds = ["games": "game", "utilities": "utility"]
-let assetExtensions: Set<String> = ["png", "json", "txt"]
+let assetExtensions: Set<String> = ["png", "json", "txt", "wav", "mp3"]
 /// What packs may declare in "capabilities" (the app shows each one before install).
 let knownCapabilities: Set<String> = [
     "clipboard.write", "clipboard.read", "power.awake", "notifications", "screen.capture",
@@ -58,6 +58,10 @@ struct Manifest: Codable {
     var handles: [String]?
     /// The utility has a page in Zephydian's Settings window (SDK 5): `settings: { view() }` in main.js.
     var settings: Bool?
+    /// A game's section in the Games grid and the Library: "arcade", "puzzles" or "words".
+    var category: String?
+    /// The game plays sounds from assets/ (SDK 10).
+    var sounds: Bool?
 }
 
 /// "1.2.3" → [1, 2, 3]; nil if it isn't three whole numbers.
@@ -106,7 +110,7 @@ func checkPack(_ folder: URL) throws -> Pack {
             || (rel.hasPrefix("assets/") && assetExtensions.contains(url.pathExtension.lowercased())
                 && !url.lastPathComponent.hasPrefix("."))
         guard allowed else {
-            throw problem("\(rel) isn't allowed. A pack holds manifest.json, main.js, icon.png and assets/ (PNG, JSON, TXT)")
+            throw problem("\(rel) isn't allowed. A pack holds manifest.json, main.js, icon.png and assets/ (PNG, JSON, TXT, WAV, MP3)")
         }
         total += values.fileSize ?? 0
         files.append(rel)
@@ -135,6 +139,14 @@ func checkPack(_ folder: URL) throws -> Pack {
     if parseVersion(m.version) == nil { throw problem("version must look like 1.0.0") }
     if !(1...sdkVersion).contains(m.sdkVersion) { throw problem("sdkVersion must be between 1 and \(sdkVersion)") }
     if m.description.isEmpty || m.description.count > 90 { throw problem("description must be 1–90 characters") }
+    if m.sounds == true {
+        if m.kind != "game" { throw problem("only games have sounds") }
+        if m.sdkVersion < 10 { throw problem("sounds need sdkVersion 10 or newer") }
+    }
+    if let c = m.category {
+        if m.kind != "game" { throw problem("only games have a category") }
+        if !["arcade", "puzzles", "words"].contains(c) { throw problem("category must be \"arcade\", \"puzzles\" or \"words\"") }
+    }
     if let caps = m.capabilities {
         if m.sdkVersion < capabilitySDK { throw problem("capabilities need sdkVersion \(capabilitySDK) or newer") }
         if let unknown = caps.first(where: { !knownCapabilities.contains($0) }) {
@@ -284,6 +296,7 @@ struct CatalogEntry: Codable {
     var sourceHash: String
     var symbol: String?
     var capabilities: [String]?
+    var category: String?
 }
 
 struct Catalog: Codable {
@@ -401,7 +414,7 @@ case "publish":
                 description: m.description, whatsNew: m.whatsNew, size: data.count,
                 url: "\(baseURL)/\(file.lastPathComponent)", sha256: sha256Hex(data),
                 iconURL: "\(baseURL)/\(iconName)", iconSha256: sha256Hex(icon), sourceHash: pack.sourceHash,
-                symbol: m.symbol, capabilities: m.capabilities))
+                symbol: m.symbol, capabilities: m.capabilities, category: m.category))
             print("new  \(m.id) \(m.version)")
         }
         let now = Date()

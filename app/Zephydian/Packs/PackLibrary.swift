@@ -90,7 +90,8 @@ final class PackLibrary {
                     }
                 },
                 badge: bundle.isDev ? "DEV" : nil,
-                reloadsOnOpen: bundle.isDev)
+                reloadsOnOpen: bundle.isDev,
+                category: GameCategory(manifest: manifest.category))
         }
     }
 
