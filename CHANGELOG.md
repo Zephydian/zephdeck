@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- **Keys**, a typing speed test in the Library: type common English words against the clock (15, 30, 60 or 120 seconds) or a word count (10, 25, 50 or 100), with optional punctuation and numbers. Mistakes show in red as you go, a smooth caret follows your typing, and the results show your WPM, accuracy and a graph of the whole test, with your best for each mode. Tab then Enter starts again at any time. Its Code switch types short snippets of code in a mix of languages instead, with Enter at the end of each line and the indentation done for you.
+- The Games grid and the Library group games into sections: Arcade, Puzzles and Words. Packs choose theirs with a new `category` field in manifest.json.
+- Pack SDK 10: key events carry the character actually typed (`char`, with Shift and Option applied) and the Tab key, and the header menu can hold on/off items (`toggles`).
+
 ## [0.9.2] - 2026-10-13
 
 ### Fixed

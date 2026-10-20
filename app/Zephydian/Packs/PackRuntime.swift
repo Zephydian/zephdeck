@@ -81,6 +81,13 @@ nonisolated struct PackMenu: Equatable {
     var title: String
     var items: [String]
     var selected: Int
+    /// On/off items under the list (SDK 10).
+    var toggles: [Toggle] = []
+
+    struct Toggle: Equatable {
+        var label: String
+        var on: Bool
+    }
 }
 
 /// A key press or release, in the form packs see it (`e.key` is like the web's KeyboardEvent.key).
@@ -91,6 +98,8 @@ nonisolated struct PackKey {
     var isRepeat = false
     /// ⌘ was held. Only a pack's own window gets ⌘ keys (⌘C, ⌘S…); the panel keeps them.
     var command = false
+    /// The character actually typed, with ⇧ and ⌥ applied ("A", "?", "é"), or nil (SDK 10).
+    var char: String?
 }
 
 /// What the runtime tells the game screen.
@@ -251,6 +260,7 @@ final class PackRuntime {
     }
     func pressOverlayButton(_ index: Int) { call("overlayPress", index) }
     func selectMenuItem(_ index: Int) { call("menuSelect", index) }
+    func toggleMenuItem(_ index: Int) { call("menuToggle", index) }
 
     /// A utility control was used. `event` is the handler's name on the control (onPress, onChange…).
     func uiEvent(_ id: String, _ event: String, _ value: Any) { call("event", id, event, value) }
@@ -1146,7 +1156,8 @@ final class PackRuntime {
         menu(m) {
           menu = m || null;
           N.menu(m ? JSON.stringify({ title: text(m.title), items: (Array.isArray(m.items) ? m.items : []).map(text),
-                                      selected: typeof m.selected === "number" ? m.selected : -1 }) : null);
+                                      selected: typeof m.selected === "number" ? m.selected : -1,
+                                      toggles: (Array.isArray(m.toggles) ? m.toggles : []).map(t => ({ label: text(t && t.label), on: !!(t && t.on) })) }) : null);
         },
         overlay(o) {
           buttons = (o && Array.isArray(o.buttons)) ? o.buttons : [];
@@ -1456,6 +1467,13 @@ final class PackRuntime {
           z.menu(Object.assign({}, m, { selected: i }));   // tick the picked item
           if (typeof m.onSelect === "function") m.onSelect(i);
         },
+        menuToggle: i => {
+          if (!menu || !Array.isArray(menu.toggles) || !menu.toggles[i]) return;
+          const m = menu;
+          const on = !m.toggles[i].on;
+          z.menu(Object.assign({}, m, { toggles: m.toggles.map((t, j) => j === i ? Object.assign({}, t, { on }) : t) }));
+          if (typeof m.onToggle === "function") m.onToggle(i, on);
+        },
       };
       return { z, zephydian, sdk };
     })
@@ -1464,7 +1482,9 @@ final class PackRuntime {
     // MARK: Decoding
 
     private static func keyObject(_ e: PackKey) -> [String: Any] {
-        ["key": e.key, "shift": e.shift, "option": e.option, "repeat": e.isRepeat, "command": e.command]
+        var object: [String: Any] = ["key": e.key, "shift": e.shift, "option": e.option, "repeat": e.isRepeat, "command": e.command]
+        if let char = e.char { object["char"] = char }
+        return object
     }
 
     static func jsonObject(_ s: String) -> [String: Any]? {
@@ -1492,8 +1512,11 @@ final class PackRuntime {
 
     static func decodeMenu(_ value: JSValue) -> PackMenu? {
         guard let m = json(value) else { return nil }
+        let toggles = (m["toggles"] as? [[String: Any]] ?? []).prefix(10).map {
+            PackMenu.Toggle(label: $0["label"] as? String ?? "", on: $0["on"] as? Bool ?? false)
+        }
         return PackMenu(title: m["title"] as? String ?? "", items: Array((m["items"] as? [String] ?? []).prefix(30)),
-                        selected: (m["selected"] as? NSNumber)?.intValue ?? -1)
+                        selected: (m["selected"] as? NSNumber)?.intValue ?? -1, toggles: Array(toggles))
     }
 
     nonisolated struct ShapeError: Error, CustomStringConvertible { let description: String }

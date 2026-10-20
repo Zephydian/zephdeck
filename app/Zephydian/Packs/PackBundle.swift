@@ -21,6 +21,8 @@ nonisolated struct PackManifest: Codable, Equatable {
     var handles: [String]?
     /// The utility has a page in the Settings window (SDK 5): `settings: { view() }` in its script.
     var settings: Bool?
+    /// A game's section in the Games grid and the Library: "arcade", "puzzles" or "words".
+    var category: String?
 
     /// Lowercase letters, digits and dashes, up to 32 characters (the same rule `packs.swift check` uses).
     /// Ids become folder and file names, so anything else is refused before it touches the disk.
@@ -32,7 +34,7 @@ nonisolated struct PackManifest: Codable, Equatable {
 /// A pack on disk, ready to run: its folder, manifest and script.
 struct PackBundle {
     /// The newest SDK version this app can run.
-    static let sdkVersion = 9
+    static let sdkVersion = 10
     /// Settings pages arrived in SDK 5.
     static let settingsSDK = 5
     /// Utilities arrived in SDK 2.

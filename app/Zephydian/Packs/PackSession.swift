@@ -147,6 +147,7 @@ final class PackSession: GameSession, PackHost {
     /// Asks a utility for its view again (something outside it changed, like a stopped service).
     func refresh() { runtime.refresh() }
     func selectMenuItem(_ index: Int) { runtime.selectMenuItem(index) }
+    func toggleMenuItem(_ index: Int) { runtime.toggleMenuItem(index) }
 
     /// Sends `z.theme` to the pack: the current appearance's colors as hex strings.
     func updateTheme(dark: Bool, accent: NSColor) {
@@ -212,18 +213,26 @@ final class PackSession: GameSession, PackHost {
         var names: [UInt16: String] = [
             Key.left: "ArrowLeft", Key.right: "ArrowRight", Key.up: "ArrowUp", Key.down: "ArrowDown",
             Key.enter: "Enter", Key.keypadEnter: "Enter", Key.space: " ", Key.delete: "Backspace", Key.forwardDelete: "Backspace",
+            Key.tab: "Tab",
         ]
         if window { names[53] = "Escape" }
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         guard window || !flags.contains(.command), !flags.contains(.control) else { return nil }
         var name = names[event.keyCode]
-        if name == nil, let chars = event.charactersIgnoringModifiers?.lowercased(), chars.count == 1,
-           let scalar = chars.unicodeScalars.first, scalar.value >= 0x20, scalar.value != 0x7F, !(0xF700...0xF8FF).contains(scalar.value) {
+        if name == nil, let chars = printable(event.charactersIgnoringModifiers?.lowercased()) {
             name = chars
         }
         guard let name else { return nil }
         return PackKey(key: name, shift: flags.contains(.shift), option: flags.contains(.option),
-                       isRepeat: event.type == .keyDown && event.isARepeat, command: flags.contains(.command))
+                       isRepeat: event.type == .keyDown && event.isARepeat, command: flags.contains(.command),
+                       char: printable(event.characters))
+    }
+
+    /// One printable character (not a control character or an arrow/function key), or nil.
+    private static func printable(_ chars: String?) -> String? {
+        guard let chars, chars.count == 1, let scalar = chars.unicodeScalars.first,
+              scalar.value >= 0x20, scalar.value != 0x7F, !(0xF700...0xF8FF).contains(scalar.value) else { return nil }
+        return chars
     }
 
     private static func hex(_ color: NSColor) -> String {
@@ -400,6 +409,12 @@ private struct PackMenuView: View {
                     }
                 }
                 .pickerStyle(.inline)
+                if !menu.toggles.isEmpty {
+                    Divider()
+                    ForEach(Array(menu.toggles.enumerated()), id: \.offset) { index, toggle in
+                        Toggle(toggle.label, isOn: Binding(get: { toggle.on }, set: { _ in session.toggleMenuItem(index) }))
+                    }
+                }
             } label: {
                 Text(menu.selected >= 0 && menu.selected < menu.items.count ? menu.items[menu.selected] : menu.title)
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())

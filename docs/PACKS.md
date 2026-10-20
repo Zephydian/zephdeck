@@ -92,6 +92,7 @@ Only these files are allowed: `manifest.json`, `main.js`, `icon.png`, and PNG, J
 | `symbol` | Optional. An SF Symbol name (for example `"doc.on.clipboard"`) used as the icon instead of `icon.png`. Meant for utilities. |
 | `capabilities` | Optional (SDK 2). What the pack uses beyond its own screen and storage, such as `["clipboard.write"]`. See [Capabilities](#capabilities). |
 | `handles` | Optional (SDK 3, utilities). `["image"]` makes the utility the editor behind a screenshot's Edit button. It needs the `windows` and `images.edit` capabilities. |
+| `category` | Optional (games). The game's section in the Games grid and the Library: `"arcade"`, `"puzzles"` or `"words"`. A game without one is listed under Words. |
 | `settings` | Optional (SDK 5, utilities). `true` gives the utility a page in Zephydian's Settings window. See [Settings pages](#settings-pages-sdk-5). |
 
 ## The game object
@@ -113,7 +114,8 @@ zephydian.game({
 ```
 
 **Key events** (`e`) have:
-- `key`: `"ArrowLeft"`, `"ArrowRight"`, `"ArrowUp"`, `"ArrowDown"`, `"Enter"`, `" "` (Space), `"Backspace"`, or the typed letter or digit in lowercase (`"r"`, `"5"`).
+- `key`: `"ArrowLeft"`, `"ArrowRight"`, `"ArrowUp"`, `"ArrowDown"`, `"Enter"`, `" "` (Space), `"Backspace"`, `"Tab"` (SDK 10), or the typed letter or digit in lowercase (`"r"`, `"5"`).
+- `char` (SDK 10): the character actually typed, with ⇧ and ⌥ applied (`"R"`, `"?"`, `"é"`), for typing games. It's missing for keys that type nothing (arrows, Enter, Backspace, Tab) and while a dead key (like ⌥E) waits for its letter.
 - `shift`, `option`: booleans.
 - `repeat`: true when the key is held down.
 
@@ -147,7 +149,7 @@ When a card from `z.overlay()` is showing, Enter presses its prominent button.
 **Header and hint**
 - `z.score("12 · best 42")`: the text at the top right of the game screen.
 - `z.hint("…")`: replaces the manifest's hint.
-- `z.menu({ title, items, selected, onSelect })`: one header menu (for example a difficulty). `items` is an array of strings, `selected` is the index of the ticked item (its name shows in the header), and `onSelect(index)` is called when the player picks one. The tick moves to the picked item by itself. Call `z.menu(null)` to remove it.
+- `z.menu({ title, items, selected, onSelect })`: one header menu (for example a difficulty). `items` is an array of strings, `selected` is the index of the ticked item (its name shows in the header), and `onSelect(index)` is called when the player picks one. The tick moves to the picked item by itself. Call `z.menu(null)` to remove it. SDK 10 adds `toggles: [{ label, on }]` and `onToggle(index, on)`: on/off items under the list (like "Punctuation"), ticked when on. The tick flips by itself.
 
 **Cards and messages**
 - `z.overlay({ title, subtitle, buttons })`: shows the standard card over the game (ready, paused, game over). `buttons` is an array of `{ label, action, prominent }`, where `action` is a function. At most one button should be `prominent`, and Enter presses it.

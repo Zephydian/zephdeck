@@ -23,6 +23,8 @@ nonisolated struct PackCatalog: Codable, Equatable {
         var symbol: String?
         /// What the pack may use; shown before install.
         var capabilities: [String]?
+        /// A game's section in the Library ("arcade", "puzzles", "words").
+        var category: String?
     }
 
     var format: Int

@@ -74,6 +74,24 @@ struct GameInfo: Identifiable {
     var badge: String? = nil
     /// Start a fresh session every time the tile is opened (developer packs, so edits show up).
     var reloadsOnOpen = false
+    /// Its section in the Games grid and the Library.
+    var category: GameCategory = .words
+}
+
+/// The sections of the Games grid and the Library, in order. A pack names its own in manifest.json
+/// (`category`); one without a known category goes in the last section.
+enum GameCategory: String, CaseIterable {
+    case arcade, puzzles, words
+
+    init(manifest value: String?) { self = value.flatMap(Self.init(rawValue:)) ?? Self.allCases.last! }
+
+    var title: String {
+        switch self {
+        case .arcade: "Arcade"
+        case .puzzles: "Puzzles"
+        case .words: "Words"
+        }
+    }
 }
 
 /// Every game in Zephydian: the built-in ones, then packs. New games are packs (see docs/PACKS.md).
@@ -89,23 +107,23 @@ enum GameRegistry {
 
     static let builtIn: [GameInfo] = [
         GameInfo(id: "snake", name: "Snake", icon: .snake,
-                 makeSession: { SnakeGame() }, stat: { BestScore.label(for: SnakeGame.bestKey) }, summary: "Eat, grow, and don't run into yourself."),
+                 makeSession: { SnakeGame() }, stat: { BestScore.label(for: SnakeGame.bestKey) }, summary: "Eat, grow, and don't run into yourself.", category: .arcade),
         GameInfo(id: "stackr", name: "Stackr", icon: .fallingBlocks,
-                 makeSession: { StackrGame() }, stat: { BestScore.label(for: StackrGame.bestKey) }, summary: "Stack falling blocks and clear full rows."),
+                 makeSession: { StackrGame() }, stat: { BestScore.label(for: StackrGame.bestKey) }, summary: "Stack falling blocks and clear full rows.", category: .arcade),
         GameInfo(id: "five", name: "Five", icon: .letterRows,
-                 makeSession: { FiveGame() }, stat: { FiveGame.tileStat() }, summary: "Guess the five-letter word in six tries."),
+                 makeSession: { FiveGame() }, stat: { FiveGame.tileStat() }, summary: "Guess the five-letter word in six tries.", category: .words),
         GameInfo(id: "wheel", name: "Spokes", icon: .wheel,
-                 makeSession: { SpokesGame() }, stat: { "Level \(SpokesGame.savedLevel)" }, summary: "Make words from the letters around a wheel."),
+                 makeSession: { SpokesGame() }, stat: { "Level \(SpokesGame.savedLevel)" }, summary: "Make words from the letters around a wheel.", category: .words),
         GameInfo(id: "fleet", name: "Fleet", icon: .ships,
-                 makeSession: { FleetGame() }, stat: { FleetGame.tileStat }, summary: "Find and sink the computer's hidden ships."),
+                 makeSession: { FleetGame() }, stat: { FleetGame.tileStat }, summary: "Find and sink the computer's hidden ships.", category: .puzzles),
         GameInfo(id: "airship", name: "Airship", icon: .jet,
-                 makeSession: { AirshipGame() }, stat: { BestScore.label(for: AirshipGame.bestKey) }, summary: "Fly, dodge and shoot through an endless sky."),
+                 makeSession: { AirshipGame() }, stat: { BestScore.label(for: AirshipGame.bestKey) }, summary: "Fly, dodge and shoot through an endless sky.", category: .arcade),
         GameInfo(id: "2048", name: "2048", icon: .mergeTiles,
-                 makeSession: { Game2048() }, stat: { BestScore.label(for: Game2048.bestKey) }, summary: "Slide and merge tiles to reach 2048."),
+                 makeSession: { Game2048() }, stat: { BestScore.label(for: Game2048.bestKey) }, summary: "Slide and merge tiles to reach 2048.", category: .puzzles),
         GameInfo(id: "mines", name: "Mines", icon: .minefield,
-                 makeSession: { MinesGame() }, stat: { MinesGame.tileStat }, summary: "Clear the board without setting off a mine."),
+                 makeSession: { MinesGame() }, stat: { MinesGame.tileStat }, summary: "Clear the board without setting off a mine.", category: .puzzles),
         GameInfo(id: "nines", name: "Nines", icon: .numberGrid,
-                 makeSession: { NinesGame() }, stat: { NinesGame.tileStat }, summary: "Fill the grid with 1 to 9, no repeats."),
+                 makeSession: { NinesGame() }, stat: { NinesGame.tileStat }, summary: "Fill the grid with 1 to 9, no repeats.", category: .puzzles),
     ]
 
     /// Any tile the panel can open: a game, or a utility.
@@ -183,7 +201,7 @@ enum Key {
     static let left: UInt16 = 123, right: UInt16 = 124, down: UInt16 = 125, up: UInt16 = 126
     static let space: UInt16 = 49, enter: UInt16 = 36, keypadEnter: UInt16 = 76
     static let w: UInt16 = 13, a: UInt16 = 0, s: UInt16 = 1, d: UInt16 = 2
-    static let delete: UInt16 = 51, forwardDelete: UInt16 = 117
+    static let delete: UInt16 = 51, forwardDelete: UInt16 = 117, tab: UInt16 = 48
 
     /// The typed letter, lowercased (for letter shortcuts like R, P, C).
     static func letter(_ event: NSEvent) -> String? { event.charactersIgnoringModifiers?.lowercased() }

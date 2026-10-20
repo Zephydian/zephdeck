@@ -1,0 +1,14 @@
+{
+  "id": "keys",
+  "name": "Keys",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 10,
+  "description": "A typing speed test: type the words as fast and as accurately as you can.",
+  "hint": "Type to start · Tab + Enter restart",
+  "pauseButton": false,
+  "tileStat": "bestScore",
+  "symbol": "keyboard",
+  "whatsNew": "First release.",
+  "category": "words"
+}
