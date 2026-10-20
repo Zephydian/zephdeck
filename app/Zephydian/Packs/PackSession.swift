@@ -18,6 +18,8 @@ final class PackSession: GameSession, PackHost {
     private(set) var toast: String?
     private(set) var failure: String?
     private(set) var isPaused = false
+    /// The game's sound is on (SDK 10; only games with `sounds: true` have the speaker button).
+    private(set) var isSoundOn = false
 
     @ObservationIgnored private var runtime: PackRuntime!
     @ObservationIgnored private var toastTask: Task<Void, Never>?
@@ -28,6 +30,14 @@ final class PackSession: GameSession, PackHost {
         hintText = bundle.manifest.hint ?? ""
         runtime = PackRuntime(bundle: bundle, host: self, mode: mode)
         failure = runtime.failure
+        isSoundOn = runtime.isSoundOn
+    }
+
+    var hasSound: Bool { bundle.kind == .game && bundle.manifest.sounds == true }
+
+    func toggleSound() {
+        runtime.setSoundOn(!isSoundOn)
+        isSoundOn = runtime.isSoundOn
     }
 
     /// Set by the pack's own window (SDK 3).
@@ -195,6 +205,7 @@ final class PackSession: GameSession, PackHost {
     func packHintChanged(_ text: String) { hintText = text }
     func packOverlayChanged(_ overlay: PackOverlay?) { self.overlay = overlay }
     func packMenuChanged(_ menu: PackMenu?) { self.menu = menu }
+    func packSoundChanged(_ on: Bool) { isSoundOn = on }
     func packFailed(_ message: String) { failure = message }
 
     func packToast(_ text: String) {

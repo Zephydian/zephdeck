@@ -23,6 +23,8 @@ nonisolated struct PackManifest: Codable, Equatable {
     var settings: Bool?
     /// A game's section in the Games grid and the Library: "arcade", "puzzles" or "words".
     var category: String?
+    /// The game plays sounds (SDK 10): its header gets a speaker button, off until switched on.
+    var sounds: Bool?
 
     /// Lowercase letters, digits and dashes, up to 32 characters (the same rule `packs.swift check` uses).
     /// Ids become folder and file names, so anything else is refused before it touches the disk.

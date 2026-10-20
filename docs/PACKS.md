@@ -45,7 +45,7 @@ packs/
 │       ├── manifest.json
 │       ├── main.js
 │       ├── icon.png       64×64, black on transparent (drawn in the user's accent color)
-│       └── assets/        optional images (PNG) and data files (JSON, TXT)
+│       └── assets/        optional images (PNG), data files (JSON, TXT) and sounds (WAV, MP3; SDK 10)
 └── utilities/
     └── notepad/           the same layout; a utility may use an SF Symbol instead of icon.png
 ```
@@ -56,7 +56,7 @@ packs/
 
 A utility can name an SF Symbol with `symbol` in its manifest instead of drawing an `icon.png`; the build draws the icon from the symbol.
 
-Only these files are allowed: `manifest.json`, `main.js`, `icon.png`, and PNG, JSON or TXT files under `assets/`. Symbolic links aren't allowed.
+Only these files are allowed: `manifest.json`, `main.js`, `icon.png`, and PNG, JSON, TXT, WAV or MP3 files under `assets/`. Symbolic links aren't allowed.
 
 **Size limits:** 5 MB per pack, 512 KB for `main.js`.
 
@@ -92,6 +92,7 @@ Only these files are allowed: `manifest.json`, `main.js`, `icon.png`, and PNG, J
 | `symbol` | Optional. An SF Symbol name (for example `"doc.on.clipboard"`) used as the icon instead of `icon.png`. Meant for utilities. |
 | `capabilities` | Optional (SDK 2). What the pack uses beyond its own screen and storage, such as `["clipboard.write"]`. See [Capabilities](#capabilities). |
 | `handles` | Optional (SDK 3, utilities). `["image"]` makes the utility the editor behind a screenshot's Edit button. It needs the `windows` and `images.edit` capabilities. |
+| `sounds` | Optional (SDK 10, games). `true` gives the header a speaker button. See [Sounds](#the-z-api). |
 | `category` | Optional (games). The game's section in the Games grid and the Library: `"arcade"`, `"puzzles"` or `"words"`. A game without one is listed under Words. |
 | `settings` | Optional (SDK 5, utilities). `true` gives the utility a page in Zephydian's Settings window. See [Settings pages](#settings-pages-sdk-5). |
 
@@ -175,6 +176,14 @@ Each pack has its own storage, up to 1 MB in total. It's kept when the player re
 **Pack files**
 - `z.data(name)`: the contents of `assets/<name>`, as an object for `.json` files and a string for `.txt` files.
 - Images in `assets/` are drawn with `g.image(name, …)`.
+
+**Sounds (SDK 10, games)**
+- Put `"sounds": true` in manifest.json. The game's header then gets a speaker button. Sound is **off** until the player switches it on, and the choice is remembered for your game.
+- `z.sound.play(name, { volume })`: plays `assets/<name>` (WAV or MP3, up to 2 seconds; `volume` 0–1, default 1). Sounds can overlap. Nothing plays while the sound is off or the game is paused, so you can call it freely.
+- `z.sound.preload(names)`: reads the files ahead of time, so the first sound isn't late. Call it in `start()` and `resume()`.
+- `z.sound.on()` → whether the sound is on; `z.sound.set(on)` switches it (for a switch in your own menu; the speaker button follows).
+- `soundChanged(on)` in your game object is called when the player uses the speaker button.
+- Keep sounds short and quiet, and don't make sound the only way to tell what happened.
 
 **Errors**
 - `z.log(...)`: writes to the Xcode console in debug builds, and does nothing otherwise.

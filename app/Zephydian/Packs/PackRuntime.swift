@@ -113,6 +113,12 @@ protocol PackHost: AnyObject {
     func packMenuChanged(_ menu: PackMenu?)
     func packToast(_ text: String)
     func packFailed(_ message: String)
+    /// The pack switched its sound on or off itself (SDK 10 `z.sound.set`).
+    func packSoundChanged(_ on: Bool)
+}
+
+extension PackHost {
+    func packSoundChanged(_ on: Bool) {}
 }
 
 /// What a pack's own window does for the runtime (the `windows` capability, SDK 3).
@@ -174,6 +180,8 @@ final class PackRuntime {
     private var size = CGSize.zero
 
     var isLooping: Bool { ticker != nil }
+    /// A game's sounds (SDK 10), when its manifest has `sounds: true`.
+    private lazy var sound: PackSound? = bundle.kind == .game && bundle.manifest.sounds == true ? PackSound(bundle: bundle) : nil
     var bestScoreKey: String { "pack.\(bundle.id).best" }
     var bestTimeKey: String { "pack.\(bundle.id).bestTime" }
     /// The line under a utility's tile (`z.tile`).
@@ -262,6 +270,15 @@ final class PackRuntime {
     func selectMenuItem(_ index: Int) { call("menuSelect", index) }
     func toggleMenuItem(_ index: Int) { call("menuToggle", index) }
 
+    /// The header's speaker button: switches the game's sound and tells the pack (`soundChanged(on)`).
+    func setSoundOn(_ on: Bool) {
+        guard let sound, sound.isOn != on else { return }
+        sound.setOn(on)
+        call("soundChanged", on)
+    }
+
+    var isSoundOn: Bool { sound?.isOn ?? false }
+
     /// A utility control was used. `event` is the handler's name on the control (onPress, onChange…).
     func uiEvent(_ id: String, _ event: String, _ value: Any) { call("event", id, event, value) }
 
@@ -281,6 +298,7 @@ final class PackRuntime {
         isPaused = true
         stopTicker()
         cancelTimers()
+        sound?.stop()
         call("pause")
     }
 
@@ -408,6 +426,25 @@ final class PackRuntime {
         define("score", { [weak self] (s: String) in MainActor.assumeIsolated { self?.host?.packScoreChanged(s) } } as @convention(block) (String) -> Void)
         define("hint", { [weak self] (s: String) in MainActor.assumeIsolated { self?.host?.packHintChanged(s) } } as @convention(block) (String) -> Void)
         define("toast", { [weak self] (s: String) in MainActor.assumeIsolated { self?.host?.packToast(s) } } as @convention(block) (String) -> Void)
+        define("soundPlay", { [weak self] (name: String, volume: Double) in
+            MainActor.assumeIsolated {
+                guard let self, !self.isPaused, self.isStarted else { return }
+                self.sound?.play(name, volume: volume.isFinite ? volume : 1)
+            }
+        } as @convention(block) (String, Double) -> Void)
+        define("soundPreload", { [weak self] (names: [String]) in
+            MainActor.assumeIsolated { self?.sound?.preload(names) }
+        } as @convention(block) ([String]) -> Void)
+        define("soundIsOn", { [weak self] () -> Bool in
+            MainActor.assumeIsolated { self?.sound?.isOn ?? false }
+        } as @convention(block) () -> Bool)
+        define("soundSet", { [weak self] (on: Bool) in
+            MainActor.assumeIsolated {
+                guard let self, let sound = self.sound, sound.isOn != on else { return }
+                sound.setOn(on)
+                self.host?.packSoundChanged(on)
+            }
+        } as @convention(block) (Bool) -> Void)
         define("overlay", { [weak self] (json: JSValue) in
             MainActor.assumeIsolated { self?.host?.packOverlayChanged(Self.decodeOverlay(json)) }
         } as @convention(block) (JSValue) -> Void)
@@ -1164,6 +1201,12 @@ final class PackRuntime {
           N.overlay(o ? JSON.stringify({ title: text(o.title), subtitle: o.subtitle == null ? null : text(o.subtitle),
                                          buttons: buttons.map(b => ({ label: text(b && b.label), prominent: !!(b && b.prominent) })) }) : null);
         },
+        sound: Object.freeze({
+          play(name, o) { N.soundPlay(text(name), o && o.volume != null ? num(o.volume) : 1); },
+          preload(names) { N.soundPreload((Array.isArray(names) ? names : []).map(text)); },
+          on() { return N.soundIsOn(); },
+          set(on) { N.soundSet(!!on); },
+        }),
         best: Object.freeze({
           score() { return N.bestScore(); },
           submitScore(n) { return N.submitScore(num(n)); },
@@ -1458,6 +1501,7 @@ final class PackRuntime {
         redo: () => call("redo") === true,
         shouldClose: () => call("shouldClose") !== false,
         shortcut: () => { call("shortcut"); },
+        soundChanged: on => { call("soundChanged", !!on); },
         fire: id => { const f = pending.get(id); pending.delete(id); if (f) f(); },
         clearTimers: () => { pending.clear(); },
         overlayPress: i => { const b = buttons[i]; if (b && typeof b.action === "function") b.action(); },

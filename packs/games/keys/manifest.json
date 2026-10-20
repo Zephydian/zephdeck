@@ -10,5 +10,6 @@
   "tileStat": "bestScore",
   "symbol": "keyboard",
   "whatsNew": "First release.",
-  "category": "words"
+  "category": "words",
+  "sounds": true
 }

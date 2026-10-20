@@ -15,6 +15,25 @@ const LINES = 3;                   // lines of text on screen
 const RESTART_WINDOW = 1500;       // ms between Tab and Enter
 const ADVANCE = 0.618;             // SF Mono's width per character, in font sizes
 
+// Key sounds (NovelKeys Creams, from kbsim by Thomas Lai, MIT): a press on key down and a release on
+// key up, like a real board. Letters sound by their keyboard row; Space, Enter and Backspace have their own.
+const ROWS = {};
+["`1234567890-=~!@#$%^&*()_+", "qwertyuiop[]\\{}|", "asdfghjkl;':\"", "zxcvbnm,./<>?"].forEach((keys, i) => { for (const k of keys) ROWS[k] = i + 1; });
+const OWN_SOUND = { " ": "space", "Enter": "enter", "Backspace": "backspace" };
+const SOUND_FILES = ["press-r1", "press-r2", "press-r3", "press-r4", "press-space", "press-enter", "press-backspace",
+  "release", "release-space", "release-enter", "release-backspace"].map(n => "sounds/" + n + ".wav");
+
+function pressSound(e) {
+  if (e.repeat) return;
+  const own = OWN_SOUND[e.key];
+  z.sound.play("sounds/press-" + (own || "r" + (e.key === "Tab" ? 2 : ROWS[e.key] || 4)) + ".wav");
+}
+
+function releaseSound(e) {
+  const own = OWN_SOUND[e.key];
+  z.sound.play("sounds/release" + (own ? "-" + own : "") + ".wav");
+}
+
 const LIST = String(z.data("words.txt")).split("\n").map(w => w.trim()).filter(Boolean);
 // Snippets are separated by blank lines; each is a list of { indent, text } lines.
 const SNIPPETS = String(z.data("code.txt")).split(/\n\s*\n/).map(block => block.split("\n")
@@ -479,12 +498,20 @@ function setMenu() {
     items: MODES.map(m => m.type === "time" ? m.n + " s" : m.n + (code ? " lines" : " words")),
     selected: mode,
     onSelect(i) { mode = i; saveSettings(); restart(); },
-    // Code has its own symbols and numbers, so the other two switches wait while it's on.
-    toggles: [{ label: "Punctuation", on: punctuation }, { label: "Numbers", on: numbers }, { label: "Code", on: code }],
+    // Code has its own symbols and numbers, so it switches the other two off, and they switch it off.
+    toggles: [{ label: "Punctuation", on: punctuation }, { label: "Numbers", on: numbers }, { label: "Code", on: code },
+              { label: "Sound", on: z.sound.on() }],
     onToggle(i, on) {
-      if (i === 0) punctuation = on; else if (i === 1) numbers = on; else code = on;
+      if (i === 3) { z.sound.set(on); return; }   // the same switch as the header's speaker
+      if (i === 2) {
+        code = on;
+        if (on) { punctuation = false; numbers = false; }
+      } else {
+        if (i === 0) punctuation = on; else numbers = on;
+        if (on) code = false;
+      }
       saveSettings();
-      if (i === 2) setMenu();                    // "words" ↔ "lines"
+      setMenu();                                 // the switches' ticks, and "words" ↔ "lines"
       restart();
     },
   });
@@ -492,6 +519,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    z.sound.preload(SOUND_FILES);
     loadSettings();
     setMenu();
     newTest();
@@ -525,6 +553,7 @@ zephydian.game({
   },
 
   key(e) {
+    pressSound(e);
     const t = now();
     if (e.key === "Tab") { tabAt = t; return true; }
     if (e.key === "Enter" && tabAt && t - tabAt < RESTART_WINDOW) { tabAt = 0; restart(); return true; }
@@ -548,11 +577,20 @@ zephydian.game({
     return true;
   },
 
+  keyUp(e) {
+    releaseSound(e);
+    return true;
+  },
+
+  // The header's speaker button: the menu's Sound switch follows it.
+  soundChanged() { setMenu(); },
+
   pause() {
     if (runningSince != null) { accumulated += now() - runningSince; runningSince = null; }
   },
 
   resume() {
+    z.sound.preload(SOUND_FILES);   // the sound engine is ready before the next key
     if (started && !finished && runningSince == null) runningSince = now();
     snapNext = true;
     z.redraw();
