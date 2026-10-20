@@ -82,24 +82,32 @@ final class PackSound {
         return buffer
     }
 
-    /// The whole file (at most 2 seconds) in the players' format.
+    /// The whole file (at most 2 seconds) in the players' format: mixed to mono and, if needed,
+    /// resampled to 44.1 kHz (straight lines between samples, plenty for short effects).
     private static func read(_ url: URL) -> AVAudioPCMBuffer? {
-        guard let file = try? AVAudioFile(forReading: url) else { return nil }
-        let frames = AVAudioFrameCount(min(file.length, AVAudioFramePosition(file.processingFormat.sampleRate * 2)))
-        guard frames > 0, let source = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: frames),
-              (try? file.read(into: source, frameCount: frames)) != nil else { return nil }
+        guard let file = try? AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false) else { return nil }
+        let rate = file.processingFormat.sampleRate
+        let frames = AVAudioFrameCount(min(file.length, AVAudioFramePosition(rate * 2)))
+        guard frames > 0, rate > 0, let source = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: frames),
+              (try? file.read(into: source, frameCount: frames)) != nil, let channels = source.floatChannelData else { return nil }
         if source.format == format { return source }
-        guard let converter = AVAudioConverter(from: source.format, to: format) else { return nil }
-        let capacity = AVAudioFrameCount(Double(source.frameLength) * format.sampleRate / source.format.sampleRate) + 1024
-        guard let output = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: capacity) else { return nil }
-        var given = false
-        var error: NSError?
-        converter.convert(to: output, error: &error) { _, status in
-            if given { status.pointee = .endOfStream; return nil }
-            given = true
-            status.pointee = .haveData
-            return source
+
+        let count = Int(source.frameLength), channelCount = Int(source.format.channelCount)
+        var mono = [Float](repeating: 0, count: count)
+        for c in 0..<channelCount {
+            for i in 0..<count { mono[i] += channels[c][i] / Float(channelCount) }
         }
-        return error == nil ? output : nil
+        let step = rate / format.sampleRate
+        let outCount = Int(Double(count) / step)
+        guard outCount > 0, let output = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(outCount)),
+              let out = output.floatChannelData?[0] else { return nil }
+        for i in 0..<outCount {
+            let position = Double(i) * step
+            let j = Int(position), fraction = Float(position - Double(j))
+            let a = mono[min(j, count - 1)], b = mono[min(j + 1, count - 1)]
+            out[i] = a + (b - a) * fraction
+        }
+        output.frameLength = AVAudioFrameCount(outCount)
+        return output
     }
 }
