@@ -115,10 +115,13 @@ protocol PackHost: AnyObject {
     func packFailed(_ message: String)
     /// The pack switched its sound on or off itself (SDK 10 `z.sound.set`).
     func packSoundChanged(_ on: Bool)
+    /// The buttons under the board changed (SDK 12 `z.actions`).
+    func packActionsChanged(_ actions: [GameAction])
 }
 
 extension PackHost {
     func packSoundChanged(_ on: Bool) {}
+    func packActionsChanged(_ actions: [GameAction]) {}
 }
 
 /// What a pack's own window does for the runtime (the `windows` capability, SDK 3).
@@ -258,6 +261,10 @@ final class PackRuntime {
     func key(_ e: PackKey) -> Bool { call("key", Self.keyObject(e))?.toBool() ?? false }
     func keyUp(_ e: PackKey) -> Bool { call("keyUp", Self.keyObject(e))?.toBool() ?? false }
     func click(x: Double, y: Double, right: Bool) { call("click", ["x": x, "y": y, "button": right ? "right" : "left"]) }
+    /// SDK 11: the pointer went down, moved with the button held, or came up.
+    func pointer(_ type: String, x: Double, y: Double, right: Bool) {
+        call("pointer", ["type": type, "x": x, "y": y, "button": right ? "right" : "left"])
+    }
     func undo() -> Bool { call("undo")?.toBool() ?? false }
     func redo() -> Bool { call("redo")?.toBool() ?? false }
     /// A window's close button or ⌘W. False keeps it open (the pack may ask first, then close it).
@@ -269,6 +276,7 @@ final class PackRuntime {
     func pressOverlayButton(_ index: Int) { call("overlayPress", index) }
     func selectMenuItem(_ index: Int) { call("menuSelect", index) }
     func toggleMenuItem(_ index: Int) { call("menuToggle", index) }
+    func pressAction(_ id: String) { call("actionPress", id) }
 
     /// The header's speaker button: switches the game's sound and tells the pack (`soundChanged(on)`).
     func setSoundOn(_ on: Bool) {
@@ -426,6 +434,9 @@ final class PackRuntime {
         define("score", { [weak self] (s: String) in MainActor.assumeIsolated { self?.host?.packScoreChanged(s) } } as @convention(block) (String) -> Void)
         define("hint", { [weak self] (s: String) in MainActor.assumeIsolated { self?.host?.packHintChanged(s) } } as @convention(block) (String) -> Void)
         define("toast", { [weak self] (s: String) in MainActor.assumeIsolated { self?.host?.packToast(s) } } as @convention(block) (String) -> Void)
+        define("actions", { [weak self] (json: String) in
+            MainActor.assumeIsolated { self?.host?.packActionsChanged(Self.decodeActions(json)) }
+        } as @convention(block) (String) -> Void)
         define("soundPlay", { [weak self] (name: String, volume: Double) in
             MainActor.assumeIsolated {
                 guard let self, !self.isPaused, self.isStarted else { return }
@@ -1094,7 +1105,7 @@ final class PackRuntime {
         alpha(a) { this._p(["alpha", num(a)]); }
       }
 
-      let game = null, menu = null, buttons = [];
+      let game = null, menu = null, buttons = [], actions = [];
       const pending = new Map();
       const call = (name, ...a) => (game && typeof game[name] === "function") ? game[name](...a) : undefined;
       const text = v => v == null ? "" : String(v);
@@ -1200,6 +1211,14 @@ final class PackRuntime {
           buttons = (o && Array.isArray(o.buttons)) ? o.buttons : [];
           N.overlay(o ? JSON.stringify({ title: text(o.title), subtitle: o.subtitle == null ? null : text(o.subtitle),
                                          buttons: buttons.map(b => ({ label: text(b && b.label), prominent: !!(b && b.prominent) })) }) : null);
+        },
+        actions(list) {
+          actions = Array.isArray(list) ? list.filter(a => a && a.id != null).slice(0, 3) : [];
+          N.actions(JSON.stringify(actions.map(a => ({
+            id: text(a.id), label: text(a.label), symbol: text(a.symbol || "circle"), enabled: a.enabled !== false,
+            help: a.help == null ? null : text(a.help),
+            confirm: a.confirm ? { title: text(a.confirm.title), message: text(a.confirm.message || ""), button: text(a.confirm.button || a.label) } : null,
+          }))));
         },
         sound: Object.freeze({
           play(name, o) { N.soundPlay(text(name), o && o.volume != null ? num(o.volume) : 1); },
@@ -1495,6 +1514,7 @@ final class PackRuntime {
         key: e => call("key", Object.freeze(e)) === true,
         keyUp: e => call("keyUp", Object.freeze(e)) === true,
         click: e => { call("click", Object.freeze(e)); },
+        pointer: e => { call("pointer", Object.freeze(e)); },
         pause: () => { call("pause"); },
         resume: () => { call("resume"); },
         undo: () => call("undo") === true,
@@ -1502,6 +1522,7 @@ final class PackRuntime {
         shouldClose: () => call("shouldClose") !== false,
         shortcut: () => { call("shortcut"); },
         soundChanged: on => { call("soundChanged", !!on); },
+        actionPress: id => { const a = actions.find(x => text(x.id) === id); if (a && typeof a.onPress === "function") a.onPress(); },
         fire: id => { const f = pending.get(id); pending.delete(id); if (f) f(); },
         clearTimers: () => { pending.clear(); },
         overlayPress: i => { const b = buttons[i]; if (b && typeof b.action === "function") b.action(); },
@@ -1552,6 +1573,19 @@ final class PackRuntime {
             PackOverlay.Button(label: $0["label"] as? String ?? "", prominent: $0["prominent"] as? Bool ?? false)
         }
         return PackOverlay(title: o["title"] as? String ?? "", subtitle: o["subtitle"] as? String, buttons: Array(buttons))
+    }
+
+    static func decodeActions(_ json: String) -> [GameAction] {
+        guard let data = json.data(using: .utf8), let list = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]] else { return [] }
+        return list.prefix(3).map { a in
+            let confirm = (a["confirm"] as? [String: Any]).map {
+                GameAction.Confirm(title: $0["title"] as? String ?? "", message: $0["message"] as? String ?? "", button: $0["button"] as? String ?? "OK")
+            }
+            let symbol = a["symbol"] as? String ?? "circle"
+            return GameAction(id: a["id"] as? String ?? "", label: a["label"] as? String ?? "",
+                              symbol: NSImage(systemSymbolName: symbol, accessibilityDescription: nil) == nil ? "circle" : symbol,
+                              enabled: a["enabled"] as? Bool ?? true, help: a["help"] as? String, confirm: confirm)
+        }
     }
 
     static func decodeMenu(_ value: JSValue) -> PackMenu? {

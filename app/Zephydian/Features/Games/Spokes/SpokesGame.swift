@@ -19,6 +19,8 @@ final class SpokesGame: GameSession {
     private(set) var shakeCount = 0
     /// The word just found, briefly highlighted in the grid.
     private(set) var justFound: String?
+    /// The level's words were shown with Give up (no hint is earned for it).
+    private(set) var gaveUp = false
 
     @ObservationIgnored private let words: [String]
     @ObservationIgnored private let valid: Set<String>
@@ -166,7 +168,21 @@ final class SpokesGame: GameSession {
         save()
     }
 
+    // Spokes keeps its own Hint button (hints are earned per level), so only Give up goes under the board.
+    var actions: [GameAction] {
+        [.giveUp(enabled: !isComplete, daily: false, what: "this level's words")]
+    }
+
+    func perform(_ action: String) {
+        guard action == "giveUp", !isComplete else { return }
+        found = Set(puzzle.entries.map(\.word))
+        gaveUp = true
+        selection = []
+        save()
+    }
+
     func nextLevel() {
+        gaveUp = false
         level += 1
         puzzle = SpokesGenerator.puzzle(level: level, words: words)
         letters = puzzle.letters

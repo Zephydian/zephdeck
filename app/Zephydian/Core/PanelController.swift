@@ -427,6 +427,11 @@ final class PanelController: NSObject {
     private func handleKey(_ event: NSEvent) -> Bool {
         if ShortcutRecording.isActive { return false }        // a shortcut field is taking the keys
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        // The How to play card: Esc, Enter or Space closes it, and other keys wait.
+        if model.isShowingHowTo, model.isShowingGame {
+            if [53, Key.enter, Key.keypadEnter, Key.space].contains(event.keyCode) { model.isShowingHowTo = false }
+            return !flags.contains(.command)
+        }
         if event.keyCode == 53 { // Esc
             if model.isRenamingNote { return false } // let the rename field cancel itself
             if model.isSearchingNotes, model.tab == .notes, !settings.notesDetached, !model.isShowingGame, !model.isShowingLibrary {

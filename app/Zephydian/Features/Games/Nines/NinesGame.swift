@@ -24,6 +24,9 @@ final class NinesGame: GameSession {
     private(set) var selected = 40
     private(set) var seconds = 0
     private(set) var isNewBest = false
+    /// Numbers filled in by Hint, and whether the solution was shown with Give up.
+    private(set) var hintsUsed = 0
+    private(set) var gaveUp = false
     var notesMode = false
 
     private static let saveKey = "nines.saved"
@@ -107,6 +110,41 @@ final class NinesGame: GameSession {
         return true
     }
 
+    var actions: [GameAction] {
+        let open = state == .playing || state == .paused
+        return [.hint(enabled: open, help: "Fill in one right number: the selected square if it's empty or wrong"),
+                .giveUp(enabled: open, daily: false)]
+    }
+
+    func perform(_ action: String) {
+        guard let puzzle, state == .playing || state == .paused else { return }
+        if state == .paused { togglePause() }
+        switch action {
+        case "hint":
+            // The selected square if it isn't right yet; otherwise the first wrong one, then the first empty one.
+            let open = { (cell: Int) in !self.isGiven(cell) && self.entries[cell] != puzzle.solution[cell] }
+            let cell = open(selected) ? selected
+                : (0..<81).first { open($0) && self.entries[$0] != 0 } ?? (0..<81).first(where: open)
+            guard let cell else { return }
+            pushUndo()
+            selected = cell
+            entries[cell] = puzzle.solution[cell]
+            notes[cell] = 0
+            for peer in NinesGenerator.peers[cell] { notes[peer] &= ~(1 << puzzle.solution[cell]) }
+            hintsUsed += 1
+            if (0..<81).allSatisfy({ value(at: $0) == puzzle.solution[$0] }) { win() } else { save() }
+        case "giveUp":
+            for cell in 0..<81 where !isGiven(cell) { entries[cell] = puzzle.solution[cell] }
+            notes = Array(repeating: 0, count: 81)
+            gaveUp = true
+            state = .won
+            loop.stop()
+            UserDefaults.standard.removeObject(forKey: Self.saveKey)
+        default:
+            break
+        }
+    }
+
     func makeView() -> AnyView { AnyView(NinesView(game: self)) }
     func makeHeaderAccessory() -> AnyView? { AnyView(NinesHeaderMenu(game: self)) }
 
@@ -188,6 +226,8 @@ final class NinesGame: GameSession {
         undoStack = []
         seconds = 0
         isNewBest = false
+        hintsUsed = 0
+        gaveUp = false
         notesMode = false
         let difficulty = difficulty
         // Generating takes a moment, so it runs off the main thread.
@@ -229,11 +269,12 @@ final class NinesGame: GameSession {
         var entries: [Int]
         var notes: [Int]
         var seconds: Int
+        var hints: Int?
     }
 
     private func save() {
         guard let puzzle, state != .won else { return }
-        let saved = Saved(difficulty: difficulty, puzzle: puzzle, entries: entries, notes: notes, seconds: seconds)
+        let saved = Saved(difficulty: difficulty, puzzle: puzzle, entries: entries, notes: notes, seconds: seconds, hints: hintsUsed)
         UserDefaults.standard.set(try? JSONEncoder().encode(saved), forKey: Self.saveKey)
     }
 
@@ -247,6 +288,7 @@ final class NinesGame: GameSession {
         entries = saved.entries
         notes = saved.notes
         seconds = saved.seconds
+        hintsUsed = saved.hints ?? 0
         selected = (0..<81).first { value(at: $0) == 0 } ?? 40
         state = .paused
         return true

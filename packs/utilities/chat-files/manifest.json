@@ -2,10 +2,20 @@
   "id": "chat-files",
   "name": "Chat Files",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 9,
   "description": "Clear old photos, videos and files that chat apps pile up. Goes to the Trash.",
   "symbol": "bubble.left.and.text.bubble.right",
-  "capabilities": ["files.clean"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "files.clean"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Finds old photos, videos and files that chat apps keep piling up, so you can clear them out.",
+    "rules": [
+      "Choose how old files must be, then review what was found before anything moves.",
+      "Everything goes to the Trash, so you can still get it back.",
+      "Some apps' folders need Full Disk Access first; it says when."
+    ]
+  }
 }

@@ -25,6 +25,8 @@ nonisolated struct PackManifest: Codable, Equatable {
     var category: String?
     /// The game plays sounds (SDK 10): its header gets a speaker button, off until switched on.
     var sounds: Bool?
+    /// How to play (a game's ⓘ card) or what it does (the top of a utility's Settings page).
+    var howTo: HowToPlay?
 
     /// Lowercase letters, digits and dashes, up to 32 characters (the same rule `packs.swift check` uses).
     /// Ids become folder and file names, so anything else is refused before it touches the disk.
@@ -36,7 +38,7 @@ nonisolated struct PackManifest: Codable, Equatable {
 /// A pack on disk, ready to run: its folder, manifest and script.
 struct PackBundle {
     /// The newest SDK version this app can run.
-    static let sdkVersion = 10
+    static let sdkVersion = 12
     /// Settings pages arrived in SDK 5.
     static let settingsSDK = 5
     /// Utilities arrived in SDK 2.

@@ -15,7 +15,7 @@ import CryptoKit
 import Foundation
 import JavaScriptCore
 
-let sdkVersion = 10                      // the newest SDK version the tools (and app) know
+let sdkVersion = 12                      // the newest SDK version the tools (and app) know
 let utilitySDK = 2                       // utilities need SDK 2 or newer
 let maxPackBytes = 5 * 1024 * 1024
 let maxScriptBytes = 512 * 1024
@@ -62,6 +62,14 @@ struct Manifest: Codable {
     var category: String?
     /// The game plays sounds from assets/ (SDK 10).
     var sounds: Bool?
+    /// How to play (a game's ⓘ card) or what it does (a utility's Settings page).
+    var howTo: HowTo?
+}
+
+struct HowTo: Codable {
+    var goal: String
+    var rules: [String]?
+    var controls: [[String]]?
 }
 
 /// "1.2.3" → [1, 2, 3]; nil if it isn't three whole numbers.
@@ -139,6 +147,13 @@ func checkPack(_ folder: URL) throws -> Pack {
     if parseVersion(m.version) == nil { throw problem("version must look like 1.0.0") }
     if !(1...sdkVersion).contains(m.sdkVersion) { throw problem("sdkVersion must be between 1 and \(sdkVersion)") }
     if m.description.isEmpty || m.description.count > 90 { throw problem("description must be 1–90 characters") }
+    if let h = m.howTo {
+        if h.goal.isEmpty || h.goal.count > 240 { throw problem("howTo.goal must be 1–240 characters") }
+        if (h.rules ?? []).count > 8 || (h.rules ?? []).contains(where: { $0.isEmpty || $0.count > 200 }) { throw problem("howTo.rules: at most 8, each 1–200 characters") }
+        if (h.controls ?? []).count > 10 || (h.controls ?? []).contains(where: { $0.count != 2 || $0.contains(where: { $0.isEmpty || $0.count > 80 }) }) {
+            throw problem("howTo.controls: at most 10 pairs of [key, what it does], each 1–80 characters")
+        }
+    }
     if m.sounds == true {
         if m.kind != "game" { throw problem("only games have sounds") }
         if m.sdkVersion < 10 { throw problem("sounds need sdkVersion 10 or newer") }

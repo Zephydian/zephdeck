@@ -2,12 +2,37 @@
   "id": "switch",
   "name": "Switch",
   "kind": "game",
-  "version": "1.0.1",
-  "sdkVersion": 1,
+  "version": "1.1.0",
+  "sdkVersion": 12,
   "description": "Flip a light and its neighbours until the whole board is dark.",
   "hint": "Click, or ←↑↓→ and Space, to flip · ⌘Z undo · R new board",
   "pauseButton": false,
   "tileStat": "none",
-  "whatsNew": "Now listed under Puzzles.",
-  "category": "puzzles"
+  "whatsNew": "How to play, hints and Give up.",
+  "category": "puzzles",
+  "howTo": {
+    "goal": "Turn every light off.",
+    "rules": [
+      "Pressing a light flips it and the four lights next to it (up, down, left, right).",
+      "Par is the number of presses the board was made with; the best solution is never longer."
+    ],
+    "controls": [
+      [
+        "Click",
+        "Press a light"
+      ],
+      [
+        "Arrows + Space",
+        "Move and press"
+      ],
+      [
+        "⌘Z",
+        "Undo"
+      ],
+      [
+        "R",
+        "New board"
+      ]
+    ]
+  }
 }

@@ -1,0 +1,36 @@
+{
+  "id": "weave",
+  "name": "Weave",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Trace the hidden words on a theme. Every letter belongs to one word.",
+  "hint": "Drag across letters (up, down, left, right) to trace a word · H or Hint for a letter",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "character.textbox",
+  "category": "words",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Find the hidden words on the theme. Together they fill the grid.",
+    "rules": [
+      "Words run through neighbouring letters: up, down, left or right, never diagonally.",
+      "Every letter belongs to exactly one word. The blanks show each word's length.",
+      "One puzzle a day; past days are in the archive."
+    ],
+    "controls": [
+      [
+        "Drag",
+        "Trace a word"
+      ],
+      [
+        "Drag back",
+        "Undo a letter"
+      ],
+      [
+        "H",
+        "Hint"
+      ]
+    ]
+  }
+}

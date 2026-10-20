@@ -28,6 +28,9 @@ final class MinesGame: GameSession {
     private(set) var cursor = Cell(x: 4, y: 4)
     private(set) var seconds = 0
     private(set) var isNewBest = false
+    /// Safe squares opened (or wrong flags taken away) by Hint, and whether the mines were shown with Give up.
+    private(set) var hintsUsed = 0
+    private(set) var gaveUp = false
     var difficulty: Difficulty {
         didSet {
             UserDefaults.standard.set(difficulty.rawValue, forKey: "mines.difficulty")
@@ -99,6 +102,41 @@ final class MinesGame: GameSession {
     func makeView() -> AnyView { AnyView(MinesView(game: self)) }
     func makeHeaderAccessory() -> AnyView? { AnyView(MinesHeaderMenu(game: self)) }
 
+    // The first click is always safe, so hints start once the field is open.
+    var actions: [GameAction] {
+        let open = state == .playing || state == .paused
+        return [.hint(enabled: open, help: "Take away a wrong flag, or uncover a safe square"),
+                .giveUp(enabled: open, daily: false, what: "where the mines are")]
+    }
+
+    func perform(_ action: String) {
+        guard state == .playing || state == .paused else { return }
+        if state == .paused { togglePause() }
+        switch action {
+        case "hint":
+            if let wrong = flagged.first(where: { !mines.contains($0) }) {
+                flagged.remove(wrong)
+                cursor = wrong
+            } else {
+                // A safe square next to what's open; any safe square if none is.
+                let all = (0..<rows).flatMap { y in (0..<cols).map { Cell(x: $0, y: y) } }
+                let safe = all.filter { !mines.contains($0) && !revealed.contains($0) && !flagged.contains($0) }
+                guard let cell = safe.first(where: { neighbors(of: $0).contains(where: revealed.contains) }) ?? safe.first else { return }
+                cursor = cell
+                open(cell)
+                if revealed.count == cols * rows - mines.count { hintsUsed += 1; win(); return }
+            }
+            hintsUsed += 1
+        case "giveUp":
+            gaveUp = true
+            flagged = flagged.filter(mines.contains)
+            state = .lost
+            loop.stop()
+        default:
+            break
+        }
+    }
+
     // MARK: Game logic
 
     func newGame() {
@@ -109,6 +147,8 @@ final class MinesGame: GameSession {
         exploded = nil
         seconds = 0
         isNewBest = false
+        hintsUsed = 0
+        gaveUp = false
         cursor = Cell(x: cols / 2, y: rows / 2)
         state = .ready
     }

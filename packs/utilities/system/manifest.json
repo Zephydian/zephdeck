@@ -2,10 +2,20 @@
   "id": "system",
   "name": "System",
   "kind": "utility",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "sdkVersion": 8,
   "description": "CPU, GPU, memory, temperatures, battery, busy apps and network, measured while you look.",
   "symbol": "gauge.with.dots.needle.50percent",
-  "capabilities": ["system.stats", "network.test"],
-  "whatsNew": "GPU, temperatures and fans, battery health and power draw, the busiest apps, graphs up to ten minutes, your IP addresses and a speed test."
+  "capabilities": [
+    "system.stats",
+    "network.test"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Shows how your Mac is doing: CPU, GPU, memory, temperatures, battery, network and the busiest apps.",
+    "rules": [
+      "It measures only while you're looking, so it costs nothing in the background.",
+      "The network part can show your public IP and test your speed when you ask."
+    ]
+  }
 }

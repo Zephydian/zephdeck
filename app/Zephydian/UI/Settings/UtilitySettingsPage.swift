@@ -11,7 +11,10 @@ struct UtilitySettingsPage: View {
 
     var body: some View {
         Group {
-            if let session, let failure = session.failure {
+            if !bundle.hasSettings {
+                // Nothing to set: only what it does.
+                Form { HowItWorksSection(bundle: bundle) }
+            } else if let session, let failure = session.failure {
                 Form {
                     Section {
                         Label("These settings couldn't open", systemImage: "exclamationmark.triangle.fill")
@@ -20,7 +23,7 @@ struct UtilitySettingsPage: View {
                     }
                 }
             } else if let session, let root = session.ui {
-                PackSettingsForm(root: root, session: session)
+                PackSettingsForm(root: root, session: session, intro: bundle)
             } else {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -33,7 +36,7 @@ struct UtilitySettingsPage: View {
     }
 
     private func start() {
-        guard session == nil else { return }
+        guard session == nil, bundle.hasSettings else { return }
         let session = PackSession(bundle: bundle, mode: .settings)
         session.updateTheme(dark: colorScheme == .dark, accent: settings.accentNSColor)
         session.setSize(CGSize(width: 480, height: 400))   // starts it
@@ -47,6 +50,8 @@ struct UtilitySettingsPage: View {
 struct PackSettingsForm: View {
     let root: PackUINode
     let session: PackSession
+    /// Whose "What it does" goes first, if any.
+    var intro: PackBundle?
 
     struct Group: Identifiable {
         var id: String
@@ -57,6 +62,7 @@ struct PackSettingsForm: View {
 
     var body: some View {
         Form {
+            if let intro { HowItWorksSection(bundle: intro) }
             ForEach(Self.groups(root)) { group in
                 Section {
                     ForEach(group.rows) { PackFormRow(node: $0, session: session) }
@@ -198,5 +204,19 @@ private struct PackFormText: View {
             .foregroundStyle(style == .caption || style == .secondary ? .secondary : .primary)
             .fixedSize(horizontal: false, vertical: true)
         if selectable { base.textSelection(.enabled) } else { base }
+    }
+}
+
+/// The top of a utility's page: what it does and how to use it (the pack's `howTo`).
+struct HowItWorksSection: View {
+    let bundle: PackBundle
+
+    var body: some View {
+        if let howTo = bundle.manifest.howTo {
+            Section("What it does") {
+                HowToPlayText(howTo: howTo)
+                    .padding(.vertical, 4)
+            }
+        }
     }
 }

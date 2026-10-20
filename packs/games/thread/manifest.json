@@ -1,0 +1,43 @@
+{
+  "id": "thread",
+  "name": "Thread",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Draw one thread through every cell, passing the numbers in order.",
+  "hint": "Drag from 1 · drag back to undo steps · click the thread to cut it · arrows · ⌘Z",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "point.topleft.down.to.point.bottomright.curvepath",
+  "category": "puzzles",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Draw one thread through every cell of the grid.",
+    "rules": [
+      "Start at 1 and pass the numbers in order, ending on the last one.",
+      "The thread moves up, down, left or right, never crosses itself and never goes through a wall."
+    ],
+    "controls": [
+      [
+        "Drag from 1",
+        "Draw"
+      ],
+      [
+        "Drag back",
+        "Undo steps"
+      ],
+      [
+        "Click the thread",
+        "Cut it there"
+      ],
+      [
+        "Arrows",
+        "Draw a step"
+      ],
+      [
+        "⌘Z",
+        "Undo"
+      ]
+    ]
+  }
+}

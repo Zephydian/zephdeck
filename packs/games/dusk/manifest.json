@@ -1,0 +1,41 @@
+{
+  "id": "dusk",
+  "name": "Dusk",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Fill the grid with suns and moons: balanced rows, no three alike, follow = and ×.",
+  "hint": "Click: sun, moon, empty · right-click back · arrows + Space · ⌘Z undo",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "sun.haze",
+  "category": "puzzles",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Fill every cell with a sun or a moon.",
+    "rules": [
+      "Each row and each column has as many suns as moons.",
+      "Never three of the same next to each other, across or down.",
+      "= between two cells means they're the same; × means they're different.",
+      "Every puzzle has exactly one answer."
+    ],
+    "controls": [
+      [
+        "Click",
+        "Sun, then moon, then empty"
+      ],
+      [
+        "Right-click",
+        "The other way round"
+      ],
+      [
+        "Arrows + Space",
+        "Move and fill"
+      ],
+      [
+        "⌘Z",
+        "Undo"
+      ]
+    ]
+  }
+}

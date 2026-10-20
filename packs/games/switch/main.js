@@ -18,6 +18,8 @@ let history = [];    // cells flipped, for undo
 let cursor = 12;     // keyboard focus (starts in the middle)
 let solved = false;
 let showCursor = false;  // the focus ring appears once the arrow keys are used
+let marked = [];         // cells ringed by Hint (one) or Give up (all of a solution)
+let gaveUp = false;
 
 // ───────────── Rules ─────────────
 
@@ -42,12 +44,16 @@ function newBoard() {
   moves = 0;
   history = [];
   solved = false;
+  gaveUp = false;
+  marked = [];
   z.overlay(null);
+  setActions();
   update();
 }
 
 function press(i) {
   if (solved) return;
+  marked = marked.filter(c => c !== i);
   flip(board, i);
   history.push(i);
   if (history.length > MAX_UNDO) history.shift();
@@ -58,6 +64,7 @@ function press(i) {
 
 function win() {
   solved = true;
+  setActions();
   const stats = z.storage.get("stats") || {};
   const key = LEVELS[level].name;
   const best = stats[key];
@@ -71,6 +78,79 @@ function win() {
     subtitle: `${moves} ${moves === 1 ? "move" : "moves"}. ${underPar}`,
     buttons: [{ label: "Next board", prominent: true, action: newBoard }],
   });
+}
+
+// ───────────── Hint and Give up ─────────────
+
+// The fewest presses that turn this board dark. Pressing a cell flips it and its neighbours, so
+// this is a set of equations over on/off (each press once at most); 5×5 has four answers to choose from.
+function solution() {
+  const size = N * N;
+  // rows[i] = which presses flip cell i, plus whether cell i is lit (the last column).
+  const rows = [];
+  for (let i = 0; i < size; i++) {
+    const row = Array(size + 1).fill(0);
+    const r = Math.floor(i / N), c = i % N;
+    for (const [dr, dc] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const rr = r + dr, cc = c + dc;
+      if (rr >= 0 && rr < N && cc >= 0 && cc < N) row[rr * N + cc] = 1;
+    }
+    row[size] = board[i] ? 1 : 0;
+    rows.push(row);
+  }
+  const pivotOf = [];
+  let rank = 0;
+  for (let col = 0; col < size && rank < size; col++) {
+    const p = rows.findIndex((row, k) => k >= rank && row[col]);
+    if (p < 0) continue;
+    [rows[rank], rows[p]] = [rows[p], rows[rank]];
+    for (let k = 0; k < size; k++) {
+      if (k !== rank && rows[k][col]) for (let j = col; j <= size; j++) rows[k][j] ^= rows[rank][j];
+    }
+    pivotOf[rank] = col;
+    rank++;
+  }
+  const free = [];
+  for (let col = 0, k = 0; col < size; col++) { if (pivotOf[k] === col) k++; else free.push(col); }
+  let best = null;
+  for (let mask = 0; mask < 1 << free.length; mask++) {
+    const x = Array(size).fill(0);
+    free.forEach((col, b) => { x[col] = (mask >> b) & 1; });
+    for (let k = rank - 1; k >= 0; k--) {
+      let v = rows[k][size];
+      for (let j = pivotOf[k] + 1; j < size; j++) if (rows[k][j]) v ^= x[j];
+      x[pivotOf[k]] = v;
+    }
+    const presses = x.flatMap((v, i) => (v ? [i] : []));
+    if (!best || presses.length < best.length) best = presses;
+  }
+  return best || [];
+}
+
+function setActions() {
+  z.actions([
+    { id: "hint", label: "Hint", symbol: "lightbulb", enabled: !solved, help: "Ring a light worth pressing", onPress() {
+      if (solved) return;
+      const presses = solution();
+      if (presses.length) marked = [presses[0]];
+      z.redraw();
+    } },
+    { id: "giveUp", label: "Give up", symbol: "eye", enabled: !solved, help: "Show the presses that clear this board",
+      confirm: { title: "Give up?", message: "You’ll see which lights to press to clear this board.", button: "Give Up" },
+      onPress() {
+        if (solved) return;
+        marked = solution();
+        gaveUp = true;
+        solved = true;
+        setActions();
+        z.overlay({
+          title: "Here’s how",
+          subtitle: `Press the ${marked.length} ringed ${marked.length === 1 ? "light" : "lights"} to clear it.`,
+          buttons: [{ label: "Next board", prominent: true, action: newBoard }, { label: "Look", action() { z.overlay(null); } }],
+        });
+        update();
+      } },
+  ]);
 }
 
 // ───────────── Saving and the header ─────────────
@@ -118,7 +198,7 @@ zephydian.game({
     if (saved && Array.isArray(saved.board) && saved.board.length === N * N) {
       ({ level, board, moves, par, history, cursor, solved } = saved);
       setMenu();
-      if (solved) { solved = false; newBoard(); } else update();
+      if (solved) { solved = false; newBoard(); } else { setActions(); update(); }
     } else {
       level = z.storage.get("level") || 0;
       setMenu();
@@ -137,6 +217,11 @@ zephydian.game({
         g.circle(x + s / 2, y + s / 2, s * 0.16, { fill: "rgba(255, 255, 255, 0.55)" });
       }
     });
+    // Hinted cells (or, after giving up, the whole answer) get a ring.
+    for (const i of marked) {
+      const x = x0 + (i % N) * cell + gap / 2, y = y0 + Math.floor(i / N) * cell + gap / 2, s = cell - gap;
+      g.rect(x + 3, y + 3, s - 6, s - 6, { radius: radius - 2, stroke: board[i] ? "#ffffff" : "accent", lineWidth: 3 });
+    }
     if (!showCursor) return;
     // Keyboard focus ring
     const x = x0 + (cursor % N) * cell + gap / 2 - 2, y = y0 + Math.floor(cursor / N) * cell + gap / 2 - 2;

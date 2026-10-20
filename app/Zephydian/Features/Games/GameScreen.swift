@@ -55,6 +55,16 @@ struct GameScreen: View {
                                 .accessibilityLabel("\(pack.manifest.name) settings")
                             }
 
+                            // How to play (games only; a utility's is on its Settings page).
+                            if info.howTo != nil {
+                                Button { showHowTo(session) } label: {
+                                    Image(systemName: "info.circle")
+                                }
+                                .glassIconButtonStyle()
+                                .help("How to play \(info.name)")
+                                .accessibilityLabel("How to play \(info.name)")
+                            }
+
                             if session.showsPauseButton {
                                 Button { session.togglePause() } label: {
                                     Image(systemName: session.isRunning ? "pause.fill" : "play.fill")
@@ -73,6 +83,18 @@ struct GameScreen: View {
                     // A new session for the same game (a reloaded pack, opened again by its shortcut
                     // while still on screen) gets a new view, so it appears and starts.
                     .id(ObjectIdentifier(session))
+                    .overlay {
+                        if model.isShowingHowTo, let howTo = info.howTo {
+                            HowToPlayCard(name: info.name, howTo: howTo) { model.isShowingHowTo = false }
+                        }
+                    }
+                    .animation(.easeOut(duration: 0.15), value: model.isShowingHowTo)
+
+                let actions = session.actions
+                if !actions.isEmpty {
+                    GameActionBar(actions: actions, perform: session.perform)
+                        .padding(.top, 6)
+                }
 
                 if !session.hint.isEmpty {
                     Text(session.hint)
@@ -84,6 +106,20 @@ struct GameScreen: View {
                         .frame(height: 30)
                 }
             }
+            // The first time a game opens, its How to play card comes up by itself.
+            .task(id: model.gameID) {
+                guard info.howTo != nil, let id = model.gameID else { return }
+                let key = "howto.seen.\(id)"
+                if !UserDefaults.standard.bool(forKey: key) {
+                    UserDefaults.standard.set(true, forKey: key)
+                    showHowTo(session)
+                }
+            }
         }
+    }
+
+    private func showHowTo(_ session: any GameSession) {
+        session.pause()
+        model.isShowingHowTo = true
     }
 }

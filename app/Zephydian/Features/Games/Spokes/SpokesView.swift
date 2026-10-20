@@ -35,8 +35,8 @@ struct SpokesView: View {
             }
 
             if game.isComplete {
-                GameOverlay(title: "Level \(game.level) complete!",
-                            subtitle: "\(game.bonus.count) bonus word\(game.bonus.count == 1 ? "" : "s") · +1 hint") {
+                GameOverlay(title: game.gaveUp ? "Here are the words" : "Level \(game.level) complete!",
+                            subtitle: game.gaveUp ? nil : "\(game.bonus.count) bonus word\(game.bonus.count == 1 ? "" : "s") · +1 hint") {
                     Button("Next level") { game.nextLevel() }.prominentButtonStyle()
                 }
                 .padding(.horizontal, 16)

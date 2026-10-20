@@ -95,6 +95,9 @@ final class AppModel {
     func openStats() { isShowingStats = true }
     func closeStats() { isShowingStats = false }
 
+    /// The game's How to play card is up (the ⓘ button, or a game's first time). Keys close it.
+    var isShowingHowTo = false
+
     /// Stops Smart auto-hide while a game is open. Utilities open on the same screen but hide as usual.
     var isPlayingGame: Bool { isShowingGame && (gameSession as? PackSession)?.isUtility != true }
 
@@ -107,10 +110,12 @@ final class AppModel {
             gameSession = make()
             gameID = id
         }
+        isShowingHowTo = false
         isShowingGame = true
     }
 
     func closeGame() {
+        isShowingHowTo = false
         gameSession?.pause()
         isShowingGame = false
         if let gameID { gameDidClose(gameID) }

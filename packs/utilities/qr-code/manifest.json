@@ -2,10 +2,20 @@
   "id": "qr-code",
   "name": "QR Code",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 2,
   "description": "Turn text or a link into a QR code to copy or save, made offline.",
   "symbol": "qrcode",
-  "capabilities": ["clipboard.write", "files.save"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "clipboard.write",
+    "files.save"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Turns text or a link into a QR code to copy or save, made right on your Mac.",
+    "rules": [
+      "Type or paste what the code should hold.",
+      "Copy the picture or save it as a file."
+    ]
+  }
 }

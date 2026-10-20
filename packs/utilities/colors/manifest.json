@@ -2,10 +2,19 @@
   "id": "colors",
   "name": "Colors",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 2,
   "description": "Pick any color on your screen and copy it as HEX, RGB, HSL, CSS or SwiftUI.",
   "symbol": "eyedropper",
-  "capabilities": ["color.sample"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "color.sample"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Picks any colour on your screen and copies it in the format you need: HEX, RGB, HSL, CSS or SwiftUI.",
+    "rules": [
+      "Press Pick, then click anywhere on the screen.",
+      "Recent colours stay in the list to copy again."
+    ]
+  }
 }

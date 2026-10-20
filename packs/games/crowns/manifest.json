@@ -1,0 +1,40 @@
+{
+  "id": "crowns",
+  "name": "Crowns",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Place one crown in every row, column and region. Crowns never touch.",
+  "hint": "Click: × then crown · drag to lay × · arrows + Space · ⌘Z undo",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "crown",
+  "category": "puzzles",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Place one crown in every row, every column and every coloured region.",
+    "rules": [
+      "Crowns never touch, not even diagonally.",
+      "Mark cells that can't hold a crown with ×; it's only a note.",
+      "Every puzzle has exactly one answer. The daily gets harder through the week."
+    ],
+    "controls": [
+      [
+        "Click",
+        "× then crown then empty"
+      ],
+      [
+        "Drag",
+        "Lay × on many cells"
+      ],
+      [
+        "Arrows + Space",
+        "Move and mark"
+      ],
+      [
+        "⌘Z",
+        "Undo"
+      ]
+    ]
+  }
+}

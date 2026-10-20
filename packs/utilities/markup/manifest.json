@@ -2,11 +2,35 @@
   "id": "markup",
   "name": "Markup",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 3,
   "description": "Crop, draw on, pixelate and label screenshots or any image, in its own window.",
   "symbol": "pencil.tip.crop.circle",
-  "capabilities": ["windows", "images.edit", "clipboard.write", "files.save"],
-  "handles": ["image"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "windows",
+    "images.edit",
+    "clipboard.write",
+    "files.save"
+  ],
+  "handles": [
+    "image"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Edits screenshots and other images in its own window: crop, draw, add arrows, shapes and text, and pixelate private details.",
+    "rules": [
+      "Opens from a screenshot's Edit button, or with an image you choose.",
+      "Copy the result or save it as a new file."
+    ],
+    "controls": [
+      [
+        "⌘Z / ⇧⌘Z",
+        "Undo / redo"
+      ],
+      [
+        "⌘W",
+        "Close the window"
+      ]
+    ]
+  }
 }

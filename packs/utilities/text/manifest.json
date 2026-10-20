@@ -2,9 +2,15 @@
   "id": "text",
   "name": "Text",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 2,
   "description": "Count, change case, tidy lines, format JSON, encode, hash and more.",
   "symbol": "textformat",
-  "whatsNew": "First release."
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "A toolbox for text: count words, change case, tidy lines, format JSON, encode, hash and more.",
+    "rules": [
+      "Paste text, pick a tool, and copy the result."
+    ]
+  }
 }
