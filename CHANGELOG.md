@@ -7,6 +7,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-20
+
+Zephydian 1.0: the first main release of the free, open-source **utility and gaming corner** for the Mac. Hover over a screen corner for a panel of utilities and games, switch on the Mac features you want, and turn the notch into a Dynamic Island. More utilities are coming soon.
+
+### Highlights since 0.7.0
+- **Panel tabs** for your favorite games, utilities and features, and the **Radial Menu**, a wheel of apps, folders, links and actions around the pointer (0.8.0).
+- The **Dynamic Island**, with music, timers, the Shelf, your calendar and side buttons, plus the **Lite**, **Essential** and **Everything** presets (0.9.0).
+- **Zephydian updates itself**, through Homebrew or the download, with What's new (0.9.1).
+- **Keys**, a typing test, and games grouped into **Arcade**, **Puzzles** and **Words** (0.10.0).
+- **Daily puzzles**, **How to play**, **Hint** and **Give up**, and **sounds** for every game (0.11.0).
+
+### Fixed
+- Updating from inside the app when Zephydian was installed with Homebrew could restart into the old version, because Homebrew hadn't fetched the new one yet. It now refreshes Homebrew first, checks the new version is really in place before restarting, and otherwise offers to install the download instead.
+- One Hunch puzzle gave its answer away in its last word.
+
+### Known issues
+- Zephydian isn't signed with an Apple Developer ID yet: the first launch needs **Open Anyway** (System Settings → Privacy & Security), and macOS may ask for permissions again after an update.
+
 ## [0.11.0] - 2026-10-20
 
 ### Added

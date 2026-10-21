@@ -8,7 +8,7 @@
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-green)
-![Status: in development](https://img.shields.io/badge/status-in%20development-orange)
+![Status: stable](https://img.shields.io/badge/status-stable-brightgreen)
 
 [![The Zephydian panel open over a Mac desktop, showing its games](assets/brand/preview.jpg)](https://zephydian.com)
 

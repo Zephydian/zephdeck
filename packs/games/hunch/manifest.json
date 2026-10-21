@@ -2,7 +2,7 @@
   "id": "hunch",
   "name": "Hunch",
   "kind": "game",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 12,
   "description": "Guess what links the words, with as few of them as you can.",
   "hint": "Type what links the words · Enter to guess · each miss shows another word",
@@ -10,7 +10,7 @@
   "tileStat": "none",
   "symbol": "lightbulb",
   "category": "words",
-  "whatsNew": "First release.",
+  "whatsNew": "One puzzle no longer gives its answer away.",
   "howTo": {
     "goal": "Work out what links the words.",
     "rules": [

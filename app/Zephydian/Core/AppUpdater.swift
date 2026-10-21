@@ -271,19 +271,34 @@ final class AppUpdater {
         return path.hasPrefix("/Applications/") || path.hasPrefix(NSHomeDirectory() + "/Applications/")
     }
 
+    /// Homebrew finished but didn't install the new version, so the sheet offers the download instead.
+    private(set) var homebrewMissed = false
+
     /// Updates through Homebrew or from the zip, then restarts. The old app stays if anything fails.
-    func installUpdate() async {
+    /// `fromDownload` skips Homebrew (after it missed the new version).
+    func installUpdate(fromDownload: Bool = false) async {
         guard let release = available, install != .installing else { return }
         if case .downloading = install { return }
         guard Self.canInstall else {
             install = .failed("This copy isn't in Applications (it runs from Xcode or a build folder), so it can't update itself.")
             return
         }
-        if let brew = Self.homebrew {
+        if !fromDownload, let brew = Self.homebrew {
             install = .installing
-            let result = await Task.detached(priority: .userInitiated) { Self.run(brew.brew, ["upgrade", "--cask", "zephydian"]) }.value
+            homebrewMissed = false
+            let result = await Task.detached(priority: .userInitiated) { () -> (status: Int32, output: String) in
+                // Homebrew refreshes its taps only once a day, so it may not know the new version yet (B-57).
+                _ = Self.run(brew.brew, ["update", "--quiet"])
+                return Self.run(brew.brew, ["upgrade", "--cask", "zephydian"])
+            }.value
             guard result.status == 0 else {
                 install = .failed("Homebrew couldn't update it: " + (result.output.split(separator: "\n").last.map(String.init) ?? "exit \(result.status)"))
+                return
+            }
+            // A successful run can still leave the old version in place: restart only into the new one.
+            guard Self.installedVersion(at: Bundle.main.bundleURL) == release.version else {
+                homebrewMissed = true
+                install = .failed("Homebrew didn't find Zephydian \(release.version) yet. Try again in a few minutes, or install the download instead.")
                 return
             }
             relaunch()
@@ -358,6 +373,11 @@ final class AppUpdater {
             if let back = trashed as URL? { try? fm.moveItem(at: back, to: target) }
             throw Failure(description: "The new version couldn't be put in place: \(error.localizedDescription)")
         }
+    }
+
+    /// The version of the app on disk, read from its Info.plist each time (Bundle caches it).
+    nonisolated static func installedVersion(at app: URL) -> String? {
+        NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist"))?["CFBundleShortVersionString"] as? String
     }
 
     /// Opens the (new) app once this one has quit, then quits.
