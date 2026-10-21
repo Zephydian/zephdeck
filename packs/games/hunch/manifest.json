@@ -1,0 +1,34 @@
+{
+  "id": "hunch",
+  "name": "Hunch",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Guess what links the words, with as few of them as you can.",
+  "hint": "Type what links the words · Enter to guess · each miss shows another word",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "lightbulb",
+  "category": "words",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Work out what links the words.",
+    "rules": [
+      "One word shows at first; every wrong guess shows another, up to five.",
+      "The fewer words you need, the better.",
+      "Close answers count: \"types of trees\" is the same as \"trees\".",
+      "One puzzle a day; past days are in the archive."
+    ],
+    "controls": [
+      [
+        "Type",
+        "Your guess"
+      ],
+      [
+        "Enter",
+        "Guess"
+      ]
+    ]
+  },
+  "sounds": true
+}

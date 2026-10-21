@@ -47,6 +47,7 @@ final class StackrGame: GameSession {
     @ObservationIgnored private var lockResets = 0
     @ObservationIgnored private var lockTask: Task<Void, Never>?
     @ObservationIgnored private var loop: GameLoop!
+    @ObservationIgnored private let sounds = GameSoundBank("stackr")
 
     /// How long a piece can sit on the ground before it locks (moving/rotating extends it a little).
     private static let lockDelay: Duration = .milliseconds(300)
@@ -63,12 +64,14 @@ final class StackrGame: GameSession {
     var hint: String { "←→ move · ↑ rotate · ↓ soft drop · Space drop · C hold · P pause" }
     var showsPauseButton: Bool { true }
     var isRunning: Bool { state == .running }
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
     func pause() {
         guard state == .running else { return }
         state = .paused
         loop.stop()
         lockTask?.cancel()
+        sounds.stop()
     }
 
     func togglePause() { state == .running ? pause() : start() }
@@ -149,6 +152,7 @@ final class StackrGame: GameSession {
         piece.x += dx
         if fits(piece) {
             current = piece
+            sounds.play("move", volume: 0.5)
             afterMove()
         }
     }
@@ -178,7 +182,8 @@ final class StackrGame: GameSession {
         piece.y -= 1
         current = piece
         score += distance * 2
-        lock()
+        sounds.play("drop")
+        lock(quietly: true)
     }
 
     private func rotate(clockwise: Bool) {
@@ -191,6 +196,7 @@ final class StackrGame: GameSession {
             candidate.y += kick.y
             if fits(candidate) {
                 current = candidate
+                sounds.play("rotate", volume: 0.6)
                 afterMove()
                 return
             }
@@ -202,6 +208,7 @@ final class StackrGame: GameSession {
         let stored = hold
         hold = piece.kind
         canHold = false
+        sounds.play("hold")
         landedAt = nil
         lockTask?.cancel()
         if let stored { current = Self.spawnPiece(stored) } else { spawn() }
@@ -253,8 +260,10 @@ final class StackrGame: GameSession {
         }
     }
 
-    private func lock() {
+    /// `quietly`: a hard drop already made its own sound.
+    private func lock(quietly: Bool = false) {
         guard let piece = current else { return }
+        if !quietly { sounds.play("land", volume: 0.7) }
         for cell in piece.cells {
             guard cell.y >= 0 else { endGame(); return } // locked above the top
             board[cell.y][cell.x] = piece.kind
@@ -289,7 +298,9 @@ final class StackrGame: GameSession {
         let points = [0, 100, 300, 500, 800][min(rows.count, 4)]
         score += points * level
         lines += rows.count
+        let oldLevel = level
         level = lines / 10 + 1
+        sounds.play(level > oldLevel ? "level" : rows.count >= 4 ? "clear4" : "clear")
         loop.interval = Self.gravity(level: level)
         updateBest()
         if state != .over { spawn() }
@@ -305,6 +316,7 @@ final class StackrGame: GameSession {
     private func endGame() {
         state = .over
         loop.stop()
+        sounds.play("over")
         updateBest()
         GameStats.finished("stackr", score: score)
     }

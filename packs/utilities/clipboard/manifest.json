@@ -2,11 +2,23 @@
   "id": "clipboard",
   "name": "Clipboard",
   "kind": "utility",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "sdkVersion": 6,
   "description": "A private history of what you copy: search it, pin favorites, paste again.",
   "symbol": "doc.on.clipboard",
-  "capabilities": ["clipboard.read", "clipboard.paste", "shortcut"],
-  "whatsNew": "Click an item (or press 1–9) to paste it straight into the app you were in. Copied files are kept too, with previews.",
-  "settings": true
+  "capabilities": [
+    "clipboard.read",
+    "clipboard.paste",
+    "shortcut"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "settings": true,
+  "howTo": {
+    "goal": "Keeps a private history of what you copy, so you can find and paste it again.",
+    "rules": [
+      "Search the history, pin favourites so they stay, and click an item to copy or paste it.",
+      "It's stored only on your Mac, and the menu bar icon shows while it's recording.",
+      "Record your own shortcut below to open it from anywhere."
+    ]
+  }
 }

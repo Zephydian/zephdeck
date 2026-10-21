@@ -2,14 +2,41 @@
   "id": "keys",
   "name": "Keys",
   "kind": "game",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 10,
   "description": "A typing speed test: type the words as fast and as accurately as you can.",
   "hint": "Type to start · Tab + Enter restart",
   "pauseButton": false,
   "tileStat": "bestScore",
   "symbol": "keyboard",
-  "whatsNew": "First release.",
+  "whatsNew": "How to play, under the ⓘ in the header.",
   "category": "words",
-  "sounds": true
+  "sounds": true,
+  "howTo": {
+    "goal": "Type the words as fast and as accurately as you can.",
+    "rules": [
+      "The timer starts with your first key.",
+      "Mistakes turn red; Space moves on to the next word.",
+      "WPM counts only correctly typed words; accuracy counts every key.",
+      "The menu picks a time or word count, punctuation, numbers, code, and keyboard sound."
+    ],
+    "controls": [
+      [
+        "Type",
+        "The words"
+      ],
+      [
+        "Space",
+        "Next word"
+      ],
+      [
+        "⌫ / ⌥⌫",
+        "Delete a letter / the word"
+      ],
+      [
+        "Tab then Enter",
+        "Start again"
+      ]
+    ]
+  }
 }

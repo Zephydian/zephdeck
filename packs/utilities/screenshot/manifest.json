@@ -2,11 +2,34 @@
   "id": "screenshot",
   "name": "Capture",
   "kind": "utility",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "sdkVersion": 7,
   "description": "Screenshots, screen recordings with an editor, and text and colors from your screen.",
   "symbol": "camera.viewfinder",
-  "capabilities": ["screen.capture", "screen.record", "screen.text", "files.save", "shortcut"],
-  "whatsNew": "Screenshot is now Capture: screen recording with an editor, copy text from the screen, pick colors, scrolling screenshots, pins, and an option to freeze the screen while you pick. ⇧⌘6 opens the capture bar, or takes a screenshot at once if you choose that in Settings.",
-  "settings": true
+  "capabilities": [
+    "screen.capture",
+    "screen.record",
+    "screen.text",
+    "files.save",
+    "shortcut"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "settings": true,
+  "howTo": {
+    "goal": "Takes screenshots of an area, a window or the whole screen, records your screen with an editor, and copies text or colours from anything on screen.",
+    "rules": [
+      "Every shot is copied as soon as it's taken; the preview card can save, edit or pin it.",
+      "Record your own shortcut below to open the capture bar from anywhere."
+    ],
+    "controls": [
+      [
+        "1–4",
+        "Screenshot, Record, Copy Text, Color on the capture bar"
+      ],
+      [
+        "Esc",
+        "Cancel a selection"
+      ]
+    ]
+  }
 }

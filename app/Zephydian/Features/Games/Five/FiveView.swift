@@ -77,7 +77,7 @@ struct FiveView: View {
             .disabled(game.isDone)
             .help(game.mode == .daily ? "Show the answer (counts as a loss)" : "Show the answer")
         }
-        .buttonStyle(ActionPillStyle())
+        .buttonStyle(GamePillStyle())
         .frame(width: 329 * scale)
         .alert("Reveal today’s word?", isPresented: Binding(get: { game.confirmingReveal }, set: { game.confirmingReveal = $0 })) {
             Button("Reveal", role: .destructive) { game.revealAnswer() }
@@ -239,22 +239,6 @@ struct FiveColors {
 
     func keyText(_ mark: FiveGame.Mark?) -> Color {
         mark == nil ? .dynamic(light: 0x1A1A1B, dark: 0xFFFFFF) : .white
-    }
-}
-
-/// Small capsule buttons for Hint / Reveal word.
-private struct ActionPillStyle: ButtonStyle {
-    @Environment(\.isEnabled) private var isEnabled
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 11, weight: .medium))
-            .padding(.horizontal, 10)
-            .frame(height: 22)
-            .background(Capsule().fill(configuration.isPressed ? Tokens.fillHover.opacity(2) : Tokens.fillHover))
-            .foregroundStyle(.secondary)
-            .opacity(isEnabled ? 1 : 0.45)
-            .contentShape(Capsule())
     }
 }
 

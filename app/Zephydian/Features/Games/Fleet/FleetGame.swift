@@ -50,6 +50,8 @@ final class FleetGame: GameSession {
 
     @ObservationIgnored private var messageTask: Task<Void, Never>?
     @ObservationIgnored private var enemyTurnTask: Task<Void, Never>?
+    @ObservationIgnored private let sounds = GameSoundBank("fleet")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
     init() {
         difficulty = Difficulty(rawValue: UserDefaults.standard.string(forKey: "fleet.difficulty") ?? "") ?? .normal
@@ -68,7 +70,7 @@ final class FleetGame: GameSession {
     }
     var showsPauseButton: Bool { false }
     var isRunning: Bool { false }
-    func pause() {}
+    func pause() { sounds.stop() }
     func togglePause() {}
 
     func handleKey(_ event: NSEvent) -> Bool {
@@ -112,6 +114,7 @@ final class FleetGame: GameSession {
     func shufflePlayerFleet() {
         guard phase == .placing else { return }
         playerShips = Self.randomFleet()
+        sounds.play("place")
     }
 
     /// Rotates a ship during placement (if it still fits).
@@ -119,7 +122,10 @@ final class FleetGame: GameSession {
         guard phase == .placing, let index = playerShips.firstIndex(where: { $0.cells.contains(cell) }) else { return }
         var ship = playerShips[index]
         ship.horizontal.toggle()
-        if Self.canPlace(ship, among: playerShips) { playerShips[index] = ship }
+        if Self.canPlace(ship, among: playerShips) {
+            playerShips[index] = ship
+            sounds.play("place", volume: 0.7)
+        }
     }
 
     /// Moves a ship during placement. Returns false (and leaves it) if the spot isn't free.
@@ -130,6 +136,7 @@ final class FleetGame: GameSession {
         ship.origin = origin
         guard Self.canPlace(ship, among: playerShips) else { return false }
         playerShips[index] = ship
+        sounds.play("place", volume: 0.7)
         return true
     }
 
@@ -149,8 +156,10 @@ final class FleetGame: GameSession {
         playerShots[cell] = hitShip == nil ? .miss : .hit
 
         if let hitShip, Self.isSunk(hitShip, shots: playerShots) {
+            sounds.play("sunk")
             show("You sank their \(hitShip.name)!")
         } else {
+            sounds.play(hitShip == nil ? "miss" : "hit")
             show(hitShip == nil ? "Miss" : "Hit!")
         }
         if enemyShips.allSatisfy({ Self.isSunk($0, shots: playerShots) }) {
@@ -171,6 +180,9 @@ final class FleetGame: GameSession {
         let hitShip = playerShips.first { $0.cells.contains(cell) }
         enemyShots[cell] = hitShip == nil ? .miss : .hit
         lastEnemyShot = cell
+        // Their shots are a little quieter than yours.
+        if let hitShip { sounds.play(Self.isSunk(hitShip, shots: enemyShots) ? "sunk" : "hit", volume: 0.6) }
+        else { sounds.play("miss", volume: 0.5) }
 
         if let hitShip, Self.isSunk(hitShip, shots: enemyShots) {
             show("They sank your \(hitShip.name)!")
@@ -187,6 +199,7 @@ final class FleetGame: GameSession {
     private func finish(won: Bool) {
         phase = won ? .won : .lost
         isPlayerTurn = false
+        sounds.play(won ? "win" : "lose")
         if won {
             GameStats.won("fleet")
             wins += 1

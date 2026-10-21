@@ -1,0 +1,41 @@
+{
+  "id": "rungs",
+  "name": "Rungs",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Answer the clues, then order the words into a ladder, one letter apart.",
+  "hint": "Click a rung and type · drag rungs (or ⌥↑↓) to order them · ↑↓ to move",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "stairs",
+  "category": "words",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Answer five clues, then put the answers in order so each word changes just one letter from the next.",
+    "rules": [
+      "Click a rung to see its clue, and type the answer; a right answer gets a tick.",
+      "Drag the rungs into order. Then the top and bottom rungs open, with one clue for both.",
+      "One puzzle a day; past days are in the archive."
+    ],
+    "controls": [
+      [
+        "Click",
+        "Pick a rung"
+      ],
+      [
+        "Type",
+        "Fill it in"
+      ],
+      [
+        "Drag or ⌥↑↓",
+        "Move a rung"
+      ],
+      [
+        "↑ ↓",
+        "Pick the next rung"
+      ]
+    ]
+  },
+  "sounds": true
+}

@@ -37,6 +37,7 @@ struct LibraryView: View {
             await packs.loadCatalog()   // online only because the Library was opened
             // The list is fresh, so updates install now (unless the person turned automatic updates off).
             if packs.autoUpdate { await packs.installUpdates() }
+            await packs.installMissingSoundSets()
         }
         .onAppear { model.libraryKeyHandler = { handleKey($0) } }
         .onDisappear { model.libraryKeyHandler = nil }
@@ -68,6 +69,7 @@ struct LibraryView: View {
     private func remove(_ item: LibraryItem, deleteProgress: Bool) {
         if item.isBuiltIn {
             InstalledGames.shared.remove(item.id, deleteProgress: deleteProgress)
+            packs.removeSoundSet(for: item.id)
             model.discardHiddenSession(for: item.id)
         } else {
             packs.uninstall(item.id, deleteProgress: deleteProgress)
@@ -346,6 +348,7 @@ private struct LibraryActions {
         switch kind {
         case .install where item.isBuiltIn:
             InstalledGames.shared.install(item.id)
+            Task { await packs.installSoundSet(for: item.id) }   // its sounds, if it has a set
         case .install where !item.capabilities.isEmpty:
             confirm(item)
         case .install, .update:

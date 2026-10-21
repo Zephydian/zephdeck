@@ -2,11 +2,23 @@
   "id": "dictionary",
   "name": "Dictionary",
   "kind": "utility",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "sdkVersion": 5,
   "description": "Definitions, synonyms and opposites from the dictionary built into your Mac.",
   "symbol": "character.book.closed",
-  "capabilities": ["dictionary", "clipboard.text", "clipboard.write", "shortcut"],
-  "whatsNew": "The shortcut setting moved to Zephydian's Settings window (the gear in Dictionary's header opens it).",
-  "settings": true
+  "capabilities": [
+    "dictionary",
+    "clipboard.text",
+    "clipboard.write",
+    "shortcut"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "settings": true,
+  "howTo": {
+    "goal": "Looks up definitions, synonyms and opposites in the dictionary built into your Mac, offline.",
+    "rules": [
+      "Type a word, or open it with your shortcut to look up the text you copied.",
+      "There's a word of the day to learn something new."
+    ]
+  }
 }

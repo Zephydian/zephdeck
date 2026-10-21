@@ -2,10 +2,19 @@
   "id": "app-updates",
   "name": "App Updates",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 9,
   "description": "One list of updates for your apps: App Store, Homebrew and apps' own updaters.",
   "symbol": "arrow.down.app",
-  "capabilities": ["updates.check"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "updates.check"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Checks every app on your Mac for a newer version and lists them in one place, whether they come from the App Store, Homebrew or their own updater.",
+    "rules": [
+      "Press Check to look online; nothing is checked until you ask.",
+      "Homebrew apps update right there; App Store apps open their page, and other apps open so their own updater can run."
+    ]
+  }
 }

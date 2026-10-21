@@ -20,6 +20,8 @@ final class PackSession: GameSession, PackHost {
     private(set) var isPaused = false
     /// The game's sound is on (SDK 10; only games with `sounds: true` have the speaker button).
     private(set) var isSoundOn = false
+    /// Hint, Give up… under the board (SDK 12 `z.actions`).
+    private(set) var packActions: [GameAction] = []
 
     @ObservationIgnored private var runtime: PackRuntime!
     @ObservationIgnored private var toastTask: Task<Void, Never>?
@@ -35,8 +37,11 @@ final class PackSession: GameSession, PackHost {
 
     var hasSound: Bool { bundle.kind == .game && bundle.manifest.sounds == true }
 
-    func toggleSound() {
-        runtime.setSoundOn(!isSoundOn)
+    var soundKey: String? { hasSound ? PackSound.key(bundle.id) : nil }
+
+    /// The speaker: the pack hears about it too (`soundChanged`), so its own Sound switch follows.
+    func setSound(_ on: Bool) {
+        runtime.setSoundOn(on)
         isSoundOn = runtime.isSoundOn
     }
 
@@ -143,6 +148,13 @@ final class PackSession: GameSession, PackHost {
         guard failure == nil, !(isPaused && showsPauseButton) else { return }
         if isPaused { resume() }
         runtime.click(x: point.x, y: point.y, right: right)
+        runtime.pointer("down", x: point.x, y: point.y, right: right)
+    }
+
+    /// The pointer moved with the button held, or the button came up (SDK 11 `pointer`).
+    func pointer(_ type: String, at point: CGPoint, right: Bool) {
+        guard failure == nil, !isPaused else { return }
+        runtime.pointer(type, x: point.x, y: point.y, right: right)
     }
 
     func pressOverlayButton(_ index: Int) { runtime.pressOverlayButton(index) }
@@ -206,6 +218,15 @@ final class PackSession: GameSession, PackHost {
     func packOverlayChanged(_ overlay: PackOverlay?) { self.overlay = overlay }
     func packMenuChanged(_ menu: PackMenu?) { self.menu = menu }
     func packSoundChanged(_ on: Bool) { isSoundOn = on }
+    func packActionsChanged(_ actions: [GameAction]) { packActions = actions }
+
+    var actions: [GameAction] { isUtility ? [] : packActions }
+
+    func perform(_ action: String) {
+        guard failure == nil else { return }
+        if isPaused && !showsPauseButton { resume() }      // turn-based packs just carry on
+        runtime.pressAction(action)
+    }
     func packFailed(_ message: String) { failure = message }
 
     func packToast(_ text: String) {
@@ -273,7 +294,8 @@ struct PackView: View {
                     Self.render(shapes, in: context, size: size, accent: accent, image: session.image(named:))
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay(ClickCatcher { point, right in session.click(at: point, right: right) })
+                .overlay(ClickCatcher(onClick: { point, right in session.click(at: point, right: right) },
+                                      onDrag: { type, point, right in session.pointer(type, at: point, right: right) }))
                 .accessibilityElement()
                 .accessibilityLabel("\(session.bundle.manifest.name) game area")
 
@@ -440,17 +462,32 @@ private struct PackMenuView: View {
 /// Reports left and right clicks (Control-click counts as right) in the view's top-left coordinates.
 private struct ClickCatcher: NSViewRepresentable {
     let onClick: (CGPoint, _ right: Bool) -> Void
+    /// "move" while a button is held, then "up" (SDK 11).
+    var onDrag: (String, CGPoint, _ right: Bool) -> Void = { _, _, _ in }
 
     func makeNSView(context: Context) -> CatcherView { CatcherView() }
-    func updateNSView(_ view: CatcherView, context: Context) { view.onClick = onClick }
+    func updateNSView(_ view: CatcherView, context: Context) {
+        view.onClick = onClick
+        view.onDrag = onDrag
+    }
 
     final class CatcherView: NSView {
         var onClick: (CGPoint, Bool) -> Void = { _, _ in }
+        var onDrag: (String, CGPoint, Bool) -> Void = { _, _, _ in }
+        private var rightDown = false
         override var isFlipped: Bool { true }
         override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
         override func mouseDown(with event: NSEvent) {
-            onClick(convert(event.locationInWindow, from: nil), event.modifierFlags.contains(.control))
+            rightDown = event.modifierFlags.contains(.control)
+            onClick(convert(event.locationInWindow, from: nil), rightDown)
         }
-        override func rightMouseDown(with event: NSEvent) { onClick(convert(event.locationInWindow, from: nil), true) }
+        override func rightMouseDown(with event: NSEvent) {
+            rightDown = true
+            onClick(convert(event.locationInWindow, from: nil), true)
+        }
+        override func mouseDragged(with event: NSEvent) { onDrag("move", convert(event.locationInWindow, from: nil), rightDown) }
+        override func rightMouseDragged(with event: NSEvent) { onDrag("move", convert(event.locationInWindow, from: nil), true) }
+        override func mouseUp(with event: NSEvent) { onDrag("up", convert(event.locationInWindow, from: nil), rightDown) }
+        override func rightMouseUp(with event: NSEvent) { onDrag("up", convert(event.locationInWindow, from: nil), true) }
     }
 }

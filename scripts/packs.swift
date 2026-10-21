@@ -15,11 +15,11 @@ import CryptoKit
 import Foundation
 import JavaScriptCore
 
-let sdkVersion = 10                      // the newest SDK version the tools (and app) know
+let sdkVersion = 12                      // the newest SDK version the tools (and app) know
 let utilitySDK = 2                       // utilities need SDK 2 or newer
 let maxPackBytes = 5 * 1024 * 1024
 let maxScriptBytes = 512 * 1024
-let kinds = ["games": "game", "utilities": "utility"]
+let kinds = ["games": "game", "utilities": "utility", "sounds": "sounds"]
 let assetExtensions: Set<String> = ["png", "json", "txt", "wav", "mp3"]
 /// What packs may declare in "capabilities" (the app shows each one before install).
 let knownCapabilities: Set<String> = [
@@ -62,6 +62,14 @@ struct Manifest: Codable {
     var category: String?
     /// The game plays sounds from assets/ (SDK 10).
     var sounds: Bool?
+    /// How to play (a game's ⓘ card) or what it does (a utility's Settings page).
+    var howTo: HowTo?
+}
+
+struct HowTo: Codable {
+    var goal: String
+    var rules: [String]?
+    var controls: [[String]]?
 }
 
 /// "1.2.3" → [1, 2, 3]; nil if it isn't three whole numbers.
@@ -116,7 +124,12 @@ func checkPack(_ folder: URL) throws -> Pack {
         files.append(rel)
     }
     files.sort()
-    for required in ["manifest.json", "main.js"] where !files.contains(required) {
+    // A sound set (packs/sounds/) is only a manifest and its sounds; everything else has a script.
+    let isSoundSet = folder.deletingLastPathComponent().lastPathComponent == "sounds"
+    if isSoundSet, let bad = files.first(where: { $0 == "main.js" || ($0.hasPrefix("assets/") && !["wav", "mp3", "txt"].contains(($0 as NSString).pathExtension.lowercased())) }) {
+        throw problem("\(bad) isn't allowed in a sound set (only manifest.json and sounds in assets/)")
+    }
+    for required in (isSoundSet ? ["manifest.json"] : ["manifest.json", "main.js"]) where !files.contains(required) {
         throw problem("\(required) is missing")
     }
     if total > maxPackBytes { throw problem("the pack is \(total / 1024) KB; the limit is \(maxPackBytes / 1024) KB") }
@@ -136,9 +149,17 @@ func checkPack(_ folder: URL) throws -> Pack {
     if m.kind == "utility" && m.sdkVersion < utilitySDK { throw problem("utilities need sdkVersion \(utilitySDK) or newer") }
     if m.name.trimmingCharacters(in: .whitespaces).isEmpty || m.name.count > 24 { throw problem("name must be 1–24 characters") }
     if m.kind == "game" && m.name.contains(" ") { throw problem("game names are a single word") }
+    if m.kind == "sounds" && !id.hasSuffix("-sounds") { throw problem("a sound set's id is the game's id plus -sounds") }
     if parseVersion(m.version) == nil { throw problem("version must look like 1.0.0") }
     if !(1...sdkVersion).contains(m.sdkVersion) { throw problem("sdkVersion must be between 1 and \(sdkVersion)") }
     if m.description.isEmpty || m.description.count > 90 { throw problem("description must be 1–90 characters") }
+    if let h = m.howTo {
+        if h.goal.isEmpty || h.goal.count > 240 { throw problem("howTo.goal must be 1–240 characters") }
+        if (h.rules ?? []).count > 8 || (h.rules ?? []).contains(where: { $0.isEmpty || $0.count > 200 }) { throw problem("howTo.rules: at most 8, each 1–200 characters") }
+        if (h.controls ?? []).count > 10 || (h.controls ?? []).contains(where: { $0.count != 2 || $0.contains(where: { $0.isEmpty || $0.count > 80 }) }) {
+            throw problem("howTo.controls: at most 10 pairs of [key, what it does], each 1–80 characters")
+        }
+    }
     if m.sounds == true {
         if m.kind != "game" { throw problem("only games have sounds") }
         if m.sdkVersion < 10 { throw problem("sounds need sdkVersion 10 or newer") }
@@ -186,7 +207,23 @@ func checkPack(_ folder: URL) throws -> Pack {
         throw problem("\"\(symbol)\" isn't an SF Symbol on this Mac")
     }
 
-    // main.js: size and syntax (checked without running it)
+    // main.js: size and syntax (checked without running it). Sound sets have none.
+    if !isSoundSet { try checkScript(folder, problem) }
+
+    // Fingerprint of the sources: every file's path and bytes, in order.
+    var hasher = SHA256()
+    for rel in files {
+        hasher.update(data: Data(rel.utf8 + [0]))
+        let bytes = try Data(contentsOf: folder.appending(path: rel))
+        withUnsafeBytes(of: UInt64(bytes.count).bigEndian) { hasher.update(bufferPointer: $0) }
+        hasher.update(data: bytes)
+    }
+    let sourceHash = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    return Pack(folder: folder, manifest: m, files: files, sourceHash: sourceHash,
+                icon: icon, iconIsGenerated: !files.contains("icon.png"))
+}
+
+func checkScript(_ folder: URL, _ problem: (String) -> Failure) throws {
     let script = try Data(contentsOf: folder.appending(path: "main.js"))
     if script.count > maxScriptBytes { throw problem("main.js is over \(maxScriptBytes / 1024) KB") }
     guard let source = String(data: script, encoding: .utf8) else { throw problem("main.js must be UTF-8") }
@@ -200,17 +237,6 @@ func checkPack(_ folder: URL) throws -> Pack {
         throw problem("main.js: \(message)")
     }
 
-    // Fingerprint of the sources: every file's path and bytes, in order.
-    var hasher = SHA256()
-    for rel in files {
-        hasher.update(data: Data(rel.utf8 + [0]))
-        let bytes = try Data(contentsOf: folder.appending(path: rel))
-        withUnsafeBytes(of: UInt64(bytes.count).bigEndian) { hasher.update(bufferPointer: $0) }
-        hasher.update(data: bytes)
-    }
-    let sourceHash = hasher.finalize().map { String(format: "%02x", $0) }.joined()
-    return Pack(folder: folder, manifest: m, files: files, sourceHash: sourceHash,
-                icon: icon, iconIsGenerated: !files.contains("icon.png"))
 }
 
 /// Draws an SF Symbol, black on transparent and centered, into a 64 × 64 PNG (the app tints it).

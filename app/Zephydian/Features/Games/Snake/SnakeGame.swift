@@ -20,6 +20,7 @@ final class SnakeGame: GameSession {
     @ObservationIgnored private var direction = Point(x: 1, y: 0)
     @ObservationIgnored private var queuedTurns: [Point] = []   // lets quick double-taps register
     @ObservationIgnored private var loop: GameLoop!
+    @ObservationIgnored private let sounds = GameSoundBank("snake")
 
     init() {
         loop = GameLoop(interval: .milliseconds(140)) { [weak self] in self?.step() }
@@ -32,11 +33,13 @@ final class SnakeGame: GameSession {
     var hint: String { "←↑↓→ or WASD move · Space pause · R restart · Esc back" }
     var showsPauseButton: Bool { true }
     var isRunning: Bool { state == .running }
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
     func pause() {
         guard state == .running else { return }
         state = .paused
         loop.stop()
+        sounds.stop()
     }
 
     func togglePause() { state == .running ? pause() : start() }
@@ -52,7 +55,10 @@ final class SnakeGame: GameSession {
             guard state != .over else { return true }
             let last = queuedTurns.last ?? direction
             let reverses = turn.x == -last.x && turn.y == -last.y
-            if !reverses, turn != last, queuedTurns.count < 2 { queuedTurns.append(turn) }
+            if !reverses, turn != last, queuedTurns.count < 2 {
+                queuedTurns.append(turn)
+                if state == .running { sounds.play("turn", volume: 0.4) }
+            }
             if state != .running { start() }
             return true
         }
@@ -111,6 +117,8 @@ final class SnakeGame: GameSession {
         if eating {
             score += 1
             loop.interval = .milliseconds(max(65, 140 - score * 3))
+            // The bite that first beats your best gets its own sound.
+            sounds.play(score > best && !isNewBest && best > 0 ? "best" : "eat")
             if score > best {
                 best = score
                 isNewBest = true
@@ -137,6 +145,7 @@ final class SnakeGame: GameSession {
     private func endGame() {
         state = .over
         loop.stop()
+        sounds.play("over")
         GameStats.finished("snake", score: score)
     }
 }

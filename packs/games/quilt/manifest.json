@@ -1,0 +1,37 @@
+{
+  "id": "quilt",
+  "name": "Quilt",
+  "kind": "game",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "Split the grid into patches: each holds one number, its size, in the shape shown.",
+  "hint": "Drag corner to corner to lay a patch · click a patch to remove it · ⌘Z undo",
+  "pauseButton": false,
+  "tileStat": "none",
+  "symbol": "square.grid.3x3.topleft.filled",
+  "category": "puzzles",
+  "whatsNew": "First release.",
+  "howTo": {
+    "goal": "Split the whole grid into rectangles, called patches.",
+    "rules": [
+      "Each patch holds exactly one number, and covers that many cells.",
+      "Its mark gives the shape: a square, tall (taller than wide), wide, or ◇ for any shape.",
+      "Every cell belongs to a patch, and every puzzle has exactly one answer."
+    ],
+    "controls": [
+      [
+        "Drag",
+        "Lay a patch, corner to corner"
+      ],
+      [
+        "Click a patch",
+        "Take it away"
+      ],
+      [
+        "⌘Z",
+        "Undo"
+      ]
+    ]
+  },
+  "sounds": true
+}

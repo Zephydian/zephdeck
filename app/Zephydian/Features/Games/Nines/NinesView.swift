@@ -139,8 +139,10 @@ struct NinesView: View {
                 Button("Resume") { game.togglePause() }.prominentButtonStyle()
             }
         case .won:
-            GameOverlay(title: game.isNewBest ? "New best time!" : "Solved!",
-                        subtitle: "\(game.difficulty.title) in \(BestTime.format(game.seconds))") {
+            GameOverlay(title: game.gaveUp ? "Here’s the solution" : game.isNewBest ? "New best time!" : "Solved!",
+                        subtitle: game.gaveUp ? game.difficulty.title
+                            : "\(game.difficulty.title) in \(BestTime.format(game.seconds))"
+                              + (game.hintsUsed > 0 ? " · \(game.hintsUsed) \(game.hintsUsed == 1 ? "hint" : "hints")" : "")) {
                 Button("New game") { game.newGame() }.prominentButtonStyle()
             }
             .padding(.horizontal, 24)

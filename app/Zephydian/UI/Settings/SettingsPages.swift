@@ -437,6 +437,12 @@ private struct GamesPage: View {
         @Bindable var settings = settings
         Form {
             Section {
+                Toggle("Game sounds", isOn: $settings.gameSounds)
+            } footer: {
+                Text("Lets games play their sounds. Each game's speaker button in the panel can still silence it.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            Section {
                 Toggle("Five: high-contrast colors", isOn: $settings.fiveHighContrast)
             }
             Section {

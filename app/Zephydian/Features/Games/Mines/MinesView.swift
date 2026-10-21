@@ -141,13 +141,14 @@ struct MinesView: View {
             }
         case .won:
             GameOverlay(title: game.isNewBest ? "New best time!" : "Field cleared!",
-                        subtitle: "\(game.difficulty.title) in \(BestTime.format(game.seconds))") {
+                        subtitle: "\(game.difficulty.title) in \(BestTime.format(game.seconds))"
+                            + (game.hintsUsed > 0 ? " · \(game.hintsUsed) \(game.hintsUsed == 1 ? "hint" : "hints")" : "")) {
                 Button("New game") { game.newGame() }.prominentButtonStyle()
             }
             .padding(.horizontal, 24)
             .frame(maxHeight: 150)
         case .lost:
-            GameOverlay(title: "Boom", subtitle: "You hit a mine.") {
+            GameOverlay(title: game.gaveUp ? "Here are the mines" : "Boom", subtitle: game.gaveUp ? nil : "You hit a mine.") {
                 Button("Try again") { game.newGame() }.prominentButtonStyle()
             }
             .padding(.horizontal, 24)

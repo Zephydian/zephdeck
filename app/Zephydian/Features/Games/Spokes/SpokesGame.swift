@@ -19,10 +19,14 @@ final class SpokesGame: GameSession {
     private(set) var shakeCount = 0
     /// The word just found, briefly highlighted in the grid.
     private(set) var justFound: String?
+    /// The level's words were shown with Give up (no hint is earned for it).
+    private(set) var gaveUp = false
 
     @ObservationIgnored private let words: [String]
     @ObservationIgnored private let valid: Set<String>
     @ObservationIgnored private var messageTask: Task<Void, Never>?
+    @ObservationIgnored private let sounds = GameSoundBank("wheel")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
     static let startingHints = 3
 
@@ -47,7 +51,7 @@ final class SpokesGame: GameSession {
     }
     var showsPauseButton: Bool { false }
     var isRunning: Bool { false }
-    func pause() {}
+    func pause() { sounds.stop() }
     func togglePause() {}
 
     func handleKey(_ event: NSEvent) -> Bool {
@@ -67,6 +71,7 @@ final class SpokesGame: GameSession {
         // Use the next unused wheel letter that matches.
         if let index = letters.indices.first(where: { letters[$0] == c && !selection.contains($0) }) {
             selection.append(index)
+            sounds.play("letter", volume: 0.6)
         } else {
             shakeCount += 1
         }
@@ -96,12 +101,16 @@ final class SpokesGame: GameSession {
             selection.removeLast()
         } else if !selection.contains(index) {
             selection.append(index)
+            sounds.play("letter", volume: 0.6)
         }
     }
 
     /// Clicking a letter: adds it, or removes it if it was the last one picked.
     func tap(_ index: Int) {
-        if selection.last == index { selection.removeLast() } else if !selection.contains(index) { selection.append(index) }
+        if selection.last == index { selection.removeLast() } else if !selection.contains(index) {
+            selection.append(index)
+            sounds.play("letter", volume: 0.6)
+        }
     }
 
     func clearSelection() { selection = [] }
@@ -111,6 +120,7 @@ final class SpokesGame: GameSession {
         let old = letters
         while letters == old { letters.shuffle() }
         selection = []
+        sounds.play("shuffle")
     }
 
     // MARK: Submitting
@@ -129,11 +139,15 @@ final class SpokesGame: GameSession {
             if isComplete {
                 hints += 1
                 GameStats.won("wheel")
+                sounds.play("level")
                 show("Level complete!")
+            } else {
+                sounds.play("word")
             }
         } else if valid.contains(word) {
             guard !bonus.contains(word) else { show("Already found"); return }
             bonus.insert(word)
+            sounds.play("bonus")
             show("Bonus word!")
         } else {
             reject("Not a word")
@@ -153,6 +167,7 @@ final class SpokesGame: GameSession {
         guard let cell = hidden.randomElement() else { return }
         revealed.insert(cell)
         hints -= 1
+        sounds.play("hint")
         let wasStarted = !found.isEmpty || revealed.count > 1
         // A word whose letters are all revealed counts as found.
         for entry in puzzle.entries where !found.contains(entry.word) && entry.cells.allSatisfy(visibleCells.contains) {
@@ -166,7 +181,21 @@ final class SpokesGame: GameSession {
         save()
     }
 
+    // Spokes keeps its own Hint button (hints are earned per level), so only Give up goes under the board.
+    var actions: [GameAction] {
+        [.giveUp(enabled: !isComplete, daily: false, what: "this level's words")]
+    }
+
+    func perform(_ action: String) {
+        guard action == "giveUp", !isComplete else { return }
+        found = Set(puzzle.entries.map(\.word))
+        gaveUp = true
+        selection = []
+        save()
+    }
+
     func nextLevel() {
+        gaveUp = false
         level += 1
         puzzle = SpokesGenerator.puzzle(level: level, words: words)
         letters = puzzle.letters
@@ -182,6 +211,7 @@ final class SpokesGame: GameSession {
     // MARK: Feedback
 
     private func reject(_ text: String) {
+        sounds.play("wrong")
         shakeCount += 1
         show(text)
     }

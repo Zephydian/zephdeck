@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Before anything reads settings or files: they may still be in the old sandbox container.
         storageMove = StorageMove.runIfNeeded()
         settings = SettingsStore()
+        GameSounds.settings = settings
         model = AppModel()
         notes = NotesStore()
         super.init()
@@ -150,6 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         applySettings()
         observeSettings()
+        observeGameSounds()
         // Put back what features changed in macOS, if Zephydian stopped without doing it (a feature
         // that's on sets it again when it starts).
         SystemShortcuts.restore()   // macOS's ⌘Tab
@@ -230,6 +232,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Re-applies settings that affect AppKit objects whenever they change.
+    /// Game sounds on (now, or switched on later): the built-in games installed from the Library
+    /// download their sounds (B-54).
+    private func observeGameSounds() {
+        if settings.gameSounds { Task { await PackManager.shared.installSoundSetsForInstalledGames() } }
+        withObservationTracking {
+            _ = settings.gameSounds
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.observeGameSounds() }
+        }
+    }
+
     private func observeSettings() {
         withObservationTracking {
             _ = settings.menuBarIcon

@@ -25,12 +25,64 @@ protocol GameSession: AnyObject {
     func handleKeyUp(_ event: NSEvent) -> Bool
     /// ⌘Z. Return true if a move was undone.
     func undo() -> Bool
+    /// Buttons under the board, like Hint and Give up. Empty for most games.
+    var actions: [GameAction] { get }
+    /// One of `actions` was pressed (after its confirmation, if it has one).
+    func perform(_ action: String)
+    /// Where the game's own sound switch is saved, if it has sounds on this Mac (see `GameSounds`).
+    var soundKey: String? { get }
+    /// The game's speaker button was used.
+    func setSound(_ on: Bool)
 }
 
 extension GameSession {
     func makeHeaderAccessory() -> AnyView? { nil }
     func handleKeyUp(_ event: NSEvent) -> Bool { false }
     func undo() -> Bool { false }
+    var actions: [GameAction] { [] }
+    func perform(_ action: String) {}
+    var soundKey: String? { nil }
+    func setSound(_ on: Bool) { if let soundKey { GameSounds.set(soundKey, on: on) } }
+}
+
+/// A small button under the board (Hint, Give up). With `confirm`, it asks first.
+struct GameAction: Identifiable, Equatable {
+    var id: String
+    var label: String
+    var symbol: String
+    var enabled = true
+    var help: String?
+    var confirm: Confirm?
+
+    struct Confirm: Equatable {
+        var title: String
+        var message: String
+        var button: String
+    }
+
+    /// The usual pair: a hint, and giving up (which asks first; on a daily it counts as a loss).
+    static func hint(enabled: Bool, help: String) -> GameAction {
+        GameAction(id: "hint", label: "Hint", symbol: "lightbulb", enabled: enabled, help: help)
+    }
+
+    static func giveUp(enabled: Bool, daily: Bool, what: String = "the solution") -> GameAction {
+        GameAction(id: "giveUp", label: "Give up", symbol: "eye", enabled: enabled,
+                   help: daily ? "Show \(what) (counts as a loss)" : "Show \(what)",
+                   confirm: Confirm(title: daily ? "Give up today’s puzzle?" : "Give up?",
+                                    message: daily ? "You’ll see \(what). This counts as a loss and resets your streak." : "You’ll see \(what).",
+                                    button: "Give Up"))
+    }
+}
+
+/// "How to play" for a game (its ⓘ card in the panel), or "What it does" for a utility (the top of
+/// its page in the Settings window). Packs give theirs in manifest.json as `howTo`.
+nonisolated struct HowToPlay: Codable, Equatable {
+    /// One or two sentences: what you're trying to do.
+    var goal: String
+    /// The rules, one short line each.
+    var rules: [String]?
+    /// Controls as pairs: the key or gesture, and what it does.
+    var controls: [[String]]?
 }
 
 // MARK: - Registry
@@ -76,6 +128,8 @@ struct GameInfo: Identifiable {
     var reloadsOnOpen = false
     /// Its section in the Games grid and the Library.
     var category: GameCategory = .words
+    /// The ⓘ card's text.
+    var howTo: HowToPlay?
 }
 
 /// The sections of the Games grid and the Library, in order. A pack names its own in manifest.json
@@ -107,23 +161,23 @@ enum GameRegistry {
 
     static let builtIn: [GameInfo] = [
         GameInfo(id: "snake", name: "Snake", icon: .snake,
-                 makeSession: { SnakeGame() }, stat: { BestScore.label(for: SnakeGame.bestKey) }, summary: "Eat, grow, and don't run into yourself.", category: .arcade),
+                 makeSession: { SnakeGame() }, stat: { BestScore.label(for: SnakeGame.bestKey) }, summary: "Eat, grow, and don't run into yourself.", category: .arcade, howTo: HowToPlay.builtIn["snake"]),
         GameInfo(id: "stackr", name: "Stackr", icon: .fallingBlocks,
-                 makeSession: { StackrGame() }, stat: { BestScore.label(for: StackrGame.bestKey) }, summary: "Stack falling blocks and clear full rows.", category: .arcade),
+                 makeSession: { StackrGame() }, stat: { BestScore.label(for: StackrGame.bestKey) }, summary: "Stack falling blocks and clear full rows.", category: .arcade, howTo: HowToPlay.builtIn["stackr"]),
         GameInfo(id: "five", name: "Five", icon: .letterRows,
-                 makeSession: { FiveGame() }, stat: { FiveGame.tileStat() }, summary: "Guess the five-letter word in six tries.", category: .words),
+                 makeSession: { FiveGame() }, stat: { FiveGame.tileStat() }, summary: "Guess the five-letter word in six tries.", category: .words, howTo: HowToPlay.builtIn["five"]),
         GameInfo(id: "wheel", name: "Spokes", icon: .wheel,
-                 makeSession: { SpokesGame() }, stat: { "Level \(SpokesGame.savedLevel)" }, summary: "Make words from the letters around a wheel.", category: .words),
+                 makeSession: { SpokesGame() }, stat: { "Level \(SpokesGame.savedLevel)" }, summary: "Make words from the letters around a wheel.", category: .words, howTo: HowToPlay.builtIn["wheel"]),
         GameInfo(id: "fleet", name: "Fleet", icon: .ships,
-                 makeSession: { FleetGame() }, stat: { FleetGame.tileStat }, summary: "Find and sink the computer's hidden ships.", category: .puzzles),
+                 makeSession: { FleetGame() }, stat: { FleetGame.tileStat }, summary: "Find and sink the computer's hidden ships.", category: .puzzles, howTo: HowToPlay.builtIn["fleet"]),
         GameInfo(id: "airship", name: "Airship", icon: .jet,
-                 makeSession: { AirshipGame() }, stat: { BestScore.label(for: AirshipGame.bestKey) }, summary: "Fly, dodge and shoot through an endless sky.", category: .arcade),
+                 makeSession: { AirshipGame() }, stat: { BestScore.label(for: AirshipGame.bestKey) }, summary: "Fly, dodge and shoot through an endless sky.", category: .arcade, howTo: HowToPlay.builtIn["airship"]),
         GameInfo(id: "2048", name: "2048", icon: .mergeTiles,
-                 makeSession: { Game2048() }, stat: { BestScore.label(for: Game2048.bestKey) }, summary: "Slide and merge tiles to reach 2048.", category: .puzzles),
+                 makeSession: { Game2048() }, stat: { BestScore.label(for: Game2048.bestKey) }, summary: "Slide and merge tiles to reach 2048.", category: .puzzles, howTo: HowToPlay.builtIn["2048"]),
         GameInfo(id: "mines", name: "Mines", icon: .minefield,
-                 makeSession: { MinesGame() }, stat: { MinesGame.tileStat }, summary: "Clear the board without setting off a mine.", category: .puzzles),
+                 makeSession: { MinesGame() }, stat: { MinesGame.tileStat }, summary: "Clear the board without setting off a mine.", category: .puzzles, howTo: HowToPlay.builtIn["mines"]),
         GameInfo(id: "nines", name: "Nines", icon: .numberGrid,
-                 makeSession: { NinesGame() }, stat: { NinesGame.tileStat }, summary: "Fill the grid with 1 to 9, no repeats.", category: .puzzles),
+                 makeSession: { NinesGame() }, stat: { NinesGame.tileStat }, summary: "Fill the grid with 1 to 9, no repeats.", category: .puzzles, howTo: HowToPlay.builtIn["nines"]),
     ]
 
     /// Any tile the panel can open: a game, or a utility.
@@ -241,9 +295,13 @@ struct GameOverlay<Actions: View>: View {
             if let subtitle {
                 Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
-            HStack(spacing: 10) { actions }
-                .controlSize(.large)
-                .padding(.top, 8)
+            // Side by side when they fit; stacked on a narrow board, like Stackr's (B-56).
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { actions }
+                VStack(spacing: 8) { actions }
+            }
+            .controlSize(.large)
+            .padding(.top, 8)
         }
         .padding(16)
     }

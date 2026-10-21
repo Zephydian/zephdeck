@@ -91,7 +91,8 @@ final class PackLibrary {
                 },
                 badge: bundle.isDev ? "DEV" : nil,
                 reloadsOnOpen: bundle.isDev,
-                category: GameCategory(manifest: manifest.category))
+                category: GameCategory(manifest: manifest.category),
+                howTo: kind == .game ? manifest.howTo : nil)
         }
     }
 

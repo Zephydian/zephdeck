@@ -2,11 +2,22 @@
   "id": "cleaner",
   "name": "Cleaner",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 9,
   "description": "Free space from caches, logs, leftovers and old downloads. Everything goes to the Trash.",
   "symbol": "sparkles.rectangle.stack",
-  "capabilities": ["files.clean", "notifications"],
+  "capabilities": [
+    "files.clean",
+    "notifications"
+  ],
   "settings": true,
-  "whatsNew": "First release."
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Frees up space by finding caches, logs, leftovers from removed apps and old downloads.",
+    "rules": [
+      "Scan, tick what you want gone, then move it to the Trash.",
+      "Nothing is deleted outright; the Trash keeps it until you empty it.",
+      "A reminder below can tell you now and then how much could be cleaned."
+    ]
+  }
 }

@@ -47,7 +47,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .shortcuts: ["Keyboard shortcut", "Open the panel", "Hotkey", "Clipboard", "Screenshot", "Dictionary"]
         case .island: ["Notch", "Look", "Black", "Liquid Glass", "Hover", "Click", "Swipe", "Haptic", "Displays without a notch", "Pill"]
         case .notes: ["Monospace font", "Notes window", "On top"]
-        case .games: ["High-contrast colors", "Five", "Stats", "Library"]
+        case .games: ["Game sounds", "Sound", "High-contrast colors", "Five", "Stats", "Library"]
         case .packs: ["Updates", "Check now", "Running now", "Stop", "Library", "Utilities"]
         case .features: ["Presets", "Lite", "Essential", "Everything", "Turn on", "Turn off", "Turn All Off"]
         case .permissions: ["Accessibility", "Screen Recording", "Repair", "Privacy"]
@@ -239,7 +239,7 @@ struct SettingsWindowView: View {
         }
         // A removed utility's page goes back to Packs.
         .onChange(of: library.packs.map(\.id)) {
-            if case .utility(let id) = model.settingsSelection, !library.packs.contains(where: { $0.id == id && $0.hasSettings }) {
+            if case .utility(let id) = model.settingsSelection, !library.packs.contains(where: { $0.id == id && Self.hasPage($0) }) {
                 model.settingsSelection = .page(.packs)
             }
         }
@@ -268,7 +268,7 @@ struct SettingsWindowView: View {
                 SettingsPageView(page: .features).navigationTitle(SettingsPage.features.title)
             }
         case .utility(let id):
-            if let pack = library.packs.first(where: { $0.id == id && $0.hasSettings }) {
+            if let pack = library.packs.first(where: { $0.id == id && Self.hasPage($0) }) {
                 UtilitySettingsPage(bundle: pack).id(pack.id).navigationTitle(pack.manifest.name)
             } else {
                 SettingsPageView(page: .packs).navigationTitle(SettingsPage.packs.title)
@@ -276,11 +276,16 @@ struct SettingsWindowView: View {
         }
     }
 
-    /// Installed utilities with a settings page, matching the search.
+    /// Installed utilities with a page (settings, or just what they do), matching the search.
     private var utilities: [PackBundle] {
         library.packs.filter { pack in
-            pack.hasSettings && (query.isEmpty || pack.manifest.name.localizedCaseInsensitiveContains(query))
+            Self.hasPage(pack) && (query.isEmpty || pack.manifest.name.localizedCaseInsensitiveContains(query))
         }
+    }
+
+    /// Every installed utility gets a page: its options (SDK 5), and what it does (`howTo`) above them.
+    static func hasPage(_ pack: PackBundle) -> Bool {
+        pack.kind == .utility && (pack.hasSettings || pack.manifest.howTo != nil)
     }
 
     /// The groups with only the pages matching the search (all of them with no search).

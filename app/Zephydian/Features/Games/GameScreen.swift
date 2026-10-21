@@ -5,6 +5,9 @@ struct GameScreen: View {
     /// False in a game or utility tab, which has nothing to go back to.
     var showsBack = true
     @Environment(AppModel.self) private var model
+    @Environment(SettingsStore.self) private var settings
+    /// Redraws the speaker after it's used (a game's own switch isn't observable).
+    @State private var soundTick = 0
 
     var body: some View {
         if let session = model.gameSession, let info = GameRegistry.info(for: model.gameID) {
@@ -35,14 +38,23 @@ struct GameScreen: View {
                                     .accessibilityLabel("Score: \(session.scoreText)")
                             }
 
-                            // A game with sounds (SDK 10): the speaker switches them on and off.
-                            if let pack = session as? PackSession, pack.hasSound {
-                                Button { pack.toggleSound() } label: {
-                                    Image(systemName: pack.isSoundOn ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                            // A game with sounds: the speaker shows whether it will play (Game sounds in
+                            // Settings and the game's own switch), and switches it.
+                            if let key = session.soundKey {
+                                // Reading these redraws the button when they change (a pack's own Sound
+                                // switch, or the speaker itself).
+                                let _ = (session as? PackSession)?.isSoundOn
+                                let _ = soundTick
+                                let on = settings.gameSounds && GameSounds.gameOn(key)
+                                Button {
+                                    session.setSound(!on)
+                                    soundTick += 1
+                                } label: {
+                                    Image(systemName: on ? "speaker.wave.2.fill" : "speaker.slash.fill")
                                 }
                                 .glassIconButtonStyle()
-                                .help(pack.isSoundOn ? "Turn sound off" : "Turn sound on")
-                                .accessibilityLabel(pack.isSoundOn ? "Sound on" : "Sound off")
+                                .help(on ? "Turn sound off" : "Turn sound on")
+                                .accessibilityLabel(on ? "Sound on" : "Sound off")
                             }
 
                             // A utility with a settings page (SDK 5): the gear opens it in the Settings window.
@@ -53,6 +65,16 @@ struct GameScreen: View {
                                 .glassIconButtonStyle()
                                 .help("\(pack.manifest.name) settings")
                                 .accessibilityLabel("\(pack.manifest.name) settings")
+                            }
+
+                            // How to play (games only; a utility's is on its Settings page).
+                            if info.howTo != nil {
+                                Button { showHowTo(session) } label: {
+                                    Image(systemName: "info.circle")
+                                }
+                                .glassIconButtonStyle()
+                                .help("How to play \(info.name)")
+                                .accessibilityLabel("How to play \(info.name)")
                             }
 
                             if session.showsPauseButton {
@@ -73,6 +95,18 @@ struct GameScreen: View {
                     // A new session for the same game (a reloaded pack, opened again by its shortcut
                     // while still on screen) gets a new view, so it appears and starts.
                     .id(ObjectIdentifier(session))
+                    .overlay {
+                        if model.isShowingHowTo, let howTo = info.howTo {
+                            HowToPlayCard(name: info.name, howTo: howTo) { model.isShowingHowTo = false }
+                        }
+                    }
+                    .animation(.easeOut(duration: 0.15), value: model.isShowingHowTo)
+
+                let actions = session.actions
+                if !actions.isEmpty {
+                    GameActionBar(actions: actions, perform: session.perform)
+                        .padding(.top, 6)
+                }
 
                 if !session.hint.isEmpty {
                     Text(session.hint)
@@ -84,6 +118,20 @@ struct GameScreen: View {
                         .frame(height: 30)
                 }
             }
+            // The first time a game opens, its How to play card comes up by itself.
+            .task(id: model.gameID) {
+                guard info.howTo != nil, let id = model.gameID else { return }
+                let key = "howto.seen.\(id)"
+                if !UserDefaults.standard.bool(forKey: key) {
+                    UserDefaults.standard.set(true, forKey: key)
+                    showHowTo(session)
+                }
+            }
         }
+    }
+
+    private func showHowTo(_ session: any GameSession) {
+        session.pause()
+        model.isShowingHowTo = true
     }
 }

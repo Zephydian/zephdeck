@@ -25,6 +25,8 @@ nonisolated struct PackManifest: Codable, Equatable {
     var category: String?
     /// The game plays sounds (SDK 10): its header gets a speaker button, off until switched on.
     var sounds: Bool?
+    /// How to play (a game's ⓘ card) or what it does (the top of a utility's Settings page).
+    var howTo: HowToPlay?
 
     /// Lowercase letters, digits and dashes, up to 32 characters (the same rule `packs.swift check` uses).
     /// Ids become folder and file names, so anything else is refused before it touches the disk.
@@ -36,7 +38,7 @@ nonisolated struct PackManifest: Codable, Equatable {
 /// A pack on disk, ready to run: its folder, manifest and script.
 struct PackBundle {
     /// The newest SDK version this app can run.
-    static let sdkVersion = 10
+    static let sdkVersion = 12
     /// Settings pages arrived in SDK 5.
     static let settingsSDK = 5
     /// Utilities arrived in SDK 2.
@@ -50,8 +52,10 @@ struct PackBundle {
 
     var id: String { manifest.id }
 
-    enum Kind: String { case game, utility }
-    /// Checked by `load`, so it's always one of the two.
+    /// `sounds` is a sound set: a built-in game's sounds, downloaded with it from the Library
+    /// (no script; never shown in the Library or the grids).
+    enum Kind: String { case game, utility, sounds }
+    /// Checked by `load`, so it's always one of these.
     var kind: Kind { Kind(rawValue: manifest.kind) ?? .game }
 
     enum LoadError: Error, CustomStringConvertible {
@@ -81,6 +85,7 @@ struct PackBundle {
             throw LoadError.invalid("needs a newer Zephydian (capability \(unknown))")
         }
         guard manifest.sdkVersion <= sdkVersion else { throw LoadError.invalid("needs a newer Zephydian (SDK \(manifest.sdkVersion))") }
+        if kind == .sounds { return PackBundle(folder: folder, manifest: manifest, script: "", isDev: isDev) }
         guard let script = try? String(contentsOf: folder.appending(path: "main.js"), encoding: .utf8) else {
             throw LoadError.unreadable("main.js can't be read")
         }

@@ -1,0 +1,4 @@
+The sounds in this folder are from Kenney's audio packs (https://kenney.nl): Interface Sounds,
+Digital Audio, Impact Sounds, Casino Audio, Music Jingles, Sci-Fi Sounds and RPG Audio, by Kenney
+Vleugels, released under Creative Commons Zero (CC0, https://creativecommons.org/publicdomain/zero/1.0/).
+They were converted to mono WAV, trimmed and evened out in loudness for Zephydian.

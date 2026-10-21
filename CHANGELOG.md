@@ -7,6 +7,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-20
+
+### Added
+- **Daily puzzles**, seven new games in the Library, each with a puzzle of the day (the same for everyone, harder through the week, with a streak) and practice:
+  - **Crowns**: place one crown in every row, column and coloured region; crowns never touch.
+  - **Dusk**: fill the grid with suns and moons, half and half in every row and column, never three alike, following the = and × marks.
+  - **Thread**: draw one thread through every cell, passing the numbers in order.
+  - **Quilt**: split the grid into patches, each holding one number (its size) in the shape shown.
+  - **Rungs**: answer five clues, then order the words into a ladder, one letter apart, to unlock the top and bottom.
+  - **Hunch**: guess what links the words, with as few of them as you can.
+  - **Weave**: trace the hidden words on a theme; every letter belongs to one word.
+  Every logic puzzle has exactly one solution. The word puzzles come with a year of hand-written dailies, and past days can be replayed from the archive.
+- **How to play** for every game: the ⓘ button in the game's header opens a short card with the goal, the rules and the controls, and it comes up by itself the first time you play a game.
+- **Hint and Give up** under the board in Crowns, Dusk, Thread, Quilt, Rungs, Hunch, Weave, Nines, Mines and Switch, and Give up in Spokes, like Five's. Hints are counted on the finished card; giving up shows the solution and, on a daily puzzle, counts as a loss.
+- **Sounds for every game and puzzle** (Kenney's free CC0 game audio): moves, hits, merges, mistakes, wins and more, each fitting its game. Turn them on with **Game sounds** in Settings → Games (off at first); each game's speaker button in the panel can still silence it. Packs carry their own sounds, and the built-in games you add from the Library download a small set of sounds with them; Snake, Stackr and Five have theirs in the app.
+- Every utility has a page in the Settings window that explains what it does and how to use it.
+- Pack SDK 11: games can follow a drag (`pointer` events: down, move, up).
+- Pack SDK 12: `howTo` in manifest.json (How to play, or a utility's What it does) and `z.actions` for buttons under the board.
+
 ## [0.10.0] - 2026-10-20
 
 ### Added

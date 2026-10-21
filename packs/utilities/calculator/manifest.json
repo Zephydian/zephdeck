@@ -2,10 +2,23 @@
   "id": "calculator",
   "name": "Calculator",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 2,
   "description": "Type a calculation or a unit conversion and see the answer as you type.",
   "hint": "Enter saves to history · ans = last answer · 5 km in mi",
   "symbol": "plus.forwardslash.minus",
-  "whatsNew": "First release."
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Type a sum or a unit conversion and the answer appears as you type.",
+    "rules": [
+      "Unit conversions read like sentences, like 5 km in mi or 70 f in c.",
+      "ans is the last answer, so you can keep going."
+    ],
+    "controls": [
+      [
+        "Enter",
+        "Save the line to the history"
+      ]
+    ]
+  }
 }

@@ -92,6 +92,7 @@ Only these files are allowed: `manifest.json`, `main.js`, `icon.png`, and PNG, J
 | `symbol` | Optional. An SF Symbol name (for example `"doc.on.clipboard"`) used as the icon instead of `icon.png`. Meant for utilities. |
 | `capabilities` | Optional (SDK 2). What the pack uses beyond its own screen and storage, such as `["clipboard.write"]`. See [Capabilities](#capabilities). |
 | `handles` | Optional (SDK 3, utilities). `["image"]` makes the utility the editor behind a screenshot's Edit button. It needs the `windows` and `images.edit` capabilities. |
+| `howTo` | Optional, but every game should have one. `{ "goal": "…", "rules": ["…"], "controls": [["Drag", "Draw a line"], ["⌘Z", "Undo"]] }`. For a game it's the **How to play** card behind the ⓘ in the header (shown once by itself the first time someone plays). For a utility it's the "What it does" section at the top of its page in the Settings window (every utility with a `howTo` gets a page). The goal is up to 240 characters, at most 8 rules and 10 controls. |
 | `sounds` | Optional (SDK 10, games). `true` gives the header a speaker button. See [Sounds](#the-z-api). |
 | `category` | Optional (games). The game's section in the Games grid and the Library: `"arcade"`, `"puzzles"` or `"words"`. A game without one is listed under Words. |
 | `settings` | Optional (SDK 5, utilities). `true` gives the utility a page in Zephydian's Settings window. See [Settings pages](#settings-pages-sdk-5). |
@@ -108,6 +109,7 @@ zephydian.game({
   key(e)       { },   // a key was pressed; return true if you used it
   keyUp(e)     { },   // a key was released (for held keys in real-time games)
   click(e)     { },   // a click on the game area
+  pointer(e)   { },   // SDK 11: pointer down / move (button held) / up, for dragging
   pause()      { },   // the game is being paused (the panel hid, or the pause button / Space)
   resume()     { },   // the game carries on
   undo()       { },   // ⌘Z; return true if a move was undone
@@ -131,6 +133,12 @@ Esc, ⌘W, ⌘Q, the panel's ⌘ shortcuts and Control-key combinations belong t
 When a card from `z.overlay()` is showing, Enter presses its prominent button.
 
 **Click events** have `x` and `y` in points from the top-left of the game area, and `button` (`"left"` or `"right"`).
+
+**Hint and Give up (SDK 12)**
+- `z.actions([{ id, label, symbol, enabled, help, confirm, onPress }])`: up to three small buttons under the game area, like Hint and Give up. `symbol` is an SF Symbol (`"lightbulb"`, `"eye"`), `enabled: false` greys one out, and `confirm: { title, message, button }` asks before `onPress` runs. Call it again whenever they change (for example, switch them off once the puzzle is solved), and `z.actions([])` to remove them.
+- Follow the usual rules so every game feels the same: a hint helps a little (fix one mistake, or fill one cell); giving up shows the solution, asks first, and on a daily puzzle counts as a loss. Show how many hints were used on the finished card.
+
+**Pointer events (SDK 11)** let a game follow a drag: add `pointer(e) { }` to the game object. `e.type` is `"down"` (right after `click`), `"move"` (the pointer moved with the button held, even outside the game area) or `"up"`, with the same `x`, `y` and `button` as a click.
 
 ## The `z` API
 
@@ -178,7 +186,8 @@ Each pack has its own storage, up to 1 MB in total. It's kept when the player re
 - Images in `assets/` are drawn with `g.image(name, …)`.
 
 **Sounds (SDK 10, games)**
-- Put `"sounds": true` in manifest.json. The game's header then gets a speaker button. Sound is **off** until the player switches it on, and the choice is remembered for your game.
+- Put `"sounds": true` in manifest.json. The game's header then gets a speaker button. Sounds play only while **Game sounds** is on in Settings (off at first) and the game's own speaker is on; switching a game on also switches Game sounds on.
+- Your sounds ship inside your pack, so they're downloaded with it and removed with it. Keep them short (most under half a second) and similar in loudness; a win jingle can be a little softer.
 - `z.sound.play(name, { volume })`: plays `assets/<name>` (WAV or MP3, up to 2 seconds; `volume` 0–1, default 1). Sounds can overlap. Nothing plays while the sound is off or the game is paused, so you can call it freely.
 - `z.sound.preload(names)`: reads the files ahead of time, so the first sound isn't late. Call it in `start()` and `resume()`.
 - `z.sound.on()` → whether the sound is on; `z.sound.set(on)` switches it (for a switch in your own menu; the speaker button follows).

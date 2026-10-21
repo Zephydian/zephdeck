@@ -65,6 +65,8 @@ final class AirshipGame: GameSession {
 
     // Input
     @ObservationIgnored private var held: Set<UInt16> = []
+    @ObservationIgnored private let sounds = GameSoundBank("airship")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
     @ObservationIgnored private var firing = false
     @ObservationIgnored private var mouseTarget: CGPoint?
     @ObservationIgnored private var mouseFiring = false
@@ -88,6 +90,7 @@ final class AirshipGame: GameSession {
         state = .paused
         loop.stop()
         releaseInput()
+        sounds.stop()
     }
 
     func togglePause() { state == .running ? pause() : start() }
@@ -170,6 +173,7 @@ final class AirshipGame: GameSession {
         state = .over
         loop.stop()
         releaseInput()
+        sounds.play("over")
         GameStats.finished("airship", score: world.score)
         if world.score > best {
             best = world.score
@@ -225,6 +229,7 @@ final class AirshipGame: GameSession {
                 w.bullets.append(Bullet(position: CGPoint(x: nose.x + offset, y: nose.y), velocity: CGVector(dx: 0, dy: -520)))
             }
             w.nextShot = w.time + (double ? 0.16 : 0.2)
+            sounds.play("shoot", volume: 0.3)   // several a second, so it stays quiet
         }
         move(&w.bullets, dt: dt)
         move(&w.enemyBullets, dt: dt)
@@ -282,6 +287,7 @@ final class AirshipGame: GameSession {
                 if w.enemies[e].health <= 0 {
                     let dead = w.enemies.remove(at: e)
                     w.score += dead.kind.points
+                    sounds.play("boom", volume: dead.kind == .heavy ? 1 : 0.7)
                     w.explosions.append(Explosion(position: dead.position, size: dead.kind.radius * 2.2))
                     if Double.random(in: 0...1) < (dead.kind == .heavy ? 0.35 : 0.07) {
                         let kind: PowerKind = Double.random(in: 0...1) < 0.15 ? .life : (Bool.random() ? .doubleShot : .shield)
@@ -298,6 +304,7 @@ final class AirshipGame: GameSession {
         for i in w.powerUps.indices { w.powerUps[i].position.y += 70 * dt }
         w.powerUps.removeAll { powerUp in
             guard distance(powerUp.position, w.player) < 20 else { return powerUp.position.y > f.height + 20 }
+            sounds.play("power")
             switch powerUp.kind {
             case .doubleShot: w.doubleShotUntil = w.time + 8
             case .shield: w.hasShield = true
@@ -315,6 +322,7 @@ final class AirshipGame: GameSession {
                 let e = w.enemies.remove(at: hitByEnemy)
                 w.explosions.append(Explosion(position: e.position, size: e.kind.radius * 2.2))
             }
+            sounds.play("hurt")
             if w.hasShield {
                 w.hasShield = false
                 w.invulnerableUntil = w.time + 1

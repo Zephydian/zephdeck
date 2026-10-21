@@ -2,10 +2,20 @@
   "id": "timer",
   "name": "Timer",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 2,
   "description": "Countdowns, a stopwatch with laps and a focus mode, even with the panel closed.",
   "symbol": "timer",
-  "capabilities": ["timers", "notifications"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "timers",
+    "notifications"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Countdowns, a stopwatch with laps and a focus mode that keep running even with the panel closed.",
+    "rules": [
+      "You get a notification when a countdown ends.",
+      "Several countdowns can run at once."
+    ]
+  }
 }

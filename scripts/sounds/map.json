@@ -1,0 +1,136 @@
+{
+  "_about": "Which Kenney (CC0) sound plays for each moment in each game. scripts/sounds/build.py turns these into the WAV files the games ship. Paths are relative to the folder the Kenney packs were unzipped into.",
+  "snake": {
+    "eat": "kenney_digital-audio/Audio/pepSound1.ogg",
+    "turn": "kenney_interface-sounds/Audio/tick_002.ogg",
+    "best": "kenney_digital-audio/Audio/powerUp2.ogg",
+    "over": "kenney_digital-audio/Audio/lowDown.ogg"
+  },
+  "stackr": {
+    "move": "kenney_interface-sounds/Audio/tick_001.ogg",
+    "rotate": "kenney_interface-sounds/Audio/click_002.ogg",
+    "land": "kenney_impact-sounds/Audio/impactSoft_medium_000.ogg",
+    "drop": "kenney_impact-sounds/Audio/impactSoft_heavy_001.ogg",
+    "hold": "kenney_interface-sounds/Audio/switch_002.ogg",
+    "clear": "kenney_interface-sounds/Audio/glass_002.ogg",
+    "clear4": "kenney_digital-audio/Audio/powerUp7.ogg",
+    "level": "kenney_digital-audio/Audio/phaserUp2.ogg",
+    "over": "kenney_digital-audio/Audio/lowThreeTone.ogg"
+  },
+  "five": {
+    "type": "kenney_interface-sounds/Audio/click_001.ogg",
+    "delete": "kenney_interface-sounds/Audio/back_001.ogg",
+    "flip": "kenney_casino-audio/Audio/card-place-1.ogg",
+    "invalid": "kenney_interface-sounds/Audio/error_004.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_PIZZI00.ogg",
+    "lose": "kenney_music-jingles/Audio/jingles_PIZZI04.ogg"
+  },
+  "wheel": {
+    "letter": "kenney_interface-sounds/Audio/pluck_001.ogg",
+    "word": "kenney_interface-sounds/Audio/confirmation_002.ogg",
+    "bonus": "kenney_rpg-audio/Audio/handleCoins.ogg",
+    "wrong": "kenney_interface-sounds/Audio/error_004.ogg",
+    "shuffle": "kenney_casino-audio/Audio/card-shuffle.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "level": "kenney_music-jingles/Audio/jingles_PIZZI02.ogg"
+  },
+  "fleet": {
+    "place": "kenney_impact-sounds/Audio/impactWood_light_002.ogg",
+    "miss": "kenney_impact-sounds/Audio/impactSoft_medium_002.ogg",
+    "hit": "kenney_sci-fi-sounds/Audio/explosionCrunch_001.ogg",
+    "sunk": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_000.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_HIT00.ogg",
+    "lose": "kenney_music-jingles/Audio/jingles_HIT04.ogg"
+  },
+  "airship": {
+    "shoot": "kenney_sci-fi-sounds/Audio/laserSmall_001.ogg",
+    "boom": "kenney_sci-fi-sounds/Audio/explosionCrunch_000.ogg",
+    "hurt": "kenney_sci-fi-sounds/Audio/impactMetal_002.ogg",
+    "power": "kenney_digital-audio/Audio/powerUp5.ogg",
+    "over": "kenney_digital-audio/Audio/phaserDown2.ogg"
+  },
+  "2048": {
+    "slide": "kenney_casino-audio/Audio/card-slide-2.ogg",
+    "merge": "kenney_interface-sounds/Audio/pluck_002.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_STEEL00.ogg",
+    "over": "kenney_digital-audio/Audio/lowThreeTone.ogg"
+  },
+  "mines": {
+    "open": "kenney_interface-sounds/Audio/click_004.ogg",
+    "area": "kenney_interface-sounds/Audio/scroll_002.ogg",
+    "flag": "kenney_interface-sounds/Audio/toggle_002.ogg",
+    "boom": "kenney_sci-fi-sounds/Audio/lowFrequency_explosion_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_STEEL02.ogg"
+  },
+  "nines": {
+    "place": "kenney_interface-sounds/Audio/click_003.ogg",
+    "note": "kenney_interface-sounds/Audio/tick_004.ogg",
+    "erase": "kenney_interface-sounds/Audio/back_002.ogg",
+    "clash": "kenney_interface-sounds/Audio/error_006.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_PIZZI06.ogg"
+  },
+  "switch": {
+    "press": "kenney_ui-audio/Audio/switch3.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_STEEL04.ogg"
+  },
+  "crowns": {
+    "mark": "kenney_interface-sounds/Audio/tick_002.ogg",
+    "crown": "kenney_interface-sounds/Audio/select_002.ogg",
+    "clear": "kenney_interface-sounds/Audio/back_003.ogg",
+    "clash": "kenney_interface-sounds/Audio/error_006.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_PIZZI08.ogg",
+    "giveup": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  },
+  "dusk": {
+    "sun": "kenney_interface-sounds/Audio/switch_004.ogg",
+    "moon": "kenney_interface-sounds/Audio/switch_005.ogg",
+    "clear": "kenney_interface-sounds/Audio/back_003.ogg",
+    "mistake": "kenney_interface-sounds/Audio/error_006.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_STEEL06.ogg",
+    "giveup": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  },
+  "thread": {
+    "step": "kenney_interface-sounds/Audio/tick_004.ogg",
+    "number": "kenney_interface-sounds/Audio/pluck_001.ogg",
+    "cut": "kenney_interface-sounds/Audio/click_005.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_PIZZI10.ogg",
+    "giveup": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  },
+  "quilt": {
+    "lay": "kenney_interface-sounds/Audio/drop_002.ogg",
+    "remove": "kenney_interface-sounds/Audio/back_003.ogg",
+    "wrong": "kenney_interface-sounds/Audio/error_006.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_STEEL08.ogg",
+    "giveup": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  },
+  "rungs": {
+    "type": "kenney_interface-sounds/Audio/click_001.ogg",
+    "right": "kenney_interface-sounds/Audio/confirmation_001.ogg",
+    "wrong": "kenney_interface-sounds/Audio/error_004.ogg",
+    "move": "kenney_casino-audio/Audio/card-slide-4.ogg",
+    "unlock": "kenney_interface-sounds/Audio/maximize_006.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_PIZZI12.ogg",
+    "giveup": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  },
+  "hunch": {
+    "type": "kenney_interface-sounds/Audio/click_001.ogg",
+    "wrong": "kenney_interface-sounds/Audio/error_004.ogg",
+    "reveal": "kenney_casino-audio/Audio/card-place-2.ogg",
+    "right": "kenney_music-jingles/Audio/jingles_PIZZI14.ogg",
+    "lose": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  },
+  "weave": {
+    "step": "kenney_interface-sounds/Audio/tick_002.ogg",
+    "word": "kenney_interface-sounds/Audio/glass_003.ogg",
+    "wrong": "kenney_interface-sounds/Audio/error_004.ogg",
+    "hint": "kenney_interface-sounds/Audio/question_001.ogg",
+    "win": "kenney_music-jingles/Audio/jingles_STEEL10.ogg",
+    "giveup": "kenney_interface-sounds/Audio/minimize_003.ogg"
+  }
+}

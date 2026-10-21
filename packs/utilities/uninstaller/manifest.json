@@ -2,10 +2,19 @@
   "id": "uninstaller",
   "name": "Uninstaller",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 9,
   "description": "Remove an app and the files it leaves behind, after you review them. Goes to the Trash.",
   "symbol": "xmark.bin",
-  "capabilities": ["apps.uninstall"],
-  "whatsNew": "First release."
+  "capabilities": [
+    "apps.uninstall"
+  ],
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Removes an app together with the files it leaves around your Mac, after you've seen the list.",
+    "rules": [
+      "Pick an app, review the leftover files it found, and move them to the Trash.",
+      "Apps that come with macOS and Zephydian itself can't be removed here."
+    ]
+  }
 }

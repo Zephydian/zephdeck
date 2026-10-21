@@ -2,9 +2,16 @@
   "id": "passwords",
   "name": "Passwords",
   "kind": "utility",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 2,
   "description": "Make strong passwords and passphrases, just the way you need them.",
   "symbol": "key.horizontal",
-  "whatsNew": "First release."
+  "whatsNew": "Explains itself on its page in Settings.",
+  "howTo": {
+    "goal": "Makes strong passwords and passphrases to your taste.",
+    "rules": [
+      "Choose the length and which kinds of characters to use, or a passphrase of random words.",
+      "Nothing is saved or sent anywhere; copy it and paste it where you need it."
+    ]
+  }
 }
