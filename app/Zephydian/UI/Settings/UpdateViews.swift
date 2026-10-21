@@ -91,7 +91,7 @@ struct WhatsNewSheet: View {
                 Link("See it on GitHub", destination: release.pageURL).font(.callout)
                 VStack(alignment: .leading, spacing: 4) {
                     if AppUpdater.homebrew != nil {
-                        Text("Installed with Homebrew: this runs `brew upgrade zephydian` for you.")
+                        Text("Installed with Homebrew: this runs `brew update` and `brew upgrade zephydian` for you.")
                     }
                     Text("Until Zephydian is signed, macOS may ask for its permissions again after the update.")
                 }
@@ -133,12 +133,17 @@ struct WhatsNewSheet: View {
         case .installing:
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text(AppUpdater.homebrew != nil ? "Homebrew is updating Zephydian…" : "Installing…").font(.callout)
+                Text(AppUpdater.homebrew != nil && !updater.homebrewMissed ? "Homebrew is updating Zephydian…" : "Installing…").font(.callout)
             }
         case .failed(let message):
-            Label(message, systemImage: "exclamationmark.triangle.fill")
-                .font(.callout).foregroundStyle(.orange)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.callout).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                if updater.homebrewMissed {
+                    Button("Install the Download Instead") { Task { await updater.installUpdate(fromDownload: true) } }
+                }
+            }
         case .none:
             EmptyView()
         }
