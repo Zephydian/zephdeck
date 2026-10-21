@@ -33,6 +33,8 @@ final class NinesGame: GameSession {
     @ObservationIgnored private var loop: GameLoop!
     @ObservationIgnored private var undoStack: [(entries: [Int], notes: [Int])] = []
     @ObservationIgnored private var generateTask: Task<Void, Never>?
+    @ObservationIgnored private let sounds = GameSoundBank("nines")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
     init() {
         difficulty = Difficulty(rawValue: UserDefaults.standard.string(forKey: "nines.difficulty") ?? "") ?? .easy
@@ -53,6 +55,7 @@ final class NinesGame: GameSession {
     var isRunning: Bool { state == .playing }
 
     func pause() {
+        sounds.stop()
         guard state == .playing else { return }
         state = .paused
         loop.stop()
@@ -189,13 +192,17 @@ final class NinesGame: GameSession {
         if notesMode {
             guard entries[selected] == 0 else { undoStack.removeLast(); return }
             notes[selected] ^= 1 << digit
+            sounds.play("note", volume: 0.6)
         } else if entries[selected] == digit {
             entries[selected] = 0
+            sounds.play("erase", volume: 0.7)
         } else {
             entries[selected] = digit
             notes[selected] = 0
             // The digit can't go anywhere else in this row, column or box any more.
             for peer in NinesGenerator.peers[selected] { notes[peer] &= ~(1 << digit) }
+            // A number that repeats in its row, column or box gets the clash sound.
+            sounds.play(conflicts.contains(selected) ? "clash" : "place", volume: 0.8)
         }
         if let puzzle, (0..<81).allSatisfy({ value(at: $0) == puzzle.solution[$0] }) {
             win()
@@ -209,6 +216,7 @@ final class NinesGame: GameSession {
         pushUndo()
         entries[selected] = 0
         notes[selected] = 0
+        sounds.play("erase", volume: 0.7)
         save()
     }
 
@@ -256,6 +264,7 @@ final class NinesGame: GameSession {
     private func win() {
         state = .won
         loop.stop()
+        sounds.play("win")
         isNewBest = BestTime.record(seconds, for: difficulty.bestKey)
         UserDefaults.standard.removeObject(forKey: Self.saveKey)
         GameStats.won("nines")

@@ -213,6 +213,8 @@ final class SettingsStore {
     /// Where the Notes window was last, as `NSStringFromRect`.
     var notesWindowFrame: String? { didSet { defaults.set(notesWindowFrame, forKey: "notesWindowFrame") } }
     var fiveHighContrast: Bool { didSet { defaults.set(fiveHighContrast, forKey: "fiveHighContrast") } }
+    /// Games may make sound (each game's speaker can still silence it). Off at first.
+    var gameSounds: Bool { didSet { defaults.set(gameSounds, forKey: GameSounds.masterKey) } }
     var hasCompletedOnboarding: Bool { didSet { defaults.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") } }
     /// The one-time "New: Features" card was seen or dismissed (the welcome tour covers it for new people).
     var featuresIntroSeen: Bool { didSet { defaults.set(featuresIntroSeen, forKey: "featuresIntroSeen") } }
@@ -289,6 +291,12 @@ final class SettingsStore {
         notesWindowOnTop = defaults.object(forKey: "notesWindowOnTop") == nil ? true : defaults.bool(forKey: "notesWindowOnTop")
         notesWindowFrame = defaults.string(forKey: "notesWindowFrame")
         fiveHighContrast = defaults.bool(forKey: "fiveHighContrast")
+        // Before there was one switch for all games, Keys had its own (off by default): whoever turned
+        // it on keeps hearing it.
+        if defaults.object(forKey: GameSounds.masterKey) == nil, defaults.bool(forKey: "pack.keys.sound") {
+            defaults.set(true, forKey: GameSounds.masterKey)
+        }
+        gameSounds = defaults.bool(forKey: GameSounds.masterKey)
         hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
         featuresIntroSeen = defaults.bool(forKey: "featuresIntroSeen")
         panelStyle = value("panelStyle", .glass)

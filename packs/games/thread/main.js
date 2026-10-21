@@ -6,6 +6,12 @@
 // Drag from 1 (or the thread's end); drag back over the thread to undo steps; click it to cut it there.
 
 const PUZZLES = z.data("puzzles.json");     // level → [{ n, nums: [[cell, number]], walls: [[a, b]], s: the answer's cells }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["cut", "giveup", "hint", "number", "step", "win"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const DAILY_POOL = 200;                     // the first 200 of each level are dailies, the rest practice
 const DAILY_LEVEL = ["hard", "easy", "easy", "medium", "medium", "medium", "hard"];   // by weekday, Sunday first
 const LEVELS = [
@@ -122,12 +128,14 @@ const isNeighbour = (a, b) => (Math.abs(a - b) === 1 && Math.floor(a / n) === Ma
 function step(j) {
   const head = path[path.length - 1];
   if (j === head) return true;
-  if (path.length > 1 && j === path[path.length - 2]) { path.pop(); return true; }
+  if (path.length > 1 && j === path[path.length - 2]) { path.pop(); return true; }   // stepping back is silent (B-55)
   const k = path.indexOf(j);
   if (k >= 0) { path.length = k + 1; return true; }        // back to a cell on the thread: cut there
   if (!isNeighbour(head, j) || walls.has(edge(head, j))) return false;
   if (numberAt.has(j) && numberAt.get(j) !== nextNumber()) return false;
   path.push(j);
+  // A quiet tick for each step; reaching the next number plucks.
+  if (numberAt.has(j)) sound("number"); else sound("step", 0.35);
   return true;
 }
 
@@ -161,6 +169,7 @@ function checkSolved() {
   solved = true;
   solvedTime = elapsed;
   recordWin();
+  sound("win");
   save();
   setActions();
   showSolved();
@@ -222,6 +231,7 @@ function useHint() {
   if (solved) return;
   startClock();
   if (!applyHint()) return;
+  sound("hint");
   hintsUsed++;
   save();
   checkSolved();
@@ -232,6 +242,7 @@ function giveUp() {
   if (solved) return;
   stopClock();
   revealSolution();
+  sound("giveup");
   solved = true;
   gaveUp = true;
   solvedTime = elapsed;
@@ -335,6 +346,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    preloadSounds();
     const saved = z.storage.get("level");
     if (typeof saved === "number" && saved >= 0 && saved < LEVELS.length) level = saved;
     setMenu();
@@ -365,7 +377,9 @@ zephydian.game({
         path = [i];
       } else if (path.includes(i)) {
         remember();
-        path.length = path.indexOf(i) + 1;     // click the thread: it's cut there, and goes on from there
+        // Click the thread: it's cut there (one soft click, B-55), and goes on from there.
+        if (path.indexOf(i) < path.length - 1) sound("cut", 0.5);
+        path.length = path.indexOf(i) + 1;
       } else {
         return;
       }
@@ -407,6 +421,7 @@ zephydian.game({
   pause() { stopClock(); dragging = false; save(); },
 
   resume() {
+    preloadSounds();
     if (level === 0 && puzzleKey !== "daily-" + dayNumber(today())) open();
     z.redraw();
   },

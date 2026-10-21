@@ -31,6 +31,8 @@ final class Game2048: GameSession {
 
     @ObservationIgnored private var nextID = 0
     @ObservationIgnored private var cleanupTask: Task<Void, Never>?
+    @ObservationIgnored private let sounds = GameSoundBank("2048")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
     init() {
         if !restore() { newGame() }
@@ -42,7 +44,7 @@ final class Game2048: GameSession {
     var hint: String { state == .over ? "Enter: new game · Esc back" : "←↑↓→ or WASD slide · or drag the board · Esc back" }
     var showsPauseButton: Bool { false }
     var isRunning: Bool { false }
-    func pause() {}
+    func pause() { sounds.stop() }
     func togglePause() {}
 
     func handleKey(_ event: NSEvent) -> Bool {
@@ -95,6 +97,7 @@ final class Game2048: GameSession {
         for (i, tile) in tiles.enumerated() { grid[tile.row][tile.col] = i }
 
         var moved = false
+        var merged = false
         for line in 0..<Self.size {
             // The line's cells, starting from the edge the tiles slide toward.
             let cells: [(row: Int, col: Int)] = (0..<Self.size).map { k in
@@ -118,6 +121,7 @@ final class Game2048: GameSession {
                     tiles[i].isMerging = true
                     lastMerged = true
                     moved = true
+                    merged = true
                 } else {
                     let target = cells[next]
                     if (tiles[i].row, tiles[i].col) != target { moved = true }
@@ -130,6 +134,7 @@ final class Game2048: GameSession {
             }
         }
         guard moved else { return }
+        sounds.play(merged ? "merge" : "slide", volume: merged ? 1 : 0.6)
 
         if score > best {
             best = score
@@ -140,8 +145,10 @@ final class Game2048: GameSession {
             hasWon = true
             state = .won
             GameStats.won("2048")
+            sounds.play("win")
         } else if !canMove() {
             state = .over
+            sounds.play("over")
         }
         save()
 

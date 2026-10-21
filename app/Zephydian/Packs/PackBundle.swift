@@ -52,8 +52,10 @@ struct PackBundle {
 
     var id: String { manifest.id }
 
-    enum Kind: String { case game, utility }
-    /// Checked by `load`, so it's always one of the two.
+    /// `sounds` is a sound set: a built-in game's sounds, downloaded with it from the Library
+    /// (no script; never shown in the Library or the grids).
+    enum Kind: String { case game, utility, sounds }
+    /// Checked by `load`, so it's always one of these.
     var kind: Kind { Kind(rawValue: manifest.kind) ?? .game }
 
     enum LoadError: Error, CustomStringConvertible {
@@ -83,6 +85,7 @@ struct PackBundle {
             throw LoadError.invalid("needs a newer Zephydian (capability \(unknown))")
         }
         guard manifest.sdkVersion <= sdkVersion else { throw LoadError.invalid("needs a newer Zephydian (SDK \(manifest.sdkVersion))") }
+        if kind == .sounds { return PackBundle(folder: folder, manifest: manifest, script: "", isDev: isDev) }
         guard let script = try? String(contentsOf: folder.appending(path: "main.js"), encoding: .utf8) else {
             throw LoadError.unreadable("main.js can't be read")
         }

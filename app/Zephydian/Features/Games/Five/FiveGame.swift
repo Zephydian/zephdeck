@@ -44,6 +44,8 @@ final class FiveGame: GameSession {
     @ObservationIgnored private let valid: Set<String>
     @ObservationIgnored private let today: String
     @ObservationIgnored private var messageTask: Task<Void, Never>?
+    @ObservationIgnored private let sounds = GameSoundBank("five")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
 
 
     init(answers: [String] = WordBank.shared.fiveAnswers,
@@ -65,7 +67,7 @@ final class FiveGame: GameSession {
     }
     var showsPauseButton: Bool { false }
     var isRunning: Bool { false }
-    func pause() {}
+    func pause() { sounds.stop() }
     func togglePause() {}
 
     func handleKey(_ event: NSEvent) -> Bool {
@@ -132,11 +134,13 @@ final class FiveGame: GameSession {
     func type(_ letter: String) {
         guard !isDone, revealedInLastRow == Self.length, current.count < Self.length else { return }
         current += letter
+        sounds.play("type", volume: 0.6)
     }
 
     func deleteLetter() {
         guard !isDone, revealedInLastRow == Self.length, !current.isEmpty else { return }
         current.removeLast()
+        sounds.play("delete", volume: 0.6)
     }
 
     func submit() {
@@ -179,6 +183,7 @@ final class FiveGame: GameSession {
             return
         }
         hintedPositions.insert(position)
+        sounds.play("hint")
         saveDaily()
     }
 
@@ -194,6 +199,7 @@ final class FiveGame: GameSession {
         current = ""
         gaveUp = true
         isDone = true
+        sounds.play("lose")
         record(won: false)
         saveDaily()
         showsResult = true
@@ -213,12 +219,14 @@ final class FiveGame: GameSession {
         for i in 1...Self.length {
             if animate { try? await Task.sleep(for: .milliseconds(i == 1 ? 0 : 90)) }
             revealedInLastRow = i
+            sounds.play("flip", volume: 0.7)
         }
         if animate { try? await Task.sleep(for: .milliseconds(250)) }
 
         let won = guess == answer
         guard won || guesses.count == Self.maxGuesses else { return }
         isDone = true
+        sounds.play(won ? "win" : "lose")
         record(won: won)
         show(won ? Self.praise[guesses.count - 1] : answer)
         try? await Task.sleep(for: .milliseconds(900))
@@ -227,6 +235,7 @@ final class FiveGame: GameSession {
 
     private func reject(_ text: String) {
         shakeCount += 1
+        sounds.play("invalid")
         show(text)
     }
 

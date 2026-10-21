@@ -3,6 +3,12 @@
 // can be replayed. Hint shows the next letter of a word you haven't found.
 
 const PUZZLES = z.data("puzzles.json");     // [{ t: theme, g: 36 letters, w: [[word, [cells]]] }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["giveup", "hint", "step", "win", "word", "wrong"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const FIRST_DAY = new Date(2026, 9, 20);    // the first daily; the archive goes back to here
 const N = 6;
 
@@ -98,16 +104,18 @@ function finishTrace() {
     if (path.length === cells.length && path.every((c, i) => c === cells[i])) {
       found.push(k);
       save();
-      if (found.length === puzzle.w.length) finish();
+      if (found.length === puzzle.w.length) finish(); else sound("word");
       return;
     }
-    if (word === spelled) { z.toast("Right word, but it's hidden somewhere else"); return; }
+    if (word === spelled) { sound("wrong", 0.7); z.toast("Right word, but it's hidden somewhere else"); return; }
   }
+  sound("wrong", 0.5);
 }
 
 function hint() {
   if (done) return;
   startClock();
+  sound("hint");
   // The next letter of the first word not found yet (a whole word revealed counts as found).
   const k = puzzle.w.findIndex((_, i) => !found.includes(i));
   if (k < 0) return;
@@ -120,6 +128,7 @@ function hint() {
 function finish() {
   stopClock();
   done = true;
+  sound(gaveUp ? "giveup" : "win");
   finalTime = elapsed;
   if (day === todayNumber() && gaveUp) {
     z.storage.set("streak", { count: 0, last: day });
@@ -266,6 +275,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    preloadSounds();
     setMenu();
     load(todayNumber());
   },
@@ -295,7 +305,7 @@ zephydian.game({
       const head = trace[trace.length - 1];
       if (i === head) return;
       if (trace.length > 1 && i === trace[trace.length - 2]) trace.pop();          // back one step
-      else if (!trace.includes(i) && isNeighbour(head, i)) trace.push(i);
+      else if (!trace.includes(i) && isNeighbour(head, i)) { trace.push(i); sound("step", 0.35); }
     } else if (e.type === "up" && trace) {
       finishTrace();
     }
@@ -311,6 +321,7 @@ zephydian.game({
   pause() { stopClock(); trace = null; if (!done) save(); },
 
   resume() {
+    preloadSounds();
     if (mode === 0 && day !== todayNumber()) load(todayNumber());
     z.redraw();
   },

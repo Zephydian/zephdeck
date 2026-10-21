@@ -1,0 +1,10 @@
+{
+  "id": "fleet-sounds",
+  "name": "Fleet sounds",
+  "kind": "sounds",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "The sounds for Fleet, downloaded with the game.",
+  "symbol": "speaker.wave.2",
+  "whatsNew": "First release."
+}

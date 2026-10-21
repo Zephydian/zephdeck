@@ -6,6 +6,12 @@
 // Click a cell: sun, then moon, then empty (right-click goes the other way).
 
 const PUZZLES = z.data("puzzles.json");     // level → [{ g, h, v, s: the answer }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["clear", "giveup", "hint", "mistake", "moon", "sun", "win"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const DAILY_POOL = 200;                     // the first 200 of each level are dailies, the rest practice
 const DAILY_LEVEL = ["hard", "easy", "easy", "medium", "medium", "medium", "hard"];   // by weekday, Sunday first
 const LEVELS = [
@@ -144,6 +150,7 @@ function checkSolved() {
   solved = true;
   solvedTime = elapsed;
   recordWin();
+  sound("win");
   save();
   setActions();
   showSolved();
@@ -205,6 +212,7 @@ function useHint() {
   if (solved) return;
   startClock();
   if (!applyHint()) return;
+  sound("hint");
   hintsUsed++;
   save();
   checkSolved();
@@ -215,6 +223,7 @@ function giveUp() {
   if (solved) return;
   stopClock();
   revealSolution();
+  sound("giveup");
   solved = true;
   gaveUp = true;
   solvedTime = elapsed;
@@ -245,6 +254,8 @@ function cycle(i, backwards) {
   history.push([i, cells[i]]);
   if (history.length > MAX_UNDO) history.shift();
   cells[i] = (cells[i] + (backwards ? 2 : 1)) % 3;
+  if (!cells[i]) sound("clear", 0.6);
+  else sound(mistakes().bad.has(i) ? "mistake" : cells[i] === SUN ? "sun" : "moon");
   save();
   checkSolved();
   z.redraw();
@@ -328,6 +339,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    preloadSounds();
     const saved = z.storage.get("level");
     if (typeof saved === "number" && saved >= 0 && saved < LEVELS.length) level = saved;
     setMenu();
@@ -382,6 +394,7 @@ zephydian.game({
   pause() { stopClock(); save(); },
 
   resume() {
+    preloadSounds();
     if (level === 0 && puzzleKey !== "daily-" + dayNumber(today())) open();
     z.redraw();
   },

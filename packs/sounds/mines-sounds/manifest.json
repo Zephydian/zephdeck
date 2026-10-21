@@ -1,0 +1,10 @@
+{
+  "id": "mines-sounds",
+  "name": "Mines sounds",
+  "kind": "sounds",
+  "version": "1.0.0",
+  "sdkVersion": 12,
+  "description": "The sounds for Mines, downloaded with the game.",
+  "symbol": "speaker.wave.2",
+  "whatsNew": "First release."
+}

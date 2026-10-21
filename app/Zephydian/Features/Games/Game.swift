@@ -29,6 +29,10 @@ protocol GameSession: AnyObject {
     var actions: [GameAction] { get }
     /// One of `actions` was pressed (after its confirmation, if it has one).
     func perform(_ action: String)
+    /// Where the game's own sound switch is saved, if it has sounds on this Mac (see `GameSounds`).
+    var soundKey: String? { get }
+    /// The game's speaker button was used.
+    func setSound(_ on: Bool)
 }
 
 extension GameSession {
@@ -37,6 +41,8 @@ extension GameSession {
     func undo() -> Bool { false }
     var actions: [GameAction] { [] }
     func perform(_ action: String) {}
+    var soundKey: String? { nil }
+    func setSound(_ on: Bool) { if let soundKey { GameSounds.set(soundKey, on: on) } }
 }
 
 /// A small button under the board (Hint, Give up). With `confirm`, it asks first.
@@ -289,9 +295,13 @@ struct GameOverlay<Actions: View>: View {
             if let subtitle {
                 Text(subtitle).font(.system(size: 13)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
-            HStack(spacing: 10) { actions }
-                .controlSize(.large)
-                .padding(.top, 8)
+            // Side by side when they fit; stacked on a narrow board, like Stackr's (B-56).
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { actions }
+                VStack(spacing: 8) { actions }
+            }
+            .controlSize(.large)
+            .padding(.top, 8)
         }
         .padding(16)
     }

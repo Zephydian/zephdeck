@@ -37,8 +37,11 @@ final class PackSession: GameSession, PackHost {
 
     var hasSound: Bool { bundle.kind == .game && bundle.manifest.sounds == true }
 
-    func toggleSound() {
-        runtime.setSoundOn(!isSoundOn)
+    var soundKey: String? { hasSound ? PackSound.key(bundle.id) : nil }
+
+    /// The speaker: the pack hears about it too (`soundChanged`), so its own Sound switch follows.
+    func setSound(_ on: Bool) {
+        runtime.setSoundOn(on)
         isSoundOn = runtime.isSoundOn
     }
 

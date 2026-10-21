@@ -5,6 +5,12 @@
 // Click a cell: × (a note), then a crown, then empty again. Drag to put × on many cells.
 
 const PUZZLES = z.data("puzzles.json");     // size → [{ r: one region letter per cell, s: the crown's column per row }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["clash", "clear", "crown", "giveup", "hint", "mark", "win"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const DAILY_POOL = 200;                     // the first 200 of each size are dailies, the rest practice
 const DAILY_SIZE = [9, 6, 7, 7, 8, 8, 9];   // by weekday, Sunday first: Monday easiest, weekends hardest
 const LEVELS = [
@@ -137,6 +143,7 @@ function checkSolved() {
   solved = true;
   solvedTime = elapsed;
   recordWin();
+  sound("win");
   save();
   setActions();
   showSolved();
@@ -201,6 +208,7 @@ function useHint() {
   if (solved) return;
   startClock();
   if (!applyHint()) return;
+  sound("hint");
   hintsUsed++;
   save();
   checkSolved();
@@ -211,6 +219,7 @@ function giveUp() {
   if (solved) return;
   stopClock();
   revealSolution();
+  sound("giveup");
   solved = true;
   gaveUp = true;
   solvedTime = elapsed;
@@ -252,6 +261,9 @@ function cycle(i) {
   if (solved) return;
   startClock();
   setCell(i, (cells[i] + 1) % 3);
+  // × is a quiet note; a crown that clashes with another sounds wrong.
+  if (cells[i] === CROWN) sound(conflicts().bad.has(i) ? "clash" : "crown");
+  else sound(cells[i] === MARK ? "mark" : "clear", 0.6);
   save();
   checkSolved();
   z.redraw();
@@ -260,6 +272,7 @@ function cycle(i) {
 function mark(i) {
   if (solved || cells[i] !== EMPTY) return;
   setCell(i, MARK);
+  sound("mark", 0.4);
   save();
   z.redraw();
 }
@@ -353,6 +366,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    preloadSounds();
     const saved = z.storage.get("level");
     if (typeof saved === "number" && saved >= 0 && saved < LEVELS.length) level = saved;
     setMenu();
@@ -424,6 +438,7 @@ zephydian.game({
   pause() { stopClock(); save(); },
 
   resume() {
+    preloadSounds();
     if (level === 0 && puzzleKey !== "daily-" + dayNumber(today())) open();
     z.redraw();
   },

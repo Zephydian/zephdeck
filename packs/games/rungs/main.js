@@ -3,6 +3,12 @@
 // shared clue. One puzzle a day; past days can be replayed.
 
 const PUZZLES = z.data("puzzles.json");     // [{ w: seven words top to bottom, c: clues for w[1..5], e: the ends' clue }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["giveup", "hint", "move", "right", "type", "unlock", "win", "wrong"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const FIRST_DAY = new Date(2026, 9, 20);    // the first daily; the archive goes back to here
 
 let mode = 0;                               // 0 today, 1 archive
@@ -106,6 +112,7 @@ const bottomRow = () => (order[0] === 1 ? 6 : 0);
 function checkUnlock() {
   if (unlocked || !order.every(solvedRow) || !inOrder(order)) return;
   unlocked = true;
+  sound("unlock");
   selected = topRow();
   z.toast("In order! Now the top and bottom");
 }
@@ -115,6 +122,7 @@ function checkDone() {
   stopClock();
   done = true;
   finalTime = elapsed;
+  sound("win");
   if (day === todayNumber() && gaveUp) {
     z.storage.set("streak", { count: 0, last: day });
   } else if (day === todayNumber()) {
@@ -168,6 +176,7 @@ function setActions() {
 function useHint() {
   if (done) return;
   startClock();
+  sound("hint");
   const open = k => !solvedRow(k) && (unlocked || (k !== 0 && k !== 6));
   const rows = shownRows().filter(k => k >= 0 && open(k));
   if (rows.length) {
@@ -194,6 +203,7 @@ function useHint() {
 
 function giveUp() {
   if (done) return;
+  sound("giveup");
   for (let k = 0; k <= 6; k++) typed[k] = puzzle.w[k];
   order = [1, 2, 3, 4, 5];
   unlocked = true;
@@ -216,9 +226,11 @@ function typeLetter(ch) {
   const t = typed[selected] || "";
   if (t.length >= L) return;
   typed[selected] = t + ch;
+  if (typed[selected].length < L) sound("type", 0.5);
   if (typed[selected].length === L) {
     if (solvedRow(selected)) {
       wrong = -1;
+      sound("right");
       checkUnlock();
       checkDone();
       // Move on to the next unsolved row.
@@ -226,6 +238,7 @@ function typeLetter(ch) {
       if (rows.length && !done) selected = rows[0];
     } else {
       wrong = selected;
+      sound("wrong");
     }
   }
   save();
@@ -316,6 +329,7 @@ function setMenu() {
 }
 
 function moveRow(from, to) {
+  sound("move", 0.7);
   const k = order.splice(from, 1)[0];
   order.splice(Math.max(0, Math.min(order.length, to)), 0, k);
   checkUnlock();
@@ -324,6 +338,7 @@ function moveRow(from, to) {
 
 zephydian.game({
   start() {
+    preloadSounds();
     setMenu();
     load(todayNumber());
   },
@@ -398,6 +413,7 @@ zephydian.game({
   pause() { stopClock(); drag = null; if (!done) save(); },
 
   resume() {
+    preloadSounds();
     if (mode === 0 && day !== todayNumber()) load(todayNumber());
     z.redraw();
   },

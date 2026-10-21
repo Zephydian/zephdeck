@@ -10,6 +10,12 @@ const LEVELS = [
 ];
 const MAX_UNDO = 100;
 
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["press", "win"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
+
 let level = 0;       // index into LEVELS
 let board = [];      // N*N booleans, true = lit
 let moves = 0;
@@ -53,6 +59,7 @@ function newBoard() {
 
 function press(i) {
   if (solved) return;
+  sound("press", 0.8);
   marked = marked.filter(c => c !== i);
   flip(board, i);
   history.push(i);
@@ -63,6 +70,7 @@ function press(i) {
 }
 
 function win() {
+  sound("win");
   solved = true;
   setActions();
   const stats = z.storage.get("stats") || {};
@@ -194,6 +202,7 @@ function cellAt(x, y) {
 
 zephydian.game({
   start() {
+    preloadSounds();
     const saved = z.storage.get("game");
     if (saved && Array.isArray(saved.board) && saved.board.length === N * N) {
       ({ level, board, moves, par, history, cursor, solved } = saved);

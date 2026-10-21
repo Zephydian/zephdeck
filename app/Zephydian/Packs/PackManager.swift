@@ -298,6 +298,7 @@ final class PackManager {
         await loadCatalog()
         guard catalogState == .loaded else { return }
         await installUpdates()
+        await installMissingSoundSets()
     }
 
     /// Installs every update in the loaded catalog (a pack that's in use waits until it's closed).
@@ -309,6 +310,41 @@ final class PackManager {
         for id in installed.keys.sorted() where hasUpdate(id) {
             if isInUse(id) { pendingUpdates.insert(id); continue }
             if let entry = entry(for: id) { await install(entry) }
+        }
+    }
+
+    // MARK: Sound sets
+
+    /// Built-in games installed from the Library, whose sounds come as a download (`<id>-sounds`).
+    /// Snake, Stackr and Five come installed and carry their sounds inside the app.
+    static let soundSetGames: Set<String> = ["wheel", "fleet", "airship", "2048", "mines", "nines"]
+
+    /// Downloads a built-in game's sounds when the game is installed from the Library.
+    func installSoundSet(for game: String) async {
+        guard Self.soundSetGames.contains(game), installed["\(game)-sounds"] == nil else { return }
+        if catalog == nil || catalogState != .loaded { await loadCatalog() }
+        if let entry = entry(for: "\(game)-sounds") { await install(entry) }
+    }
+
+    func removeSoundSet(for game: String) {
+        guard Self.soundSetGames.contains(game), installed["\(game)-sounds"] != nil else { return }
+        uninstall("\(game)-sounds", deleteProgress: false)
+    }
+
+    /// With Game sounds on (switched on, or at launch), every installed built-in game gets its sound
+    /// set: fetching the Library's list only if one is missing (B-54). Offline, it tries again next time.
+    func installSoundSetsForInstalledGames() async {
+        let missing = Self.soundSetGames.filter { InstalledGames.shared.contains($0) && installed["\($0)-sounds"] == nil }
+        guard !missing.isEmpty else { return }
+        if catalogState != .loaded { await loadCatalog() }
+        await installMissingSoundSets()
+    }
+
+    /// Games installed before sounds existed get theirs the next time the Library's list is fresh.
+    func installMissingSoundSets() async {
+        guard catalogState == .loaded else { return }
+        for game in Self.soundSetGames.sorted() where InstalledGames.shared.contains(game) && installed["\(game)-sounds"] == nil {
+            if let entry = entry(for: "\(game)-sounds") { await install(entry) }
         }
     }
 

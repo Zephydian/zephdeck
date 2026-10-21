@@ -6,6 +6,12 @@
 // Drag from one corner to the other to lay a patch; click a patch to take it away.
 
 const PUZZLES = z.data("puzzles.json");     // level → [{ n, clues: [[cell, area, shape], …], s: [[r, c, w, h], …] }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["giveup", "hint", "lay", "remove", "win", "wrong"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const DAILY_POOL = 200;                     // the first 200 of each level are dailies, the rest practice
 const DAILY_LEVEL = ["hard", "easy", "easy", "medium", "medium", "medium", "hard"];   // by weekday, Sunday first
 const LEVELS = [
@@ -130,6 +136,7 @@ function checkSolved() {
   solved = true;
   solvedTime = elapsed;
   recordWin();
+  sound("win");
   save();
   setActions();
   showSolved();
@@ -191,6 +198,7 @@ function useHint() {
   if (solved) return;
   startClock();
   if (!applyHint()) return;
+  sound("hint");
   hintsUsed++;
   save();
   checkSolved();
@@ -201,6 +209,7 @@ function giveUp() {
   if (solved) return;
   stopClock();
   revealSolution();
+  sound("giveup");
   solved = true;
   gaveUp = true;
   solvedTime = elapsed;
@@ -244,6 +253,8 @@ function rectFrom(a, b) {
 function lay(p) {
   remember();
   patches = patches.filter(q => !overlaps(p, q)).concat([p]);
+  // A patch that breaks a rule (no clue, two clues, wrong size or shape) sounds wrong.
+  sound(check(p).ok ? "lay" : "wrong");
   save();
   checkSolved();
 }
@@ -253,6 +264,7 @@ function removeAt(cell) {
   if (k < 0) return;
   remember();
   patches.splice(k, 1);
+  sound("remove", 0.7);
   save();
 }
 
@@ -336,6 +348,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    preloadSounds();
     const saved = z.storage.get("level");
     if (typeof saved === "number" && saved >= 0 && saved < LEVELS.length) level = saved;
     setMenu();
@@ -385,6 +398,7 @@ zephydian.game({
   pause() { stopClock(); drag = null; save(); },
 
   resume() {
+    preloadSounds();
     if (level === 0 && puzzleKey !== "daily-" + dayNumber(today())) open();
     z.redraw();
   },

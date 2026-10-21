@@ -36,5 +36,6 @@
         "Pick the next rung"
       ]
     ]
-  }
+  },
+  "sounds": true
 }

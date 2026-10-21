@@ -186,7 +186,8 @@ Each pack has its own storage, up to 1 MB in total. It's kept when the player re
 - Images in `assets/` are drawn with `g.image(name, …)`.
 
 **Sounds (SDK 10, games)**
-- Put `"sounds": true` in manifest.json. The game's header then gets a speaker button. Sound is **off** until the player switches it on, and the choice is remembered for your game.
+- Put `"sounds": true` in manifest.json. The game's header then gets a speaker button. Sounds play only while **Game sounds** is on in Settings (off at first) and the game's own speaker is on; switching a game on also switches Game sounds on.
+- Your sounds ship inside your pack, so they're downloaded with it and removed with it. Keep them short (most under half a second) and similar in loudness; a win jingle can be a little softer.
 - `z.sound.play(name, { volume })`: plays `assets/<name>` (WAV or MP3, up to 2 seconds; `volume` 0–1, default 1). Sounds can overlap. Nothing plays while the sound is off or the game is paused, so you can call it freely.
 - `z.sound.preload(names)`: reads the files ahead of time, so the first sound isn't late. Call it in `start()` and `resume()`.
 - `z.sound.on()` → whether the sound is on; `z.sound.set(on)` switches it (for a switch in your own menu; the speaker button follows).

@@ -47,7 +47,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .shortcuts: ["Keyboard shortcut", "Open the panel", "Hotkey", "Clipboard", "Screenshot", "Dictionary"]
         case .island: ["Notch", "Look", "Black", "Liquid Glass", "Hover", "Click", "Swipe", "Haptic", "Displays without a notch", "Pill"]
         case .notes: ["Monospace font", "Notes window", "On top"]
-        case .games: ["High-contrast colors", "Five", "Stats", "Library"]
+        case .games: ["Game sounds", "Sound", "High-contrast colors", "Five", "Stats", "Library"]
         case .packs: ["Updates", "Check now", "Running now", "Stop", "Library", "Utilities"]
         case .features: ["Presets", "Lite", "Essential", "Everything", "Turn on", "Turn off", "Turn All Off"]
         case .permissions: ["Accessibility", "Screen Recording", "Repair", "Privacy"]

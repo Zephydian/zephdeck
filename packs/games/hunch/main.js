@@ -2,6 +2,12 @@
 // five. The fewer words you needed, the better. One puzzle a day; past days can be replayed.
 
 const PUZZLES = z.data("puzzles.json");     // [{ a: answer, ok: [key phrases], w: [five words] }]
+
+// Sounds (Kenney, CC0), played only while game sounds are on (Settings, and this game's speaker).
+const SOUND_NAMES = ["lose", "reveal", "right", "type", "wrong"];
+const sound = (name, volume) => z.sound.play("sounds/" + name + ".wav", { volume: volume == null ? 1 : volume });
+const preloadSounds = () => z.sound.preload(SOUND_NAMES.map(n => "sounds/" + n + ".wav"));
+
 const FIRST_DAY = new Date(2026, 9, 20);    // the first daily; the archive goes back to here
 const WORDS = 5;
 const ADVANCE = 14 * 0.618;                 // the typed guess is 14 pt SF Mono
@@ -115,7 +121,9 @@ function submit() {
     return;
   }
   guesses.push(guess);
-  if (shown < WORDS) shown++;
+  sound("wrong");
+  // The next word turns over a moment after the miss.
+  if (shown < WORDS) { shown++; z.after(260, () => sound("reveal")); }
   else { finish(); return; }
   save();
   setActions();
@@ -127,6 +135,7 @@ function finish() {
   done = true;
   finalTime = elapsed;
   shown = WORDS;
+  sound(won ? "right" : "lose");
   if (won && day === todayNumber()) {
     const streak = z.storage.get("streak") || { count: 0, last: null };
     if (streak.last !== day) {
@@ -172,6 +181,7 @@ function setActions() {
         if (done || shown >= WORDS) return;
         startClock();
         shown++;
+        sound("reveal");
         hintsUsed++;
         save();
         setActions();
@@ -254,6 +264,7 @@ function setMenu() {
 
 zephydian.game({
   start() {
+    preloadSounds();
     setMenu();
     load(todayNumber());
   },
@@ -282,6 +293,7 @@ zephydian.game({
       if (!typing && e.char === " ") return true;
       startClock();
       typing += e.char;
+      sound("type", 0.4);
     } else {
       return false;
     }
@@ -293,6 +305,7 @@ zephydian.game({
   pause() { stopClock(); if (!done) save(); },
 
   resume() {
+    preloadSounds();
     if (mode === 0 && day !== todayNumber()) load(todayNumber());
     z.redraw();
   },

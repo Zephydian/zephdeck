@@ -109,3 +109,12 @@ EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
+
+## Kenney's game audio
+
+Game sounds (in `app/Zephydian/Resources/Sounds/`, `packs/sounds/` and the `assets/sounds/` folders of
+the game packs) are from Kenney's audio packs, <https://kenney.nl>: Interface Sounds, Digital Audio, Impact
+Sounds, Casino Audio, Music Jingles, Sci-Fi Sounds and RPG Audio, by Kenney Vleugels, released under
+[Creative Commons Zero (CC0)](https://creativecommons.org/publicdomain/zero/1.0/). No credit is required;
+it's given here with thanks. They were converted to mono WAV, trimmed and evened out in loudness
+(`scripts/sounds/build.py`, which lists every sound in `scripts/sounds/map.json`).

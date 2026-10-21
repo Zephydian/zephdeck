@@ -28,6 +28,8 @@ final class MinesGame: GameSession {
     private(set) var cursor = Cell(x: 4, y: 4)
     private(set) var seconds = 0
     private(set) var isNewBest = false
+    @ObservationIgnored private let sounds = GameSoundBank("mines")
+    var soundKey: String? { sounds.isAvailable ? sounds.key : nil }
     /// Safe squares opened (or wrong flags taken away) by Hint, and whether the mines were shown with Give up.
     private(set) var hintsUsed = 0
     private(set) var gaveUp = false
@@ -63,6 +65,7 @@ final class MinesGame: GameSession {
     var isRunning: Bool { state == .playing }
 
     func pause() {
+        sounds.stop()
         guard state == .playing else { return }
         state = .paused
         loop.stop()
@@ -171,7 +174,9 @@ final class MinesGame: GameSession {
                 if state == .lost { return }
             }
         } else {
+            let before = revealed.count
             open(cell)
+            if state == .playing { sounds.play(revealed.count - before > 1 ? "area" : "open", volume: 0.7) }
         }
         if state == .playing, revealed.count == cols * rows - mines.count { win() }
     }
@@ -180,6 +185,7 @@ final class MinesGame: GameSession {
         guard state == .ready || state == .playing, !revealed.contains(cell) else { return }
         cursor = cell
         if flagged.contains(cell) { flagged.remove(cell) } else { flagged.insert(cell) }
+        sounds.play("flag", volume: 0.7)
     }
 
     func adjacentMines(_ cell: Cell) -> Int { neighbors(of: cell).filter(mines.contains).count }
@@ -195,6 +201,7 @@ final class MinesGame: GameSession {
             exploded = cell
             state = .lost
             loop.stop()
+            sounds.play("boom")
             return
         }
         var stack = [cell]
@@ -215,6 +222,7 @@ final class MinesGame: GameSession {
     private func win() {
         state = .won
         loop.stop()
+        sounds.play("win")
         flagged = mines
         isNewBest = BestTime.record(seconds, for: difficulty.bestKey)
         GameStats.won("mines")
