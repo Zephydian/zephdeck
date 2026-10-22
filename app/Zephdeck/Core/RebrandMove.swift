@@ -132,9 +132,7 @@ enum WelcomeWindow {
 
     static func show(openPermissions: @escaping () -> Void) {
         guard window == nil else { return }
-        let close = {
-            window?.close()
-        }
+        let close = { Self.window?.close() }
         let view = RebrandWelcomeView(
             openPermissions: { close(); openPermissions() },
             done: { close() })
