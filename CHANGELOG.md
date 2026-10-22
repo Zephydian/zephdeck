@@ -1,11 +1,21 @@
 # Changelog
 
-All notable changes to Zephydian are documented in this file.
+All notable changes to Zephdeck (called Zephydian before 1.1.0) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+**Zephydian is now Zephdeck.** Same app, new name: Zephydian is now the name of the company that makes it. Zephdeck lives at [zephydian.com/zephdeck](https://zephydian.com/zephdeck) and [github.com/zephydian/zephdeck](https://github.com/zephydian/zephdeck), and it's still a free, open-source utility app with games. More utilities are coming soon.
+
+### Changed
+- The app is called **Zephdeck**, with its own app ID, so macOS treats it as a new app. On its first launch it brings over all of Zephydian's settings, notes, installed packs, scores and shortcuts, and switches *Open at login* back on if you used it. Zephydian's old files stay where they were, as a backup.
+- macOS asks for Zephdeck's permissions again (Accessibility, Screen Recording and so on) the first time a feature needs them. A welcome window explains this once, with a button to **Settings → Permissions**.
+- Homebrew: the cask is now `zephdeck` in the `zephydian/tap` tap (`brew install zephydian/tap/zephdeck`). Existing installs follow the new name.
+- Packs: the pack SDK is now called `zephdeck` (SDK 13), and every pack in the Library was updated for it.
+
+## [1.0.1] - Unreleased
 
 Zephydian is becoming **Zephdeck**: same app, new name, now at [zephydian/zephdeck](https://github.com/zephydian/zephdeck). This update gets your Mac ready for the next one, which renames the app.
 

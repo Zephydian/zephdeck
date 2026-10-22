@@ -2,14 +2,14 @@
   "id": "homebrew",
   "name": "Homebrew",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 9,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Search, install, upgrade and remove Homebrew packages without the Terminal.",
   "symbol": "mug",
   "capabilities": [
     "homebrew"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Search, install, upgrade and remove Homebrew packages without opening the Terminal.",
     "rules": [

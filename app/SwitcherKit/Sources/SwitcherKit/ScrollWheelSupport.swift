@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Modified for Zephydian on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): trimmed to the scroll-wheel helpers the switcher uses (ScrollWheelEventTraits, ScrollWheelSupport basics).
+// Modified for Zephdeck on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): trimmed to the scroll-wheel helpers the switcher uses (ScrollWheelEventTraits, ScrollWheelSupport basics).
 
 import Foundation
 import CoreGraphics
 
-// (Zephydian: trimmed to the scroll-wheel helpers the switcher uses.)
+// (Zephdeck: trimmed to the scroll-wheel helpers the switcher uses.)
 
 struct ScrollWheelEventTraits: Equatable {
     let isContinuous: Bool

@@ -2,11 +2,11 @@
   "id": "passwords",
   "name": "Passwords",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 2,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Make strong passwords and passphrases, just the way you need them.",
   "symbol": "key.horizontal",
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Makes strong passwords and passphrases to your taste.",
     "rules": [

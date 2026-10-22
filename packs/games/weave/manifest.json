@@ -2,15 +2,15 @@
   "id": "weave",
   "name": "Weave",
   "kind": "game",
-  "version": "1.0.0",
-  "sdkVersion": 12,
+  "version": "1.0.1",
+  "sdkVersion": 13,
   "description": "Trace the hidden words on a theme. Every letter belongs to one word.",
   "hint": "Drag across letters (up, down, left, right) to trace a word · H or Hint for a letter",
   "pauseButton": false,
   "tileStat": "none",
   "symbol": "character.textbox",
   "category": "words",
-  "whatsNew": "First release.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Find the hidden words on the theme. Together they fill the grid.",
     "rules": [

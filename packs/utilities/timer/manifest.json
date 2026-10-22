@@ -2,15 +2,15 @@
   "id": "timer",
   "name": "Timer",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 2,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Countdowns, a stopwatch with laps and a focus mode, even with the panel closed.",
   "symbol": "timer",
   "capabilities": [
     "timers",
     "notifications"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Countdowns, a stopwatch with laps and a focus mode that keep running even with the panel closed.",
     "rules": [

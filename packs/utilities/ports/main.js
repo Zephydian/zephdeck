@@ -9,7 +9,7 @@ let stopping = {};        // pid → true after Stop, offering Force Stop
 
 function load() { z.ports.list(list => { ports = Array.isArray(list) ? list : []; }); }
 
-zephydian.utility({
+zephdeck.utility({
   start() { load(); z.loop.start(3000); },
   resume() { load(); },
   tick() { load(); },

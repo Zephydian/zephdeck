@@ -80,7 +80,7 @@ function reviewView() {
   ], { spacing: 10 });
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() { loadApps(); z.loop.start(3000); },
   resume() { loadApps(); },
   tick() { if (apps && apps.some(a => a.size == null)) loadApps(); },   // sizes arrive in the background

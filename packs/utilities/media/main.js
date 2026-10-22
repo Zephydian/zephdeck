@@ -1,5 +1,5 @@
 // Media: shrink a video, convert images, make a GIF from a video, add a watermark to images.
-// The work is done by Zephydian on this Mac (z.media); files come in through macOS's open dialog
+// The work is done by Zephdeck on this Mac (z.media); files come in through macOS's open dialog
 // and go out through its save dialog, so this utility only ever sees their names.
 
 const TABS = ["Shrink Video", "Convert", "GIF", "Watermark"];
@@ -106,7 +106,7 @@ function watermarkTab() {
   ];
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     const p = z.storage.get("prefs") || {};
     ({ tab = 0, quality = 1, format = 0, width = 1, rate = 1, position = 0, opacity = 0.8, mark = "" } = p);

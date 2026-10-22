@@ -7,7 +7,7 @@ Each sound is decoded with macOS's afconvert, made mono 44.1 kHz, trimmed of sil
 given a short fade-out and evened out in loudness, then written as WAV to:
   - packs/games/<id>/assets/sounds/          (packs)
   - packs/sounds/<id>-sounds/assets/         (sound sets for built-in games installed from the Library)
-  - app/Zephydian/Resources/Sounds/<id>-<sound>.wav (built-in games that come installed: Snake, Stackr,
+  - app/Zephdeck/Resources/Sounds/<id>-<sound>.wav (built-in games that come installed: Snake, Stackr,
     Five; the app's resources end up in one folder, so their names carry the game's id)
 With a demo folder, it also writes demo-<id>.wav: every sound of a game in turn, for listening.
 """
@@ -69,7 +69,7 @@ def folder(game):
     if game in PACKS:
         return os.path.join(ROOT, "packs/games", game, "assets/sounds")
     if game in IN_APP:
-        return os.path.join(ROOT, "app/Zephydian/Resources/Sounds")
+        return os.path.join(ROOT, "app/Zephdeck/Resources/Sounds")
     return os.path.join(ROOT, "packs/sounds", game + "-sounds", "assets")
 
 

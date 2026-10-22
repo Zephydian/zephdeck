@@ -2,14 +2,14 @@
   "id": "media",
   "name": "Media",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 7,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Shrink videos, convert and watermark images, and make GIFs, all on your Mac.",
   "symbol": "photo.on.rectangle.angled",
   "capabilities": [
     "media.convert"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Shrinks videos, converts and watermarks images, and makes GIFs, all on your Mac.",
     "rules": [

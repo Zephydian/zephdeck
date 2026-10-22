@@ -32,7 +32,7 @@ function image(m) {
   return { width: size, height: size, scale: 1, draw(g) { drawCode(g, size, m, 0); } };
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     const s = z.storage.get("state");
     if (s) { text = s.text || ""; level = s.level == null ? 1 : s.level; }

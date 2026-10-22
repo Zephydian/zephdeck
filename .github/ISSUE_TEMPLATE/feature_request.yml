@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement to Zephydian
+description: Suggest an improvement to Zephdeck
 labels: ["enhancement"]
 body:
   - type: textarea

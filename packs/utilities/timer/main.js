@@ -1,5 +1,5 @@
 // Timer: countdowns, a stopwatch with laps, and a focus mode (work/break cycles).
-// Countdowns and focus phases are Zephydian timers (z.timers): they keep running with the panel
+// Countdowns and focus phases are Zephdeck timers (z.timers): they keep running with the panel
 // closed, and when one ends macOS shows a notification and the chosen sound plays.
 // The stopwatch only needs a start time, so it keeps counting on its own.
 
@@ -176,7 +176,7 @@ function focus() {
 /// Redraws every second for the countdowns, or ten times a second while the stopwatch runs on screen.
 function updateLoop() { z.loop.start(prefs.tab === 1 && watch.running ? 100 : 1000); }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     prefs = Object.assign(prefs, z.storage.get("prefs") || {});
     watch = Object.assign(watch, z.storage.get("watch") || {});

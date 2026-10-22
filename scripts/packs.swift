@@ -1,5 +1,5 @@
 #!/usr/bin/env swift
-// Builds, checks, signs and publishes Zephydian packs (see docs/PACKS.md).
+// Builds, checks, signs and publishes Zephdeck packs (see docs/PACKS.md).
 // Uses only what ships with macOS (CryptoKit, JavaScriptCore, ditto), so there's nothing to install.
 //
 //   swift scripts/packs.swift check [packs]                 check every pack under packs/
@@ -15,7 +15,7 @@ import CryptoKit
 import Foundation
 import JavaScriptCore
 
-let sdkVersion = 12                      // the newest SDK version the tools (and app) know
+let sdkVersion = 13                      // the newest SDK version the tools (and app) know
 let utilitySDK = 2                       // utilities need SDK 2 or newer
 let maxPackBytes = 5 * 1024 * 1024
 let maxScriptBytes = 512 * 1024
@@ -56,7 +56,7 @@ struct Manifest: Codable {
     var capabilities: [String]?
     /// What the utility opens for others (SDK 3): "image" makes it the screenshot editor.
     var handles: [String]?
-    /// The utility has a page in Zephydian's Settings window (SDK 5): `settings: { view() }` in main.js.
+    /// The utility has a page in Zephdeck's Settings window (SDK 5): `settings: { view() }` in main.js.
     var settings: Bool?
     /// A game's section in the Games grid and the Library: "arcade", "puzzles" or "words".
     var category: String?
@@ -208,7 +208,7 @@ func checkPack(_ folder: URL) throws -> Pack {
     }
 
     // main.js: size and syntax (checked without running it). Sound sets have none.
-    if !isSoundSet { try checkScript(folder, problem) }
+    if !isSoundSet { try checkScript(folder, sdkVersion: m.sdkVersion, problem) }
 
     // Fingerprint of the sources: every file's path and bytes, in order.
     var hasher = SHA256()
@@ -223,10 +223,13 @@ func checkPack(_ folder: URL) throws -> Pack {
                 icon: icon, iconIsGenerated: !files.contains("icon.png"))
 }
 
-func checkScript(_ folder: URL, _ problem: (String) -> Failure) throws {
+func checkScript(_ folder: URL, sdkVersion sdk: Int, _ problem: (String) -> Failure) throws {
     let script = try Data(contentsOf: folder.appending(path: "main.js"))
     if script.count > maxScriptBytes { throw problem("main.js is over \(maxScriptBytes / 1024) KB") }
     guard let source = String(data: script, encoding: .utf8) else { throw problem("main.js must be UTF-8") }
+    // The SDK is `zephdeck` since SDK 13 (the app was called Zephydian before 1.1.0).
+    if source.contains("zephydian.") { throw problem("main.js uses zephydian, the SDK's old name: call zephdeck.game() or zephdeck.utility()") }
+    if source.contains("zephdeck."), sdk < 13 { throw problem("zephdeck needs sdkVersion 13 or newer (older apps call the SDK zephydian)") }
     let ctx = JSGlobalContextCreate(nil)!
     defer { JSGlobalContextRelease(ctx) }
     let js = JSStringCreateWithUTF8CString(source)!

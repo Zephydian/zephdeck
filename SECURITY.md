@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the **latest release** of Zephydian receives security fixes.
+Only the **latest release** of Zephdeck receives security fixes.
 
 ## Reporting a vulnerability
 
@@ -18,7 +18,7 @@ You'll get an acknowledgment within a few days. Once a fix is released, you'll b
 
 ## Scope
 
-Zephydian stores only local data (settings, your notes, game progress and what your utilities keep, such as Clipboard's history). It connects to the internet only to download and update games and utilities (**packs**) from this repository's `packs` release: when you open the Library, when you install or update something, and at most once a day to check installed packs (which you can turn off).
+Zephdeck stores only local data (settings, your notes, game progress and what your utilities keep, such as Clipboard's history). It connects to the internet only to download and update games and utilities (**packs**) from this repository's `packs` release: when you open the Library, when you install or update something, and at most once a day to check installed packs (which you can turn off).
 
 ### How packs are verified
 

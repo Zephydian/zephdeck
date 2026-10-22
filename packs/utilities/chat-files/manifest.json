@@ -2,14 +2,14 @@
   "id": "chat-files",
   "name": "Chat Files",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 9,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Clear old photos, videos and files that chat apps pile up. Goes to the Trash.",
   "symbol": "bubble.left.and.text.bubble.right",
   "capabilities": [
     "files.clean"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Finds old photos, videos and files that chat apps keep piling up, so you can clear them out.",
     "rules": [

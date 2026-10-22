@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Modified for Zephydian on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): renamed thread and queue labels from Vorssaint to Zephydian (Vorssaint's TRADEMARKS.md).
+// Modified for Zephdeck on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): renamed thread and queue labels from Vorssaint to Zephdeck (Vorssaint's TRADEMARKS.md).
 
 import AppKit
 import ApplicationServices
@@ -355,7 +355,7 @@ final class AppSwitcher: ObservableObject {
             let thread = Thread { [weak self] in
                 self?.runEventTap()
             }
-            thread.name = "Zephydian Switcher"
+            thread.name = "Zephdeck Switcher"
             thread.qualityOfService = .userInteractive
             tapThread = thread
             return thread

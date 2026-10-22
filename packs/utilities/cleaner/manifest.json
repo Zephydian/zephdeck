@@ -2,8 +2,8 @@
   "id": "cleaner",
   "name": "Cleaner",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 9,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Free space from caches, logs, leftovers and old downloads. Everything goes to the Trash.",
   "symbol": "sparkles.rectangle.stack",
   "capabilities": [
@@ -11,7 +11,7 @@
     "notifications"
   ],
   "settings": true,
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Frees up space by finding caches, logs, leftovers from removed apps and old downloads.",
     "rules": [

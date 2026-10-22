@@ -517,7 +517,7 @@ function setMenu() {
   });
 }
 
-zephydian.game({
+zephdeck.game({
   start() {
     z.sound.preload(SOUND_FILES);
     loadSettings();

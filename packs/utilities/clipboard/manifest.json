@@ -2,8 +2,8 @@
   "id": "clipboard",
   "name": "Clipboard",
   "kind": "utility",
-  "version": "1.2.1",
-  "sdkVersion": 6,
+  "version": "1.2.2",
+  "sdkVersion": 13,
   "description": "A private history of what you copy: search it, pin favorites, paste again.",
   "symbol": "doc.on.clipboard",
   "capabilities": [
@@ -11,7 +11,7 @@
     "clipboard.paste",
     "shortcut"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "settings": true,
   "howTo": {
     "goal": "Keeps a private history of what you copy, so you can find and paste it again.",

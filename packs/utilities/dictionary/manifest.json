@@ -2,8 +2,8 @@
   "id": "dictionary",
   "name": "Dictionary",
   "kind": "utility",
-  "version": "1.1.1",
-  "sdkVersion": 5,
+  "version": "1.1.2",
+  "sdkVersion": 13,
   "description": "Definitions, synonyms and opposites from the dictionary built into your Mac.",
   "symbol": "character.book.closed",
   "capabilities": [
@@ -12,7 +12,7 @@
     "clipboard.write",
     "shortcut"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "settings": true,
   "howTo": {
     "goal": "Looks up definitions, synonyms and opposites in the dictionary built into your Mac, offline.",

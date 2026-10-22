@@ -2,9 +2,9 @@
   "id": "nines-sounds",
   "name": "Nines sounds",
   "kind": "sounds",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 12,
   "description": "The sounds for Nines, downloaded with the game.",
   "symbol": "speaker.wave.2",
-  "whatsNew": "First release."
+  "whatsNew": "Credits now name Zephdeck, Zephydian's new name."
 }

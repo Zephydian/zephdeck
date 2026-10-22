@@ -60,7 +60,7 @@ function categoryView(c) {
   return z.ui.section(null, lines);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {},
   view() {
     if (scanning) return z.ui.column([z.ui.text("Looking through your Library… this can take a minute.", { style: "secondary", align: "center" })], { center: true, align: "center" });

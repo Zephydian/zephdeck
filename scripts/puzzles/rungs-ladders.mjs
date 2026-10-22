@@ -4,13 +4,13 @@
 //
 //   node scripts/puzzles/rungs-ladders.mjs 4 300 > ladders4.txt
 //
-// Prints one ladder per line, top to bottom, from the app's word lists (app/Zephydian/Resources/Words/).
+// Prints one ladder per line, top to bottom, from the app's word lists (app/Zephdeck/Resources/Words/).
 
 import { readFileSync } from "node:fs";
 
 const [len = "4", want = "300", seedArg = "20261024"] = process.argv.slice(2);
 const L = Number(len);
-const list = name => readFileSync(new URL("../../app/Zephydian/Resources/Words/" + name, import.meta.url), "utf8")
+const list = name => readFileSync(new URL("../../app/Zephdeck/Resources/Words/" + name, import.meta.url), "utf8")
   .split("\n").map(w => w.trim()).filter(Boolean);
 const common = new Set(list("wheel-words.txt")), valid = new Set(list("wheel-valid.txt"));
 // No plurals or past tenses ("cats", "fared"): they make weak rungs and clumsy clues.

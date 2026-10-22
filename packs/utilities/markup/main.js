@@ -1,7 +1,7 @@
 // Markup: crop, annotate, pixelate and dress up an image in its own window. In the panel it lists
 // this session's screenshots and can open an image file or paste one; clicking a screenshot's
 // preview opens it here directly. The editing is all in this file: the document is a list of marks
-// drawn over the picture, with undo and redo. Zephydian draws it, turns it into an image and saves it.
+// drawn over the picture, with undo and redo. Zephdeck draws it, turns it into an image and saves it.
 
 // The tool rail, top to bottom. Markup opens on Crop.
 const TOOLS = [
@@ -836,7 +836,7 @@ function editorView() {
   ], { spacing: 8 });
 }
 
-zephydian.utility({
+zephdeck.utility({
   view: panelView,
 
   window: {

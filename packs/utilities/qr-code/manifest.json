@@ -2,15 +2,15 @@
   "id": "qr-code",
   "name": "QR Code",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 2,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Turn text or a link into a QR code to copy or save, made offline.",
   "symbol": "qrcode",
   "capabilities": [
     "clipboard.write",
     "files.save"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Turns text or a link into a QR code to copy or save, made right on your Mac.",
     "rules": [

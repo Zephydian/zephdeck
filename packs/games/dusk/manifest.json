@@ -2,15 +2,15 @@
   "id": "dusk",
   "name": "Dusk",
   "kind": "game",
-  "version": "1.0.0",
-  "sdkVersion": 12,
+  "version": "1.0.1",
+  "sdkVersion": 13,
   "description": "Fill the grid with suns and moons: balanced rows, no three alike, follow = and ×.",
   "hint": "Click: sun, moon, empty · right-click back · arrows + Space · ⌘Z undo",
   "pauseButton": false,
   "tileStat": "none",
   "symbol": "sun.haze",
   "category": "puzzles",
-  "whatsNew": "First release.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Fill every cell with a sun or a moon.",
     "rules": [

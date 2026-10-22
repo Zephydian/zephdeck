@@ -200,7 +200,7 @@ function cellAt(x, y) {
 
 // ───────────── The game ─────────────
 
-zephydian.game({
+zephdeck.game({
   start() {
     preloadSounds();
     const saved = z.storage.get("game");

@@ -38,7 +38,7 @@ function jobView() {
   ]);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() { z.loop.start(1000); },
   tick() {},
   view() {

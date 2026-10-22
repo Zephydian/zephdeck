@@ -26,5 +26,5 @@ jobs:
       # crash once passed the Debug check and failed the v0.9.0 release.
       - name: Build Release (warnings count as errors)
         run: |
-          xcodebuild -project app/Zephydian.xcodeproj -scheme Zephydian -configuration Release \
+          xcodebuild -project app/Zephdeck.xcodeproj -scheme Zephdeck -configuration Release \
             -destination 'generic/platform=macOS' -derivedDataPath app/build build SWIFT_TREAT_WARNINGS_AS_ERRORS=YES

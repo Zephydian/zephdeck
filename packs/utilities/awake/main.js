@@ -1,6 +1,6 @@
 // Awake: keeps the Mac from sleeping for a chosen time, or until switched off, and (SDK 8) by
 // itself while chosen apps are open, while on power or with an external display. The keep-awake
-// and the rules are Zephydian services (z.awake), so they carry on after the panel closes.
+// and the rules are Zephdeck services (z.awake), so they carry on after the panel closes.
 
 const LENGTHS = [
   { label: "15 minutes", minutes: 15 },
@@ -35,7 +35,7 @@ function left(until) {
   return h + " h" + (m ? " " + m + " min" : "") + " left";
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     load();
     z.loop.start(15000);   // keeps "… left" current while it's on screen (stops when the panel hides)
@@ -72,11 +72,11 @@ zephydian.utility({
           if (z.awake.status().on) turnOn();   // apply the new length right away
         }),
       ]),
-      z.ui.text("Awake stops when Zephydian quits. While it's on, the menu bar icon takes your accent color. Set it to keep the Mac awake by itself on its settings page (the gear above).", { style: "caption" }),
+      z.ui.text("Awake stops when Zephdeck quits. While it's on, the menu bar icon takes your accent color. Set it to keep the Mac awake by itself on its settings page (the gear above).", { style: "caption" }),
     ], { spacing: 12 });
   },
 
-  // Awake's page in Zephydian's Settings window.
+  // Awake's page in Zephdeck's Settings window.
   settings: {
     start: load,
     storageChanged: load,

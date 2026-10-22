@@ -1,6 +1,6 @@
 # Code of Conduct
 
-Zephydian has adopted the **[Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/)** as its Code of Conduct. Everyone taking part in this project (in issues, pull requests, discussions, or anywhere else) is expected to follow it.
+Zephdeck has adopted the **[Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/)** as its Code of Conduct. Everyone taking part in this project (in issues, pull requests, discussions, or anywhere else) is expected to follow it.
 
 ## In short
 

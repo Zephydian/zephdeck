@@ -204,7 +204,7 @@ function setMenu() {
            onSelect: i => { degrees = i === 1; save(); } });
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     const s = z.storage.get("state");
     if (s) {

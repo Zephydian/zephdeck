@@ -59,4 +59,4 @@ node_modules/
 *.swp
 
 # ── XcodeGen output (regenerate with: cd app && xcodegen) ──
-app/Zephydian.xcodeproj/
+app/Zephdeck.xcodeproj/

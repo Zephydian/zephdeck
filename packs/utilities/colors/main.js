@@ -89,7 +89,7 @@ function swatches(list) {
   return rows;
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     const s = z.storage.get("state");
     if (s) {
