@@ -75,7 +75,7 @@ struct WhatsNewSheet: View {
                         .frame(width: 24, height: 24).foregroundStyle(settings.accentColor)
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Zephydian \(release.version)").font(.title3.bold())
+                        Text("\(AppUpdater.appName(for: release.version)) \(release.version)").font(.title3.bold())
                         Text("You have \(AppUpdater.currentVersion)").font(.callout).foregroundStyle(.secondary)
                     }
                 }
@@ -90,7 +90,13 @@ struct WhatsNewSheet: View {
                 .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
                 Link("See it on GitHub", destination: release.pageURL).font(.callout)
                 VStack(alignment: .leading, spacing: 4) {
-                    if AppUpdater.homebrew != nil {
+                    if AppUpdater.renames(release) {
+                        Text("Zephydian is becoming **Zephdeck**: same app, new name. Your settings, notes and packs come along.")
+                            .foregroundStyle(.primary)
+                    }
+                    if let cask = AppUpdater.homebrewRenamedCask {
+                        Text("Installed with Homebrew: Homebrew needs your OK to follow the new name. Allow and Update runs `brew trust --cask \(cask)`, then `brew upgrade zephdeck`.")
+                    } else if AppUpdater.homebrew != nil {
                         Text("Installed with Homebrew: this runs `brew update` and `brew upgrade zephydian` for you.")
                     }
                     Text("Until Zephydian is signed, macOS may ask for its permissions again after the update.")
@@ -103,7 +109,9 @@ struct WhatsNewSheet: View {
                     Button("Later") { dismiss() }
                         .keyboardShortcut(.cancelAction)
                         .disabled(busy)
-                    Button("Update and Restart") { Task { await updater.installUpdate() } }
+                    Button(AppUpdater.homebrewRenamedCask != nil ? "Allow and Update" : "Update and Restart") {
+                        Task { await updater.installUpdate() }
+                    }
                         .keyboardShortcut(.defaultAction)
                         .disabled(busy)
                 }
@@ -174,7 +182,7 @@ struct UpdateBanner: View {
                 Image(systemName: "arrow.down.circle.fill")
                     .foregroundStyle(settings.accentColor)
                     .accessibilityHidden(true)
-                Text("Zephydian \(release.version) is available")
+                Text("\(AppUpdater.appName(for: release.version)) \(release.version) is available")
                     .font(.system(size: 12.5, weight: .medium))
                 Spacer(minLength: 6)
                 Button("Update…") { updater.requestWhatsNew() }

@@ -65,7 +65,7 @@ private struct GeneralPage: View {
             Section("About") {
                 LabeledContent("Version", value: "\(version) (\(build))")
                 LabeledContent("Website") { Link("zephydian.com", destination: URL(string: "https://zephydian.com")!) }
-                LabeledContent("Source code") { Link("GitHub", destination: URL(string: "https://github.com/ahmastan/zephydian")!) }
+                LabeledContent("Source code") { Link("GitHub", destination: URL(string: "https://github.com/zephydian/zephdeck")!) }
             }
             Section {
                 LabeledContent("Quit Zephydian") {

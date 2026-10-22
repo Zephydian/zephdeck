@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+Zephydian is becoming **Zephdeck**: same app, new name, now at [zephydian/zephdeck](https://github.com/zephydian/zephdeck). This update gets your Mac ready for the next one, which renames the app.
+
+### Changed
+- Updates now come from the app's new home on GitHub and the moved Homebrew tap (`zephydian/homebrew-tap`).
+- The next update installs **Zephdeck** in place of Zephydian, in the same folder, and keeps *Open at login* on if you use it. Installed with Homebrew? The update asks for your OK first, because Homebrew trusts each app by name, then follows the new name for you.
+
 ## [1.0.0] - 2026-10-20
 
 Zephydian 1.0: the first main release of the free, open-source **utility and gaming corner** for the Mac. Hover over a screen corner for a panel of utilities and games, switch on the Mac features you want, and turn the notch into a Dynamic Island. More utilities are coming soon.

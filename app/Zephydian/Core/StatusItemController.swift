@@ -65,7 +65,7 @@ final class StatusItemController: NSObject {
         let menu = NSMenu()
         if let release = AppUpdater.shared.available {
             // With a dot, so a waiting update stands out (Phase 26).
-            let item = menu.addItem(withTitle: "Update Zephydian to \(release.version)…", action: #selector(openUpdate), keyEquivalent: "")
+            let item = menu.addItem(withTitle: AppUpdater.renames(release) ? "Update to Zephdeck \(release.version)…" : "Update Zephydian to \(release.version)…", action: #selector(openUpdate), keyEquivalent: "")
             item.target = self
             let dot = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: 7, weight: .regular).applying(.init(paletteColors: [.controlAccentColor])))

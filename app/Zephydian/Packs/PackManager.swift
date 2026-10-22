@@ -83,7 +83,7 @@ final class PackManager {
         #endif
         return PackManager()
     }()
-    static let releaseURL = URL(string: "https://github.com/ahmastan/zephydian/releases/download/packs/")!
+    static let releaseURL = URL(string: "https://github.com/zephydian/zephdeck/releases/download/packs/")!
 
     enum CatalogState: Equatable { case idle, loading, loaded, offline, failed(String) }
 
