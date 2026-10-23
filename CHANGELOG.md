@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-23
+
 Zephydian is becoming **Zephdeck**: same app, new name, now at [zephydian/zephdeck](https://github.com/zephydian/zephdeck). This update gets your Mac ready for the next one, which renames the app.
 
 ### Changed
