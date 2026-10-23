@@ -94,8 +94,8 @@ struct WhatsNewSheet: View {
                         Text("Zephydian is becoming **Zephdeck**: same app, new name. Your settings, notes and packs come along.")
                             .foregroundStyle(.primary)
                     }
-                    if let cask = AppUpdater.homebrewRenamedCask {
-                        Text("Installed with Homebrew: Homebrew needs your OK to follow the new name. Allow and Update runs `brew trust --cask \(cask)`, then `brew upgrade zephdeck`.")
+                    if AppUpdater.homebrewRenames {
+                        Text("Installed with Homebrew: Homebrew needs your OK to follow the new name. Allow and Update lets it trust Zephdeck's cask (`brew trust --cask zephydian/tap/zephdeck`), then runs `brew upgrade zephdeck`.")
                     } else if AppUpdater.homebrew != nil {
                         Text("Installed with Homebrew: this runs `brew update` and `brew upgrade zephydian` for you.")
                     }
@@ -109,7 +109,7 @@ struct WhatsNewSheet: View {
                     Button("Later") { dismiss() }
                         .keyboardShortcut(.cancelAction)
                         .disabled(busy)
-                    Button(AppUpdater.homebrewRenamedCask != nil ? "Allow and Update" : "Update and Restart") {
+                    Button(AppUpdater.homebrewRenames ? "Allow and Update" : "Update and Restart") {
                         Task { await updater.installUpdate() }
                     }
                         .keyboardShortcut(.defaultAction)
