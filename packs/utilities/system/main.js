@@ -1,6 +1,6 @@
 // System: CPU, GPU, memory, temperatures, battery and power, the busiest apps, network and disk.
 // It reads the numbers once a second only while it's on screen (the loop stops when the panel
-// hides), so it costs nothing the rest of the time. The graphs use Zephydian's history, which also
+// hides), so it costs nothing the rest of the time. The graphs use Zephdeck's history, which also
 // fills while the menu bar readouts are on, so they can show up to ten minutes.
 
 const RANGES = [{ label: "1 min", seconds: 60 }, { label: "10 min", seconds: 600 }];
@@ -174,7 +174,7 @@ function diskSection() {
   ]);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     read();                 // the first reading sets the starting point for CPU, network and apps
     z.loop.start(1000);

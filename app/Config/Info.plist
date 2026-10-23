@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Zephydian</string>
+	<string>Zephdeck</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Zephydian</string>
+	<string>Zephdeck</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,22 +27,22 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Zephydian asks Finder to move the files you cut and paste, and which folder is open to save a pasted image there (Finder Shortcuts), and asks Calendar to show an event you click in the Dynamic Island.</string>
+	<string>Zephdeck asks Finder to move the files you cut and paste, and which folder is open to save a pasted image there (Finder Shortcuts), and asks Calendar to show an event you click in the Dynamic Island.</string>
 	<key>NSAudioCaptureUsageDescription</key>
-	<string>Zephydian changes the volume of each app (Sound Mixer) by passing that app's sound through itself. Nothing is recorded or saved.</string>
+	<string>Zephdeck changes the volume of each app (Sound Mixer) by passing that app's sound through itself. Nothing is recorded or saved.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Zephydian shows your calendar's events in the Dynamic Island, only after you allow it there.</string>
+	<string>Zephdeck shows your calendar's events in the Dynamic Island, only after you allow it there.</string>
 	<key>NSCalendarsUsageDescription</key>
-	<string>Zephydian shows your calendar's events in the Dynamic Island, only after you allow it there.</string>
+	<string>Zephdeck shows your calendar's events in the Dynamic Island, only after you allow it there.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Zephydian shows your camera in a small floating mirror, only while you have it open (Camera Mirror).</string>
+	<string>Zephdeck shows your camera in a small floating mirror, only while you have it open (Camera Mirror).</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 ahmastan. GPL-3.0-or-later.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Zephydian records your microphone with a screen recording, only when you switch it on (Capture).</string>
+	<string>Zephdeck records your microphone with a screen recording, only when you switch it on (Capture).</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Zephydian shows reminders due that day in the Dynamic Island's calendar and lets you tick them off.</string>
+	<string>Zephdeck shows reminders due that day in the Dynamic Island's calendar and lets you tick them off.</string>
 	<key>NSRemindersUsageDescription</key>
-	<string>Zephydian shows reminders due that day in the Dynamic Island's calendar and lets you tick them off.</string>
+	<string>Zephdeck shows reminders due that day in the Dynamic Island's calendar and lets you tick them off.</string>
 </dict>
 </plist>

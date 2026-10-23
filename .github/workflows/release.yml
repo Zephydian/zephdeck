@@ -37,7 +37,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          SHA=$(cat dist/Zephydian-$VERSION.zip.sha256)
+          SHA=$(cat dist/Zephdeck-$VERSION.zip.sha256)
           # A tag pushed twice starts two runs; the second finds the release made and stops here.
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "The release $GITHUB_REF_NAME already exists."
@@ -47,8 +47,8 @@ jobs:
           # the SHA-256 line the app checks downloads against.
           NOTES=$(awk -v v="$VERSION" 'index($0, "## [" v "]") == 1 {f=1; next} f && /^## \[/ {exit} f {print}' CHANGELOG.md)
           printf 'SHA-256 of the zip: `%s`\n\n%s\n' "$SHA" "$NOTES" > release-notes.md
-          gh release create "$GITHUB_REF_NAME" "dist/Zephydian-$VERSION.zip" \
-            --title "Zephydian $VERSION" \
+          gh release create "$GITHUB_REF_NAME" "dist/Zephdeck-$VERSION.zip" \
+            --title "Zephdeck $VERSION" \
             --notes-file release-notes.md
       - name: Update the Homebrew tap
         env:
@@ -59,15 +59,19 @@ jobs:
             exit 0
           fi
           VERSION=${GITHUB_REF_NAME#v}
-          SHA=$(cat dist/Zephydian-$VERSION.zip.sha256)
+          SHA=$(cat dist/Zephdeck-$VERSION.zip.sha256)
           git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/zephydian/homebrew-tap.git" tap
           cd tap
-          sed -i '' -E "s/^  version \".*\"/  version \"$VERSION\"/; s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/zephydian.rb
+          if [ ! -f Casks/zephdeck.rb ]; then
+            echo "::warning::The tap has no zephdeck cask yet, so it wasn't updated. Add Casks/zephdeck.rb with this release's SHA-256: $SHA"
+            exit 0
+          fi
+          sed -i '' -E "s/^  version \".*\"/  version \"$VERSION\"/; s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/zephdeck.rb
           if git diff --quiet; then
             echo "The cask is already at $VERSION."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "zephydian $VERSION"
+          git commit -am "zephdeck $VERSION"
           git push

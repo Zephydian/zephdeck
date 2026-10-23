@@ -2,15 +2,15 @@
   "id": "quilt",
   "name": "Quilt",
   "kind": "game",
-  "version": "1.0.0",
-  "sdkVersion": 12,
+  "version": "1.0.1",
+  "sdkVersion": 13,
   "description": "Split the grid into patches: each holds one number, its size, in the shape shown.",
   "hint": "Drag corner to corner to lay a patch · click a patch to remove it · ⌘Z undo",
   "pauseButton": false,
   "tileStat": "none",
   "symbol": "square.grid.3x3.topleft.filled",
   "category": "puzzles",
-  "whatsNew": "First release.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Split the whole grid into rectangles, called patches.",
     "rules": [

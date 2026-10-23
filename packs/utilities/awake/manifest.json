@@ -2,14 +2,14 @@
   "id": "awake",
   "name": "Awake",
   "kind": "utility",
-  "version": "1.2.1",
-  "sdkVersion": 8,
+  "version": "1.2.2",
+  "sdkVersion": 13,
   "description": "Keep your Mac awake for a while, until you turn it off, or by itself when you choose.",
   "symbol": "cup.and.saucer",
   "capabilities": [
     "power.awake"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "settings": true,
   "howTo": {
     "goal": "Keeps your Mac from going to sleep: for a while, until you turn it off, or by itself while the apps or conditions you choose are active.",

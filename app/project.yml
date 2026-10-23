@@ -1,19 +1,19 @@
-# Zephydian Xcode project spec.
+# Zephdeck Xcode project spec.
 #
 # This file is the SOURCE OF TRUTH for the Xcode project. XcodeGen turns it into
-# Zephydian.xcodeproj (which is generated and git-ignored):
+# Zephdeck.xcodeproj (which is generated and git-ignored):
 #
 #     brew install xcodegen      # once
 #     cd app && xcodegen         # after changing this file
 #
 # ⚠️ Change build settings HERE, not in Xcode's UI. Edits made in Xcode's
 # settings screens are overwritten the next time the project is generated.
-# (Adding/removing .swift files is fine anywhere: the Zephydian/ folder is synced.)
+# (Adding/removing .swift files is fine anywhere: the Zephdeck/ folder is synced.)
 
-name: Zephydian
+name: Zephdeck
 
 options:
-  bundleIdPrefix: com.ahmastan
+  bundleIdPrefix: com.zephydian
   projectFormat: xcode16_0          # opens in Xcode 16+ and on GitHub's build machines
   createIntermediateGroups: true
   deploymentTarget:
@@ -24,8 +24,8 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor   # UI code runs on the main thread by default
     SWIFT_APPROACHABLE_CONCURRENCY: YES
-    MARKETING_VERSION: 1.0.2                   # the version users see
-    CURRENT_PROJECT_VERSION: 17                # build number, bump every release
+    MARKETING_VERSION: 1.1.0                   # the version users see
+    CURRENT_PROJECT_VERSION: 18                # build number, bump every release
 
 packages:
   # The app switcher and Finder cut and paste, copied from Vorssaint (GPL-3.0-or-later). A package of
@@ -34,17 +34,17 @@ packages:
     path: SwitcherKit
 
 targets:
-  Zephydian:
+  Zephdeck:
     type: application
     platform: macOS
     deploymentTarget: "14.0"
     sources:
-      - path: Zephydian
+      - path: Zephdeck
         type: syncedFolder
     dependencies:
       - package: SwitcherKit
       # Copied into Contents/Frameworks; Resources/now-playing.pl loads it into /usr/bin/perl.
-      - target: ZephydianNowPlaying
+      - target: ZephdeckNowPlaying
         embed: true
         link: false
         codeSign: true
@@ -53,24 +53,24 @@ targets:
     info:
       path: Config/Info.plist
       properties:
-        CFBundleName: Zephydian
-        CFBundleDisplayName: Zephydian
+        CFBundleName: Zephdeck
+        CFBundleDisplayName: Zephdeck
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: true                      # menu bar app: no Dock icon
-        NSMicrophoneUsageDescription: "Zephydian records your microphone with a screen recording, only when you switch it on (Capture)."
-        NSCameraUsageDescription: "Zephydian shows your camera in a small floating mirror, only while you have it open (Camera Mirror)."
-        NSAudioCaptureUsageDescription: "Zephydian changes the volume of each app (Sound Mixer) by passing that app's sound through itself. Nothing is recorded or saved."
-        NSCalendarsFullAccessUsageDescription: "Zephydian shows your calendar's events in the Dynamic Island, only after you allow it there."
-        NSCalendarsUsageDescription: "Zephydian shows your calendar's events in the Dynamic Island, only after you allow it there."
-        NSRemindersFullAccessUsageDescription: "Zephydian shows reminders due that day in the Dynamic Island's calendar and lets you tick them off."
-        NSRemindersUsageDescription: "Zephydian shows reminders due that day in the Dynamic Island's calendar and lets you tick them off."
-        NSAppleEventsUsageDescription: "Zephydian asks Finder to move the files you cut and paste, and which folder is open to save a pasted image there (Finder Shortcuts), and asks Calendar to show an event you click in the Dynamic Island."
+        NSMicrophoneUsageDescription: "Zephdeck records your microphone with a screen recording, only when you switch it on (Capture)."
+        NSCameraUsageDescription: "Zephdeck shows your camera in a small floating mirror, only while you have it open (Camera Mirror)."
+        NSAudioCaptureUsageDescription: "Zephdeck changes the volume of each app (Sound Mixer) by passing that app's sound through itself. Nothing is recorded or saved."
+        NSCalendarsFullAccessUsageDescription: "Zephdeck shows your calendar's events in the Dynamic Island, only after you allow it there."
+        NSCalendarsUsageDescription: "Zephdeck shows your calendar's events in the Dynamic Island, only after you allow it there."
+        NSRemindersFullAccessUsageDescription: "Zephdeck shows reminders due that day in the Dynamic Island's calendar and lets you tick them off."
+        NSRemindersUsageDescription: "Zephdeck shows reminders due that day in the Dynamic Island's calendar and lets you tick them off."
+        NSAppleEventsUsageDescription: "Zephdeck asks Finder to move the files you cut and paste, and which folder is open to save a pasted image there (Finder Shortcuts), and asks Calendar to show an event you click in the Dynamic Island."
         NSHumanReadableCopyright: "© 2026 ahmastan. GPL-3.0-or-later."
     entitlements:
-      path: Config/Zephydian.entitlements
+      path: Config/Zephdeck.entitlements
       # Not in the App Sandbox: features like Dock Preview and the app switcher read and arrange other
       # apps' windows through macOS Accessibility, which the sandbox blocks. Hardened Runtime stays on.
       # Packs are still limited by PackRuntime itself (no network, no files, only declared capabilities).
@@ -85,8 +85,8 @@ targets:
         com.apple.security.personal-information.calendars: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ahmastan.zephydian
-        PRODUCT_NAME: Zephydian
+        PRODUCT_BUNDLE_IDENTIFIER: com.zephydian.zephdeck
+        PRODUCT_NAME: Zephdeck
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "-"                # "Sign to Run Locally" (free, no Apple account)
         DEVELOPMENT_TEAM: ""
@@ -109,7 +109,7 @@ targets:
   # Vorssaint (GPL-3.0-or-later). Since macOS 15.4 only Apple-signed programs may read Now Playing,
   # so the app never loads this itself: it runs /usr/bin/perl with Resources/now-playing.pl, which
   # loads this library and prints one JSON line. Swift 5 mode, as Vorssaint wrote it.
-  ZephydianNowPlaying:
+  ZephdeckNowPlaying:
     type: library.dynamic
     platform: macOS
     deploymentTarget: "14.0"
@@ -120,9 +120,9 @@ targets:
         SWIFT_VERSION: "5.0"
         SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
         SWIFT_APPROACHABLE_CONCURRENCY: NO
-        PRODUCT_NAME: ZephydianNowPlaying
+        PRODUCT_NAME: ZephdeckNowPlaying
         EXECUTABLE_PREFIX: lib
-        PRODUCT_BUNDLE_IDENTIFIER: com.ahmastan.zephydian.now-playing
+        PRODUCT_BUNDLE_IDENTIFIER: com.zephydian.zephdeck.now-playing
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_IDENTITY: "-"
         DEVELOPMENT_TEAM: ""

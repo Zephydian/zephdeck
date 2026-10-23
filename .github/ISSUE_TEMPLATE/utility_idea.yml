@@ -1,5 +1,5 @@
 name: Utility idea
-description: Suggest a new utility (tool) for Zephydian
+description: Suggest a new utility (tool) for Zephdeck
 labels: ["utility-idea"]
 body:
   - type: input
@@ -13,8 +13,8 @@ body:
   - type: textarea
     id: why
     attributes:
-      label: Why would it fit Zephydian?
-      description: Zephydian utilities should open instantly, work in a small panel, be keyboard-friendly, and stay very lightweight. No network access.
+      label: Why would it fit Zephdeck?
+      description: Zephdeck utilities should open instantly, work in a small panel, be keyboard-friendly, and stay very lightweight. No network access.
     validations:
       required: true
   - type: checkboxes

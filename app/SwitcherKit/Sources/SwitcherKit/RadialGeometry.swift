@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Copied into Zephydian on 2026-10-06 from vorssaint/vorssaint-utils, commit 567ba36
+// Copied into Zephdeck on 2026-10-06 from vorssaint/vorssaint-utils, commit 567ba36
 // (Services/RadialMenu/RadialMenuSupport.swift: RadialMenuLayout, RadialMenuGeometry;
-// UI/RadialMenu/RadialMenuView.swift: RadialWedgeShape). Zephydian's changes: made public for the
+// UI/RadialMenu/RadialMenuView.swift: RadialWedgeShape). Zephdeck's changes: made public for the
 // app target, renamed to RadialLayout/RadialGeometry, dropped `panelSize` (the app sizes its own
 // panel per wheel size) and added `scaled(_:)`.
 
@@ -21,7 +21,7 @@ public enum RadialLayout {
     /// whatever direction the pointer already happened to sit in.
     public static let moveActivationDistance: CGFloat = 8
 
-    /// A Medium measurement at another wheel size (Zephydian).
+    /// A Medium measurement at another wheel size (Zephdeck).
     public static func scaled(_ value: CGFloat, by scale: CGFloat) -> CGFloat { (value * scale).rounded() }
 }
 

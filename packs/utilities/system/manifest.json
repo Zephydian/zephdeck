@@ -2,15 +2,15 @@
   "id": "system",
   "name": "System",
   "kind": "utility",
-  "version": "1.1.1",
-  "sdkVersion": 8,
+  "version": "1.1.2",
+  "sdkVersion": 13,
   "description": "CPU, GPU, memory, temperatures, battery, busy apps and network, measured while you look.",
   "symbol": "gauge.with.dots.needle.50percent",
   "capabilities": [
     "system.stats",
     "network.test"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Shows how your Mac is doing: CPU, GPU, memory, temperatures, battery, network and the busiest apps.",
     "rules": [

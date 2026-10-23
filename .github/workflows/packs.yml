@@ -38,7 +38,7 @@ jobs:
           fi
           if ! gh release view packs >/dev/null 2>&1; then
             gh release create packs --title "Packs" --prerelease --latest=false \
-              --notes "Games and utilities you can install from Zephydian's Library. The app downloads these itself; there's nothing to download here by hand."
+              --notes "Games and utilities you can install from Zephdeck's Library. The app downloads these itself; there's nothing to download here by hand."
           fi
           mkdir -p previous
           gh release download packs --pattern catalog.json --dir previous 2>/dev/null || true

@@ -364,7 +364,7 @@ function setMenu() {
   });
 }
 
-zephydian.game({
+zephdeck.game({
   start() {
     preloadSounds();
     const saved = z.storage.get("level");

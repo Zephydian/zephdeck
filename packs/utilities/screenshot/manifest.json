@@ -2,8 +2,8 @@
   "id": "screenshot",
   "name": "Capture",
   "kind": "utility",
-  "version": "2.0.1",
-  "sdkVersion": 7,
+  "version": "2.0.2",
+  "sdkVersion": 13,
   "description": "Screenshots, screen recordings with an editor, and text and colors from your screen.",
   "symbol": "camera.viewfinder",
   "capabilities": [
@@ -13,7 +13,7 @@
     "files.save",
     "shortcut"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "settings": true,
   "howTo": {
     "goal": "Takes screenshots of an area, a window or the whole screen, records your screen with an editor, and copies text or colours from anything on screen.",

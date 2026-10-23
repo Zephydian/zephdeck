@@ -1,6 +1,6 @@
 // Capture: screenshots (area, window, whole screen, scrolling), screen recordings, text copied
 // off the screen, and colors. The capturing itself (the capture bar, the selection overlay with its
-// magnifier, the preview card, the recorder and its editor) is done by Zephydian through z.screen;
+// magnifier, the preview card, the recorder and its editor) is done by Zephdeck through z.screen;
 // this utility starts captures, holds the settings and lists this session's shots and recordings.
 
 const TABS = ["Screenshot", "Record", "Copy Text", "Color"];
@@ -45,7 +45,7 @@ function time(ms) { return new Date(ms).toLocaleTimeString([], { hour: "numeric"
 function permissionCard() {
   return z.ui.section(null, [
     z.ui.text("Allow screen recording", { style: "title" }),
-    z.ui.text("macOS asks before any app can capture the screen. Click below, turn on Zephydian under Screen Recording in System Settings, then come back.", { style: "secondary" }),
+    z.ui.text("macOS asks before any app can capture the screen. Click below, turn on Zephdeck under Screen Recording in System Settings, then come back.", { style: "secondary" }),
     z.ui.button("Allow Screen Recording…", () => z.screen.requestPermission(), { style: "prominent", symbol: "lock.open" }),
   ]);
 }
@@ -120,7 +120,7 @@ function colorTab() {
   ];
 }
 
-// Capture's page in Zephydian's Settings window.
+// Capture's page in Zephdeck's Settings window.
 function settings() {
   const folder = z.screen.folder();
   return z.ui.column([
@@ -164,7 +164,7 @@ function settings() {
   ]);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start: load,
 
   // The settings may have changed in the Settings window while the panel was closed.

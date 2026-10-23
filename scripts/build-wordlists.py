@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Builds Zephydian's word lists from SCOWL (Spell Checker Oriented Word Lists).
+Builds Zephdeck's word lists from SCOWL (Spell Checker Oriented Word Lists).
 
     1. Download SCOWL 2020.12.07 from http://wordlist.aspell.net/ and extract it.
     2. python3 scripts/build-wordlists.py path/to/scowl-2020.12.07
 
-Writes to app/Zephydian/Resources/Words/:
+Writes to app/Zephdeck/Resources/Words/:
     five-answers.txt   common 5-letter words used as Five answers (shuffled, fixed seed)
     five-valid.txt     every 5-letter word accepted as a Five guess
     wheel-words.txt    common 3–6 letter words used to build Spokes puzzles
@@ -79,7 +79,7 @@ def main() -> None:
         sys.exit(__doc__)
     scowl = Path(sys.argv[1])
     final_dir = scowl / "final"
-    out = Path(__file__).resolve().parent.parent / "app/Zephydian/Resources/Words"
+    out = Path(__file__).resolve().parent.parent / "app/Zephdeck/Resources/Words"
     out.mkdir(parents=True, exist_ok=True)
 
     common = {w for w in load(final_dir, COMMON_SIZES) if not blocked(w)}

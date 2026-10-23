@@ -252,7 +252,7 @@ function home() {
   return z.ui.column(parts, { spacing: 12 });
 }
 
-// Dictionary's page in Zephydian's Settings window.
+// Dictionary's page in Zephdeck's Settings window.
 function settings() {
   return z.ui.section(null, [
     z.ui.shortcut("Shortcut"),
@@ -260,7 +260,7 @@ function settings() {
   ]);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     const s = z.storage.get("state") || {};
     recent = Array.isArray(s.recent) ? s.recent.filter(w => typeof w === "string").slice(0, MAX_RECENT) : [];

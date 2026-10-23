@@ -2,15 +2,15 @@
   "id": "thread",
   "name": "Thread",
   "kind": "game",
-  "version": "1.0.0",
-  "sdkVersion": 12,
+  "version": "1.0.1",
+  "sdkVersion": 13,
   "description": "Draw one thread through every cell, passing the numbers in order.",
   "hint": "Drag from 1 · drag back to undo steps · click the thread to cut it · arrows · ⌘Z",
   "pauseButton": false,
   "tileStat": "none",
   "symbol": "point.topleft.down.to.point.bottomright.curvepath",
   "category": "puzzles",
-  "whatsNew": "First release.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Draw one thread through every cell of the grid.",
     "rules": [

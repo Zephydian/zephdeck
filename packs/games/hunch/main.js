@@ -262,7 +262,7 @@ function setMenu() {
   });
 }
 
-zephydian.game({
+zephdeck.game({
   start() {
     preloadSounds();
     setMenu();

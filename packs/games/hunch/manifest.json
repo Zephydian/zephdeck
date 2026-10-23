@@ -2,15 +2,15 @@
   "id": "hunch",
   "name": "Hunch",
   "kind": "game",
-  "version": "1.0.1",
-  "sdkVersion": 12,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Guess what links the words, with as few of them as you can.",
   "hint": "Type what links the words · Enter to guess · each miss shows another word",
   "pauseButton": false,
   "tileStat": "none",
   "symbol": "lightbulb",
   "category": "words",
-  "whatsNew": "One puzzle no longer gives its answer away.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Work out what links the words.",
     "rules": [

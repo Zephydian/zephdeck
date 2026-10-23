@@ -1,4 +1,4 @@
-// Clipboard: a history of the text and images you copy. The recording itself is done by Zephydian
+// Clipboard: a history of the text and images you copy. The recording itself is done by Zephdeck
 // (z.history) while this utility has it switched on, so it works with the panel closed. The history
 // stays on this Mac, skips what password managers mark private, and is deleted when Clipboard is removed.
 
@@ -60,7 +60,7 @@ function history() {
   });
 }
 
-// Clipboard's page in Zephydian's Settings window.
+// Clipboard's page in Zephdeck's Settings window.
 function settings() {
   const apps = z.history.apps();
   return z.ui.column([
@@ -74,7 +74,7 @@ function settings() {
   ]);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     z.storage.remove("showSettings");   // the old in-panel settings switch (before 1.1)
     z.loop.start(30000);      // keeps "2 min ago" current while it's on screen

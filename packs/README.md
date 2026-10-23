@@ -1,6 +1,6 @@
 # Packs
 
-Games (and later utilities) that people install from Zephydian's Library. Each folder is one pack:
+Games (and later utilities) that people install from Zephdeck's Library. Each folder is one pack:
 
 ```
 packs/games/<id>/        manifest.json, main.js, icon.png, assets/

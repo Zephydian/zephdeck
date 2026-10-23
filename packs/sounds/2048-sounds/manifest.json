@@ -2,9 +2,9 @@
   "id": "2048-sounds",
   "name": "2048 sounds",
   "kind": "sounds",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "sdkVersion": 12,
   "description": "The sounds for 2048, downloaded with the game.",
   "symbol": "speaker.wave.2",
-  "whatsNew": "First release."
+  "whatsNew": "Credits now name Zephdeck, Zephydian's new name."
 }

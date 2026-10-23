@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Modified for Zephydian on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): renamed thread and queue labels from Vorssaint to Zephydian (Vorssaint's TRADEMARKS.md).
+// Modified for Zephdeck on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): renamed thread and queue labels from Vorssaint to Zephdeck (Vorssaint's TRADEMARKS.md).
 
 import AppKit
 import ApplicationServices
@@ -63,7 +63,7 @@ final class FinderRenameService {
             shouldStopTapThread = false
             pendingStartAfterStop = false
             let thread = Thread { [weak self] in self?.runEventTap() }
-            thread.name = "Zephydian Finder Rename"
+            thread.name = "Zephdeck Finder Rename"
             thread.qualityOfService = .userInteractive
             tapThread = thread
             return thread

@@ -2,8 +2,8 @@
   "id": "markup",
   "name": "Markup",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 3,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "Crop, draw on, pixelate and label screenshots or any image, in its own window.",
   "symbol": "pencil.tip.crop.circle",
   "capabilities": [
@@ -15,7 +15,7 @@
   "handles": [
     "image"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Edits screenshots and other images in its own window: crop, draw, add arrows, shapes and text, and pixelate private details.",
     "rules": [

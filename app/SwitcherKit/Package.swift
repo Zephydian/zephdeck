@@ -1,6 +1,6 @@
 // swift-tools-version:5.9
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 Zephydian contributors
+// Copyright (C) 2026 Zephdeck contributors
 
 // SwitcherKit: the app switcher (⌘Tab) and Finder cut and paste, copied from Vorssaint
 // (github.com/vorssaint/vorssaint-utils, GPL-3.0-or-later). It keeps Vorssaint's own Swift

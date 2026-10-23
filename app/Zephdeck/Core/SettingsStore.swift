@@ -1,0 +1,344 @@
+import AppKit
+import Observation
+
+// MARK: - Setting value types
+
+nonisolated enum Corner: String, CaseIterable, Identifiable {
+    case topLeft = "tl", topRight = "tr", bottomLeft = "bl", bottomRight = "br"
+
+    var id: Self { self }
+    var isTop: Bool { self == .topLeft || self == .topRight }
+    var isLeft: Bool { self == .topLeft || self == .bottomLeft }
+
+    var name: String {
+        switch self {
+        case .topLeft: "Top left"
+        case .topRight: "Top right"
+        case .bottomLeft: "Bottom left"
+        case .bottomRight: "Bottom right"
+        }
+    }
+}
+
+nonisolated enum AppearanceMode: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: Self { self }
+    var title: String { rawValue.capitalized }
+}
+
+nonisolated enum AutoHideMode: String, CaseIterable, Identifiable {
+    case smart, always, never
+    var id: Self { self }
+    var title: String { rawValue.capitalized }
+
+    var explanation: String {
+        switch self {
+        case .smart: "Hides when the mouse leaves, but never while a game is open or you’re typing (in a note or a utility)."
+        case .always: "Hides whenever the mouse leaves the panel. Games pause automatically."
+        case .never: "Only Esc, a click outside, or the corner closes the panel."
+        }
+    }
+}
+
+nonisolated enum MenuBarIcon: String, CaseIterable, Identifiable {
+    case logo, wind, controller, sparkles, grid, note, hidden
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .logo: "Zephdeck logo"
+        case .wind: "Wind"
+        case .controller: "Controller"
+        case .sparkles: "Sparkles"
+        case .grid: "Grid"
+        case .note: "Note"
+        case .hidden: "Hidden"
+        }
+    }
+
+    /// SF Symbol name, or nil for the custom logo asset.
+    var symbolName: String? {
+        switch self {
+        case .logo: nil
+        case .wind: "wind"
+        case .controller: "gamecontroller"
+        case .sparkles: "sparkles"
+        case .grid: "square.grid.2x2"
+        case .note: "note.text"
+        case .hidden: "circle.slash"
+        }
+    }
+}
+
+/// How the panel's background looks.
+nonisolated enum PanelStyle: String, CaseIterable, Identifiable {
+    case glass, frosted
+    var id: Self { self }
+    var title: String { self == .glass ? "Liquid Glass" : "Frosted" }
+
+    /// Apple's macOS 26+ glass panels (like Control Center) use rounder, "concentric" corners.
+    var cornerRadius: CGFloat { self == .glass ? 24 : 16 }
+}
+
+/// One of the panel's top tabs: a built-in page, one game or utility, or one Mac feature's controls.
+/// People choose which show and their order (Settings → Panel & Corner → Tabs), up to 8.
+nonisolated enum PanelTab: Hashable, Identifiable {
+    case games, utilities, notes, settings
+    /// A game or utility, by its registry id. It shows that game's or utility's screen.
+    case item(String)
+    /// A Mac feature's controls (Sound, Brightness, Quick Toggles…), by its feature id.
+    case feature(String)
+
+    /// The features that make sense as a tab: each has controls worth having one click away.
+    static let featureIDs = ["sound-mixer", "brightness", "quick-toggles", "quick-panel", "window-layout",
+                             "snippets", "shelf", "camera-mirror"]
+
+    static let builtIns: [PanelTab] = [.games, .utilities, .notes, .settings]
+    static let maxShown = 8
+
+    var id: String { rawValue }
+
+    /// Saved as "games", "notes"… or "item:<id>".
+    var rawValue: String {
+        switch self {
+        case .games: "games"
+        case .utilities: "utilities"
+        case .notes: "notes"
+        case .settings: "settings"
+        case .item(let id): "item:" + id
+        case .feature(let id): "feature:" + id
+        }
+    }
+
+    init?(rawValue: String) {
+        if rawValue.hasPrefix("feature:") {
+            let id = String(rawValue.dropFirst(8))
+            guard Self.featureIDs.contains(id) else { return nil }
+            self = .feature(id)
+            return
+        }
+        if rawValue.hasPrefix("item:") {
+            let id = String(rawValue.dropFirst(5))
+            guard !id.isEmpty else { return nil }
+            self = .item(id)
+            return
+        }
+        guard let tab = Self.builtIns.first(where: { $0.rawValue == rawValue }) else { return nil }
+        self = tab
+    }
+
+    var itemID: String? {
+        if case .item(let id) = self { return id }
+        return nil
+    }
+
+    var featureID: String? {
+        if case .feature(let id) = self { return id }
+        return nil
+    }
+
+    /// Added by the person (a game, utility or feature), so it can be removed, not only hidden.
+    var isAdded: Bool { !Self.builtIns.contains(self) }
+
+    /// The built-in tabs' names (a game's or utility's comes from the registry; see `PanelTabLabel`).
+    var title: String {
+        switch self {
+        case .item(let id), .feature(let id): id
+        default: rawValue.capitalized
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .games: "gamecontroller"
+        case .utilities: "wrench.and.screwdriver"
+        case .notes: "note.text"
+        case .settings: "gearshape"
+        case .item, .feature: "square.grid.2x2"
+        }
+    }
+}
+
+/// How big the panel is. Text keeps its size; game boards, notes and lists get more or less room.
+nonisolated enum PanelSize: String, CaseIterable, Identifiable {
+    case small, medium, large
+    var id: Self { self }
+    var title: String {
+        switch self {
+        case .small: "Small"
+        case .medium: "Medium"
+        case .large: "Large"
+        }
+    }
+
+    var size: NSSize {
+        switch self {
+        case .small: NSSize(width: 340, height: 480)
+        case .medium: NSSize(width: 380, height: 540)
+        case .large: NSSize(width: 440, height: 620)
+        }
+    }
+}
+
+/// Optional system-wide shortcut to open the panel. Presets avoid clashing with common app shortcuts.
+// MARK: - Store
+
+/// All user preferences, saved to UserDefaults as soon as they change.
+@Observable
+final class SettingsStore {
+    @ObservationIgnored private let defaults: UserDefaults
+
+    var corner: Corner { didSet { defaults.set(corner.rawValue, forKey: "corner") } }
+    var dwellMs: Int { didSet { defaults.set(dwellMs, forKey: "dwellMs") } }
+    /// `nil` means the main display (the one with the menu bar).
+    var displayName: String? { didSet { defaults.set(displayName, forKey: "displayName") } }
+    var appearance: AppearanceMode { didSet { defaults.set(appearance.rawValue, forKey: "appearance") } }
+    var accent: AccentTheme { didSet { defaults.set(accent.rawValue, forKey: "accent") } }
+    /// Changes when macOS's accent color changes, so the System accent (and its swatch) redraw.
+    private(set) var systemAccentRevision = 0
+
+    /// Called when macOS's accent color changes (System Settings → Appearance).
+    func systemAccentDidChange() {
+        SystemAccent.revision += 1
+        systemAccentRevision += 1
+    }
+    var menuBarIcon: MenuBarIcon { didSet { defaults.set(menuBarIcon.rawValue, forKey: "menuBarIcon") } }
+    var autoHide: AutoHideMode { didSet { defaults.set(autoHide.rawValue, forKey: "autoHide") } }
+    var hideDelayMs: Int { didSet { defaults.set(hideDelayMs, forKey: "hideDelayMs") } }
+    var notesMonospaced: Bool { didSet { defaults.set(notesMonospaced, forKey: "notesMonospaced") } }
+    /// Notes are open in their own window (instead of the panel's Notes tab).
+    var notesDetached: Bool { didSet { defaults.set(notesDetached, forKey: "notesDetached") } }
+    /// The Notes window floats above other apps (on every Space) instead of being an ordinary window.
+    var notesWindowOnTop: Bool { didSet { defaults.set(notesWindowOnTop, forKey: "notesWindowOnTop") } }
+    /// Where the Notes window was last, as `NSStringFromRect`.
+    var notesWindowFrame: String? { didSet { defaults.set(notesWindowFrame, forKey: "notesWindowFrame") } }
+    var fiveHighContrast: Bool { didSet { defaults.set(fiveHighContrast, forKey: "fiveHighContrast") } }
+    /// Games may make sound (each game's speaker can still silence it). Off at first.
+    var gameSounds: Bool { didSet { defaults.set(gameSounds, forKey: GameSounds.masterKey) } }
+    var hasCompletedOnboarding: Bool { didSet { defaults.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") } }
+    /// The one-time "New: Features" card was seen or dismissed (the welcome tour covers it for new people).
+    var featuresIntroSeen: Bool { didSet { defaults.set(featuresIntroSeen, forKey: "featuresIntroSeen") } }
+    var panelStyle: PanelStyle { didSet { defaults.set(panelStyle.rawValue, forKey: "panelStyle") } }
+    var panelSize: PanelSize { didSet { defaults.set(panelSize.rawValue, forKey: "panelSize") } }
+    /// Every panel tab, in the order chosen (hidden ones keep their place for when they come back).
+    /// Built-in tabs are always in it; game and utility tabs are added and removed.
+    var tabOrder: [PanelTab] { didSet { defaults.set(tabOrder.map(\.rawValue), forKey: "tabOrder") } }
+    /// Tabs left out of the panel's tab bar. At least one tab always shows.
+    var hiddenTabs: Set<PanelTab> { didSet { defaults.set(hiddenTabs.map(\.rawValue).sorted(), forKey: "hiddenTabs") } }
+    /// Whether a game or utility tab's game or utility is installed (set by AppDelegate from the
+    /// registry; a removed one's tab is left out until it's back).
+    @ObservationIgnored var itemExists: (String) -> Bool = { _ in true }
+    /// The tabs the panel shows, in order (never empty, at most 8).
+    var visibleTabs: [PanelTab] {
+        let tabs = tabOrder.filter { !hiddenTabs.contains($0) && ($0.itemID.map(itemExists) ?? true) }
+        return tabs.isEmpty ? [.games] : Array(tabs.prefix(PanelTab.maxShown))
+    }
+    /// Whether another tab can be shown (8 at most).
+    var canShowMoreTabs: Bool {
+        tabOrder.filter { !hiddenTabs.contains($0) && ($0.itemID.map(itemExists) ?? true) }.count < PanelTab.maxShown
+    }
+    /// Shows or hides a tab. Hiding the last visible one, or showing a 9th, does nothing.
+    func setTab(_ tab: PanelTab, visible: Bool) {
+        if visible {
+            guard hiddenTabs.contains(tab), canShowMoreTabs else { return }
+            hiddenTabs.remove(tab)
+        } else if visibleTabs.count > 1 || !visibleTabs.contains(tab) {
+            hiddenTabs.insert(tab)
+        }
+    }
+    /// Adds a game, utility or feature as a tab, at the end and shown. Refused past 8 shown tabs.
+    @discardableResult
+    func addTab(_ tab: PanelTab) -> Bool {
+        guard tab.isAdded else { return false }
+        guard canShowMoreTabs || (tabOrder.contains(tab) && !hiddenTabs.contains(tab)) else { return false }
+        if !tabOrder.contains(tab) { tabOrder.append(tab) }
+        hiddenTabs.remove(tab)
+        return true
+    }
+    /// Removes an added tab (built-in tabs can only be hidden).
+    func removeTab(_ tab: PanelTab) {
+        guard tab.isAdded else { return }
+        tabOrder.removeAll { $0 == tab }
+        hiddenTabs.remove(tab)
+    }
+    /// Back to the four built-in tabs in their first order (added tabs are removed).
+    func resetTabs() {
+        tabOrder = PanelTab.builtIns
+        hiddenTabs = []
+    }
+    /// The panel's global shortcut, recorded by the person (nil = none).
+    var panelShortcut: KeyShortcut? { didSet { defaults.set(try? JSONEncoder().encode(panelShortcut), forKey: "panelShortcut") } }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        func value<E: RawRepresentable>(_ key: String, _ fallback: E) -> E where E.RawValue == String {
+            guard let raw = defaults.string(forKey: key), let saved = E(rawValue: raw) else { return fallback }
+            return saved
+        }
+        func int(_ key: String, _ fallback: Int) -> Int {
+            defaults.object(forKey: key) == nil ? fallback : defaults.integer(forKey: key)
+        }
+        corner = value("corner", .topRight)
+        dwellMs = int("dwellMs", 150)
+        displayName = defaults.string(forKey: "displayName")
+        appearance = value("appearance", .system)
+        accent = value("accent", .sky)
+        menuBarIcon = value("menuBarIcon", .logo)
+        autoHide = value("autoHide", .smart)
+        hideDelayMs = int("hideDelayMs", 400)
+        notesMonospaced = defaults.bool(forKey: "notesMonospaced")
+        notesDetached = defaults.bool(forKey: "notesDetached")
+        notesWindowOnTop = defaults.object(forKey: "notesWindowOnTop") == nil ? true : defaults.bool(forKey: "notesWindowOnTop")
+        notesWindowFrame = defaults.string(forKey: "notesWindowFrame")
+        fiveHighContrast = defaults.bool(forKey: "fiveHighContrast")
+        // Before there was one switch for all games, Keys had its own (off by default): whoever turned
+        // it on keeps hearing it.
+        if defaults.object(forKey: GameSounds.masterKey) == nil, defaults.bool(forKey: "pack.keys.sound") {
+            defaults.set(true, forKey: GameSounds.masterKey)
+        }
+        gameSounds = defaults.bool(forKey: GameSounds.masterKey)
+        hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
+        featuresIntroSeen = defaults.bool(forKey: "featuresIntroSeen")
+        panelStyle = value("panelStyle", .glass)
+        panelSize = value("panelSize", .medium)
+        // Unknown names are dropped and missing tabs added at the end, so a newer or older version's list still works.
+        var order: [PanelTab] = []
+        for tab in (defaults.stringArray(forKey: "tabOrder") ?? []).compactMap(PanelTab.init(rawValue:)) where !order.contains(tab) {
+            order.append(tab)
+        }
+        let allTabs = order + PanelTab.builtIns.filter { !order.contains($0) }
+        tabOrder = allTabs
+        let hidden = Set((defaults.stringArray(forKey: "hiddenTabs") ?? []).compactMap(PanelTab.init(rawValue:)))
+            .filter(allTabs.contains)
+        hiddenTabs = allTabs.allSatisfy(hidden.contains) ? [] : hidden
+        // Worked out first and assigned once: in an @Observable class even this assignment saves.
+        var shortcut = defaults.data(forKey: "panelShortcut").flatMap { try? JSONDecoder().decode(KeyShortcut?.self, from: $0) } ?? nil
+        // Before any key could be recorded there were three choices; keep the one picked.
+        if defaults.object(forKey: "panelShortcut") == nil {
+            switch defaults.string(forKey: "globalShortcut") {
+            case "optionSpace": shortcut = KeyShortcut(keyCode: 49, modifiers: .option, key: "Space")
+            case "controlOptionSpace": shortcut = KeyShortcut(keyCode: 49, modifiers: [.control, .option], key: "Space")
+            case "controlOptionZ": shortcut = KeyShortcut(keyCode: 6, modifiers: [.control, .option], key: "Z")
+            default: break
+            }
+        }
+        panelShortcut = shortcut
+    }
+
+    /// The style actually in use: Liquid Glass needs macOS 26 or later.
+    var effectivePanelStyle: PanelStyle {
+        if #available(macOS 26, *) { return panelStyle }
+        return .frosted
+    }
+
+    /// The display Zephdeck lives on. Falls back to the main display if the chosen one is unplugged.
+    var targetScreen: NSScreen? {
+        let screens = NSScreen.screens
+        if let displayName {
+            for screen in screens where screen.localizedName == displayName {
+                return screen
+            }
+        }
+        return screens.first ?? NSScreen.main
+    }
+}

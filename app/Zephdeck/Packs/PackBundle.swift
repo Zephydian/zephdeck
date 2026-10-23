@@ -1,0 +1,214 @@
+import AppKit
+import Foundation
+
+/// A pack's manifest.json (see docs/PACKS.md).
+nonisolated struct PackManifest: Codable, Equatable {
+    var id: String
+    var name: String
+    var kind: String
+    var version: String
+    var sdkVersion: Int
+    var description: String
+    var hint: String?
+    var pauseButton: Bool?
+    var tileStat: String?
+    var whatsNew: String?
+    /// An SF Symbol used as the tile icon (utilities).
+    var symbol: String?
+    /// What the pack may use beyond drawing and storage (see `PackCapability`).
+    var capabilities: [String]?
+    /// What the utility opens for others (SDK 3). "image": it's the editor behind a screenshot's Edit.
+    var handles: [String]?
+    /// The utility has a page in the Settings window (SDK 5): `settings: { view() }` in its script.
+    var settings: Bool?
+    /// A game's section in the Games grid and the Library: "arcade", "puzzles" or "words".
+    var category: String?
+    /// The game plays sounds (SDK 10): its header gets a speaker button, off until switched on.
+    var sounds: Bool?
+    /// How to play (a game's ⓘ card) or what it does (the top of a utility's Settings page).
+    var howTo: HowToPlay?
+
+    /// Lowercase letters, digits and dashes, up to 32 characters (the same rule `packs.swift check` uses).
+    /// Ids become folder and file names, so anything else is refused before it touches the disk.
+    static func isValidID(_ id: String) -> Bool {
+        id.range(of: #"^[a-z0-9][a-z0-9-]{0,31}$"#, options: .regularExpression) != nil
+    }
+}
+
+/// A pack on disk, ready to run: its folder, manifest and script.
+struct PackBundle {
+    /// The newest SDK version this app can run.
+    static let sdkVersion = 13
+    /// Settings pages arrived in SDK 5.
+    static let settingsSDK = 5
+    /// Utilities arrived in SDK 2.
+    static let utilitySDK = 2
+
+    let folder: URL
+    let manifest: PackManifest
+    let script: String
+    /// Loaded unsigned from the developer folder (debug builds only).
+    let isDev: Bool
+
+    var id: String { manifest.id }
+
+    /// `sounds` is a sound set: a built-in game's sounds, downloaded with it from the Library
+    /// (no script; never shown in the Library or the grids).
+    enum Kind: String { case game, utility, sounds }
+    /// Checked by `load`, so it's always one of these.
+    var kind: Kind { Kind(rawValue: manifest.kind) ?? .game }
+
+    enum LoadError: Error, CustomStringConvertible {
+        case unreadable(String), invalid(String)
+        var description: String {
+            switch self { case .unreadable(let s), .invalid(let s): s }
+        }
+    }
+
+    /// Reads and checks a pack folder. The folder name must match the manifest's id.
+    static func load(from folder: URL, isDev: Bool = false) throws -> PackBundle {
+        let manifest: PackManifest
+        do {
+            manifest = try JSONDecoder().decode(PackManifest.self, from: Data(contentsOf: folder.appending(path: "manifest.json")))
+        } catch {
+            throw LoadError.unreadable("manifest.json can't be read: \(error.localizedDescription)")
+        }
+        guard PackManifest.isValidID(manifest.id) else {
+            throw LoadError.invalid("the id \"\(manifest.id)\" must be lowercase letters, digits and dashes (up to 32)")
+        }
+        guard manifest.id == folder.lastPathComponent else {
+            throw LoadError.invalid("the manifest id \"\(manifest.id)\" doesn't match the folder name")
+        }
+        guard let kind = Kind(rawValue: manifest.kind) else { throw LoadError.invalid("unknown kind \"\(manifest.kind)\"") }
+        guard kind == .game || manifest.sdkVersion >= utilitySDK else { throw LoadError.invalid("utilities need SDK \(utilitySDK) or newer") }
+        if let unknown = manifest.capabilities?.first(where: { PackCapability.named($0) == nil }) {
+            throw LoadError.invalid("needs a newer Zephdeck (capability \(unknown))")
+        }
+        guard manifest.sdkVersion <= sdkVersion else { throw LoadError.invalid("needs a newer Zephdeck (SDK \(manifest.sdkVersion))") }
+        if kind == .sounds { return PackBundle(folder: folder, manifest: manifest, script: "", isDev: isDev) }
+        guard let script = try? String(contentsOf: folder.appending(path: "main.js"), encoding: .utf8) else {
+            throw LoadError.unreadable("main.js can't be read")
+        }
+        return PackBundle(folder: folder, manifest: manifest, script: script, isDev: isDev)
+    }
+
+    /// An image editor: a utility that handles "image" and may open windows and edit images.
+    /// It has a page in the Settings window (a utility on SDK 5 or newer that says so).
+    var hasSettings: Bool {
+        kind == .utility && manifest.settings == true && manifest.sdkVersion >= Self.settingsSDK
+    }
+
+    var isImageEditor: Bool {
+        kind == .utility && manifest.handles?.contains("image") == true
+            && Set(manifest.capabilities ?? []).isSuperset(of: ["windows", "images.edit"])
+    }
+
+    /// A file under the pack's assets/ folder, or nil if the name tries to leave it.
+    func assetURL(_ name: String) -> URL? {
+        guard !name.isEmpty, !name.hasPrefix("/"), !name.split(separator: "/").contains("..") else { return nil }
+        let assets = folder.appending(path: "assets", directoryHint: .isDirectory).resolvingSymlinksInPath().standardizedFileURL
+        let url = assets.appending(path: name).resolvingSymlinksInPath().standardizedFileURL
+        guard url.path.hasPrefix(assets.path + "/") else { return nil }
+        return url
+    }
+
+    /// The tile icon: a template image, drawn in the accent color. A named SF Symbol wins over icon.png.
+    func loadIcon() -> NSImage? {
+        if let symbol = manifest.symbol, let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) {
+            return image
+        }
+        guard let image = NSImage(contentsOf: folder.appending(path: "icon.png")) else { return nil }
+        image.isTemplate = true
+        return image
+    }
+}
+
+/// A pack's own saved data: a small JSON file per pack, holding each key's value as JSON text.
+/// It lives outside the pack's folder, so it survives updates (and removal, unless the player deletes progress).
+final class PackStorage {
+    static let limit = 1024 * 1024
+
+    private let file: URL
+    private var values: [String: String]
+    /// Runtimes of the same pack (its panel screen, its window, its settings page) that want to
+    /// know when another one changes the data. Held weakly.
+    private var listeners: [(owner: () -> AnyObject?, changed: () -> Void)] = []
+
+    /// One store per pack, shared by every runtime of it, so they never overwrite each other's saves.
+    private static var open: [String: PackStorage] = [:]
+
+    static func shared(packID: String) -> PackStorage {
+        if let storage = open[packID] { return storage }
+        let storage = PackStorage(packID: packID)
+        open[packID] = storage
+        return storage
+    }
+
+    /// The pack's data file was deleted (removing a pack with its progress): read it afresh next time.
+    static func forget(packID: String) { open[packID] = nil }
+
+    /// Calls `changed` when a runtime other than `owner` changes the data, for as long as `owner` lives.
+    func observe(by owner: AnyObject, _ changed: @escaping () -> Void) {
+        listeners.removeAll { $0.owner() == nil }
+        listeners.append((owner: { [weak owner] in owner }, changed: changed))
+    }
+
+    private func notify(except writer: AnyObject?) {
+        listeners.removeAll { $0.owner() == nil }
+        for listener in listeners where listener.owner() !== writer { listener.changed() }
+    }
+
+    /// ~/Library/Application Support/Zephdeck/PackData/<id>.json.
+    static func defaultDirectory() -> URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appending(path: "Zephdeck/PackData", directoryHint: .isDirectory)
+    }
+
+    init(packID: String, directory: URL = PackStorage.defaultDirectory()) {
+        file = directory.appending(path: "\(packID).json")
+        values = (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
+    }
+
+    func get(_ key: String) -> String? { values[key] }
+
+    /// Returns false (and saves nothing) if the pack would go over its 1 MB. `writer` (the runtime
+    /// saving) isn't told about its own change; the others are.
+    @discardableResult
+    func set(_ key: String, json: String, by writer: AnyObject? = nil) -> Bool {
+        guard values[key] != json else { return true }
+        var next = values
+        next[key] = json
+        guard Self.size(of: next) <= Self.limit else { return false }
+        values = next
+        save()
+        notify(except: writer)
+        return true
+    }
+
+    func remove(_ key: String, by writer: AnyObject? = nil) {
+        guard values.removeValue(forKey: key) != nil else { return }
+        save()
+        notify(except: writer)
+    }
+
+    func clear(by writer: AnyObject? = nil) {
+        values = [:]
+        try? FileManager.default.removeItem(at: file)
+        notify(except: writer)
+    }
+
+    private static func size(of values: [String: String]) -> Int {
+        values.reduce(0) { $0 + $1.key.utf8.count + $1.value.utf8.count }
+    }
+
+    private func save() {
+        do {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try JSONEncoder().encode(values).write(to: file, options: .atomic)
+        } catch {
+            #if DEBUG
+            print("PackStorage: couldn't save \(file.lastPathComponent): \(error)")
+            #endif
+        }
+    }
+}

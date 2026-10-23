@@ -2,14 +2,14 @@
   "id": "app-updates",
   "name": "App Updates",
   "kind": "utility",
-  "version": "1.0.1",
-  "sdkVersion": 9,
+  "version": "1.0.2",
+  "sdkVersion": 13,
   "description": "One list of updates for your apps: App Store, Homebrew and apps' own updaters.",
   "symbol": "arrow.down.app",
   "capabilities": [
     "updates.check"
   ],
-  "whatsNew": "Explains itself on its page in Settings.",
+  "whatsNew": "Zephydian is now Zephdeck: updated for the new name.",
   "howTo": {
     "goal": "Checks every app on your Mac for a newer version and lists them in one place, whether they come from the App Store, Homebrew or their own updater.",
     "rules": [

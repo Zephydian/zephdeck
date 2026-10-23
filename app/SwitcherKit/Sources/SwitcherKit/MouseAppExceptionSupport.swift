@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Modified for Zephydian on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): removed the per-feature mouse exception list (MouseExceptionScope); kept the window helpers.
+// Modified for Zephdeck on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): removed the per-feature mouse exception list (MouseExceptionScope); kept the window helpers.
 
 import CoreGraphics
 import Foundation
 
 
-// (Zephydian: the per-feature mouse exception list that came here was removed; only the window helpers are used.)
+// (Zephdeck: the per-feature mouse exception list that came here was removed; only the window helpers are used.)
 
 /// The pure half of the mouse exceptions: which window answers for the app
 /// being used, and how long an answer may be reused before the window server

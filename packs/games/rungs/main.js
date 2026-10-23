@@ -336,7 +336,7 @@ function moveRow(from, to) {
   save();
 }
 
-zephydian.game({
+zephdeck.game({
   start() {
     preloadSounds();
     setMenu();

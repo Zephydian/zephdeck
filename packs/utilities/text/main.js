@@ -190,7 +190,7 @@ function tools() {
   ]);
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() { text = z.storage.get("text") || ""; },
 
   undo,

@@ -92,7 +92,7 @@ function maintenanceView() {
   ];
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() { if (z.brew.status().installed) loadInstalled(); z.loop.start(1000); },
   resume() { if (z.brew.status().installed) loadInstalled(); },
   tick() {},

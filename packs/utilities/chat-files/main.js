@@ -1,6 +1,6 @@
 // Chat Files: the photos, videos and files that Messages, WhatsApp, Telegram, Signal, Discord,
 // Slack and Teams keep, older than an age you choose. Tick apps, review the sizes, and move them
-// to the Trash. Messages' files are protected by macOS until Zephydian has Full Disk Access.
+// to the Trash. Messages' files are protected by macOS until Zephdeck has Full Disk Access.
 
 const AGES = [{ label: "1 month", days: 30 }, { label: "3 months", days: 90 }, { label: "6 months", days: 180 }, { label: "1 year", days: 365 }];
 let age = 1;
@@ -35,7 +35,7 @@ function clean() {
   });
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() { age = z.storage.get("age") ?? 1; },
   view() {
     const controls = [
@@ -60,9 +60,9 @@ zephydian.utility({
           : z.ui.toggle(a.app + " (" + a.count + " file" + (a.count === 1 ? "" : "s") + ")", !!picked[a.app], on => { picked[a.app] = on; }, { id: "a" + a.app }),
         z.ui.spacer(),
         z.ui.text(a.blocked ? "" : bytes(a.size), { style: "mono" }),
-      ]))) : z.ui.text("None of the chat apps Zephydian knows are on this Mac.", { style: "secondary" }),
+      ]))) : z.ui.text("None of the chat apps Zephdeck knows are on this Mac.", { style: "secondary" }),
       blocked ? z.ui.row([
-        z.ui.text("macOS protects some chat files. Allow Zephydian under Full Disk Access, then scan again.", { style: "caption" }),
+        z.ui.text("macOS protects some chat files. Allow Zephdeck under Full Disk Access, then scan again.", { style: "caption" }),
         z.ui.button("Open Settings", () => z.clean.openFullDiskAccess(), { symbol: "lock.open" }),
       ]) : null,
       z.ui.row([

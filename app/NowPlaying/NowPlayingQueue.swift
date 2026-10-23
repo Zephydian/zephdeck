@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Copied unchanged into Zephydian on 2026-10-06 from vorssaint/vorssaint-utils, commit 567ba36.
+// Copied unchanged into Zephdeck on 2026-10-06 from vorssaint/vorssaint-utils, commit 567ba36.
 
 import Foundation
 import ImageIO

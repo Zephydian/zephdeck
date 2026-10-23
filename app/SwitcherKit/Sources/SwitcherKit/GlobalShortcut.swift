@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Vorssaint
-// Modified for Zephydian on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): removed the shortcut-role registry that listed every Vorssaint feature (GlobalShortcutRole, ShortcutRecordingCaption) and the role parameter of the macOS-conflict check; renamed thread and queue labels from Vorssaint to Zephydian (Vorssaint's TRADEMARKS.md).
+// Modified for Zephdeck on 2026-10-05 (from vorssaint/vorssaint-utils, commit 04abae3): removed the shortcut-role registry that listed every Vorssaint feature (GlobalShortcutRole, ShortcutRecordingCaption) and the role parameter of the macOS-conflict check; renamed thread and queue labels from Vorssaint to Zephdeck (Vorssaint's TRADEMARKS.md).
 
 import AppKit
 import Carbon.HIToolbox
@@ -567,7 +567,7 @@ struct GlobalShortcut: Equatable, Hashable {
     private static let layoutLabelLock = NSLock()
     private static var layoutLabels: [LayoutLabelKey: String] = [:]
     private static var keyboardLayoutObserver: AnyObject?
-    static let keyboardLayoutDidChange = Notification.Name("ZephydianShortcutKeyboardLayoutDidChange")
+    static let keyboardLayoutDidChange = Notification.Name("ZephdeckShortcutKeyboardLayoutDidChange")
 
     /// Starts observing system keyboard layout changes so the keycap cache stays
     /// current across layout switches. Safe to call multiple times.
@@ -679,7 +679,7 @@ struct GlobalShortcut: Equatable, Hashable {
     }
 }
 
-// (Zephydian: the shortcut-role registry that listed every feature was removed here.)
+// (Zephdeck: the shortcut-role registry that listed every feature was removed here.)
 
 extension GlobalShortcut {
     /// The customised half of the system's shortcut list, as System Settings

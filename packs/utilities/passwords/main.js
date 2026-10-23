@@ -103,7 +103,7 @@ function passphraseOptions() {
   ];
 }
 
-zephydian.utility({
+zephdeck.utility({
   start() {
     prefs = Object.assign(prefs, z.storage.get("prefs") || {});
     regenerate();
