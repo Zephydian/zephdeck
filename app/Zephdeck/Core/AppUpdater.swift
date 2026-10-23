@@ -271,7 +271,8 @@ final class AppUpdater {
         return path.hasPrefix("/Applications/") || path.hasPrefix(NSHomeDirectory() + "/Applications/")
     }
 
-    /// Homebrew finished but didn't install the new version, so the sheet offers the download instead.
+    /// Homebrew didn't install the new version (not found yet, or it refused a cask it doesn't trust),
+    /// so the sheet offers the download instead.
     private(set) var homebrewMissed = false
 
     /// Updates through Homebrew or from the zip, then restarts. The old app stays if anything fails.
@@ -292,7 +293,10 @@ final class AppUpdater {
                 return Self.run(brew.brew, ["upgrade", "--cask", "zephdeck"])
             }.value
             guard result.status == 0 else {
-                install = .failed("Homebrew couldn't update it: " + (result.output.split(separator: "\n").last.map(String.init) ?? "exit \(result.status)"))
+                let reason = result.output.split(separator: "\n").last.map(String.init) ?? "exit \(result.status)"
+                // A cask Homebrew doesn't trust (B-59, e.g. after its tap moved): the download still works.
+                if result.output.lowercased().contains("trust") { homebrewMissed = true }
+                install = .failed("Homebrew couldn't update it: " + reason + (homebrewMissed ? " You can install the download instead." : ""))
                 return
             }
             // A successful run can still leave the old version in place: restart only into the new one.
