@@ -60,7 +60,7 @@ jobs:
           fi
           VERSION=${GITHUB_REF_NAME#v}
           SHA=$(cat dist/Zephydian-$VERSION.zip.sha256)
-          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/ahmastan/homebrew-tap.git" tap
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/zephydian/homebrew-tap.git" tap
           cd tap
           sed -i '' -E "s/^  version \".*\"/  version \"$VERSION\"/; s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/zephydian.rb
           if git diff --quiet; then

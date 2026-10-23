@@ -31,14 +31,29 @@ final class AppUpdater {
         case idle, checking, upToDate, failed(String)
     }
 
-    static let latestURL = URL(string: "https://github.com/ahmastan/zephydian/releases/latest")!
-    static let caskURL = URL(string: "https://raw.githubusercontent.com/ahmastan/homebrew-tap/main/Casks/zephydian.rb")!
+    static let latestURL = URL(string: "https://github.com/zephydian/zephdeck/releases/latest")!
+    /// The renamed cask first, then the old one (only one of them has the new version).
+    static let caskURLs = ["zephdeck", "zephydian"].map {
+        URL(string: "https://raw.githubusercontent.com/zephydian/homebrew-tap/main/Casks/\($0).rb")!
+    }
     static func changelogURL(_ version: String) -> URL {
-        URL(string: "https://raw.githubusercontent.com/ahmastan/zephydian/v\(version)/CHANGELOG.md")!
+        URL(string: "https://raw.githubusercontent.com/zephydian/zephdeck/v\(version)/CHANGELOG.md")!
     }
     static func zipURL(_ version: String) -> URL {
-        URL(string: "https://github.com/ahmastan/zephydian/releases/download/v\(version)/Zephydian-\(version).zip")!
+        URL(string: "https://github.com/zephydian/zephdeck/releases/download/v\(version)/\(appName(for: version))-\(version).zip")!
     }
+
+    /// From this version on the app is Zephdeck, with its own bundle ID; this copy (1.0.1) is the
+    /// bridge that can install it.
+    nonisolated static let renameVersion = "1.1.0"
+    nonisolated static func appName(for version: String) -> String {
+        isNewer(renameVersion, than: version) ? "Zephydian" : "Zephdeck"
+    }
+    nonisolated static func bundleID(for version: String) -> String {
+        isNewer(renameVersion, than: version) ? "com.ahmastan.zephydian" : "com.zephydian.zephdeck"
+    }
+    /// The update renames the app (Zephydian → Zephdeck).
+    static func renames(_ release: Release) -> Bool { appName(for: release.version) != "Zephydian" }
 
     private(set) var available: Release?
     private(set) var state: State = .idle
@@ -170,14 +185,21 @@ final class AppUpdater {
 
     /// The zip's fingerprint from the Homebrew cask, and the notes from that version's CHANGELOG.
     private func details(_ version: String) async throws -> Release {
-        let cask = try await text(Self.caskURL)
-        guard let sha = Self.caskValue("sha256", in: cask), Self.caskValue("version", in: cask) == version else {
-            throw Failure(description: "Zephydian \(version) is still being published.")
+        var sha: String?
+        var failure: Error = Failure(description: "\(Self.appName(for: version)) \(version) is still being published.")
+        for url in Self.caskURLs where sha == nil {
+            do {
+                let cask = try await text(url)
+                if Self.caskValue("version", in: cask) == version { sha = Self.caskValue("sha256", in: cask) }
+            } catch let error as URLError {
+                failure = error
+            } catch {}   // the other cask isn't there
         }
+        guard let sha else { throw failure }
         let changelog = (try? await text(Self.changelogURL(version))) ?? ""
         return Release(version: version, notes: Self.changelogSection(version, in: changelog),
                        zipURL: Self.zipURL(version), zipSize: 0, sha256: sha.count == 64 ? sha.lowercased() : nil,
-                       pageURL: URL(string: "https://github.com/ahmastan/zephydian/releases/tag/v\(version)")!)
+                       pageURL: URL(string: "https://github.com/zephydian/zephdeck/releases/tag/v\(version)")!)
     }
 
     private func text(_ url: URL) async throws -> String {
@@ -244,7 +266,7 @@ final class AppUpdater {
 
     nonisolated private static func post(_ version: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Zephydian \(version) is available"
+        content.title = "\(appName(for: version)) \(version) is available"
         content.body = "Click to see what's new and update."
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: notificationID, content: content, trigger: nil))
     }
@@ -262,6 +284,25 @@ final class AppUpdater {
             }
         }
         return nil
+    }
+
+    /// The tap this copy's cask came from (Homebrew's install receipt), e.g. "ahmastan/tap".
+    nonisolated static func homebrewTap(caskroom: String) -> String {
+        let receipt = URL(filePath: caskroom + "/.metadata/INSTALL_RECEIPT.json")
+        if let data = try? Data(contentsOf: receipt),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let tap = (json["source"] as? [String: Any])?["tap"] as? String,
+           tap.wholeMatch(of: /[a-z0-9_-]+\/[a-z0-9_-]+/.ignoresCase()) != nil {
+            return tap.lowercased()
+        }
+        return "ahmastan/tap"
+    }
+
+    /// Homebrew 7 loads casks from other taps only once they're trusted, one by one: people trusted
+    /// zephydian, so the renamed cask needs the person's OK (the update sheet asks) before it's trusted.
+    static var homebrewRenamedCask: String? {
+        guard let brew = homebrew, let release = AppUpdater.shared.available, renames(release) else { return nil }
+        return homebrewTap(caskroom: brew.caskroom) + "/zephdeck"
     }
 
     /// An installed copy (in an Applications folder) can update itself; one run from Xcode or a
@@ -283,35 +324,43 @@ final class AppUpdater {
             install = .failed("This copy isn't in Applications (it runs from Xcode or a build folder), so it can't update itself.")
             return
         }
+        let name = Self.appName(for: release.version)
         if !fromDownload, let brew = Self.homebrew {
             install = .installing
             homebrewMissed = false
+            // The renamed cask, when this update is the rename (the tap's cask_renames.json moves
+            // Homebrew's record of zephydian over to it).
+            let renamed = Self.homebrewRenamedCask
             let result = await Task.detached(priority: .userInitiated) { () -> (status: Int32, output: String) in
                 // Homebrew refreshes its taps only once a day, so it may not know the new version yet (B-57).
                 _ = Self.run(brew.brew, ["update", "--quiet"])
-                return Self.run(brew.brew, ["upgrade", "--cask", "zephydian"])
+                guard let renamed else { return Self.run(brew.brew, ["upgrade", "--cask", "zephydian"]) }
+                let trust = Self.run(brew.brew, ["trust", "--cask", renamed])
+                guard trust.status == 0 else { return trust }
+                return Self.run(brew.brew, ["upgrade", "--cask", "zephdeck"])
             }.value
             guard result.status == 0 else {
                 install = .failed("Homebrew couldn't update it: " + (result.output.split(separator: "\n").last.map(String.init) ?? "exit \(result.status)"))
                 return
             }
             // A successful run can still leave the old version in place: restart only into the new one.
-            guard Self.installedVersion(at: Bundle.main.bundleURL) == release.version else {
+            let installed = Bundle.main.bundleURL.deletingLastPathComponent().appending(path: name + ".app", directoryHint: .isDirectory)
+            guard Self.installedVersion(at: installed) == release.version else {
                 homebrewMissed = true
-                install = .failed("Homebrew didn't find Zephydian \(release.version) yet. Try again in a few minutes, or install the download instead.")
+                install = .failed("Homebrew didn't find \(name) \(release.version) yet. Try again in a few minutes, or install the download instead.")
                 return
             }
-            relaunch()
+            relaunch(installed)
             return
         }
         do {
             let data = try await download(release)
             install = .installing
             let target = Bundle.main.bundleURL
-            try await Task.detached(priority: .userInitiated) {
+            let installed = try await Task.detached(priority: .userInitiated) {
                 try Self.replace(app: target, with: data, version: release.version)
             }.value
-            relaunch()
+            relaunch(installed)
         } catch let failure as Failure {
             install = .failed(failure.description)
         } catch {
@@ -345,8 +394,9 @@ final class AppUpdater {
     }
 
     /// Unzips the new version beside the old one, checks it, then swaps them (the old app goes to
-    /// the Trash, and comes back if the swap fails).
-    nonisolated private static func replace(app target: URL, with zip: Data, version: String) throws {
+    /// the Trash, and comes back if the swap fails). Zephdeck goes beside it as Zephdeck.app, and an
+    /// older Zephdeck.app already there goes to the Trash too. Returns where the new app is.
+    nonisolated private static func replace(app target: URL, with zip: Data, version: String) throws -> URL {
         let fm = FileManager.default
         let work = fm.temporaryDirectory.appending(path: "zephydian-update-\(UUID().uuidString)", directoryHint: .isDirectory)
         try fm.createDirectory(at: work, withIntermediateDirectories: true)
@@ -356,23 +406,30 @@ final class AppUpdater {
         guard run("/usr/bin/ditto", ["-x", "-k", zipFile.path, work.path]).status == 0 else {
             throw Failure(description: "The download couldn't be unpacked.")
         }
-        let app = work.appending(path: "Zephydian.app", directoryHint: .isDirectory)
+        let name = appName(for: version)
+        let app = work.appending(path: name + ".app", directoryHint: .isDirectory)
         guard let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist")),
-              info["CFBundleIdentifier"] as? String == "com.ahmastan.zephydian",
+              info["CFBundleIdentifier"] as? String == bundleID(for: version),
               info["CFBundleShortVersionString"] as? String == version else {
-            throw Failure(description: "The download isn't the expected Zephydian \(version).")
+            throw Failure(description: "The download isn't the expected \(name) \(version).")
         }
         guard run("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path]).status == 0 else {
             throw Failure(description: "The new app's signature didn't check out.")
         }
-        var trashed: NSURL?
+        let destination = target.deletingLastPathComponent().appending(path: name + ".app", directoryHint: .isDirectory)
+        var trashed: NSURL?, trashedOther: NSURL?
         try fm.trashItem(at: target, resultingItemURL: &trashed)
         do {
-            try fm.moveItem(at: app, to: target)
+            if destination != target, fm.fileExists(atPath: destination.path) {
+                try fm.trashItem(at: destination, resultingItemURL: &trashedOther)
+            }
+            try fm.moveItem(at: app, to: destination)
         } catch {
             if let back = trashed as URL? { try? fm.moveItem(at: back, to: target) }
+            if let back = trashedOther as URL? { try? fm.moveItem(at: back, to: destination) }
             throw Failure(description: "The new version couldn't be put in place: \(error.localizedDescription)")
         }
+        return destination
     }
 
     /// The version of the app on disk, read from its Info.plist each time (Bundle caches it).
@@ -380,10 +437,15 @@ final class AppUpdater {
         NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist"))?["CFBundleShortVersionString"] as? String
     }
 
-    /// Opens the (new) app once this one has quit, then quits.
-    private func relaunch() {
+    /// Opens the new app once this one has quit, then quits. When it's Zephdeck (another bundle ID),
+    /// this copy's login item is switched off first and a note left for Zephdeck to switch its own on.
+    private func relaunch(_ app: URL) {
         let pid = ProcessInfo.processInfo.processIdentifier
-        let path = Bundle.main.bundlePath
+        let path = app.path
+        if path != Bundle.main.bundlePath, LaunchAtLogin.isEnabled {
+            try? LaunchAtLogin.set(false)
+            defaults.set(true, forKey: "rebrand.wasLoginItem")
+        }
         let task = Process()
         task.executableURL = URL(filePath: "/bin/sh")
         task.arguments = ["-c", "while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done; /usr/bin/open \"$0\"", path]
