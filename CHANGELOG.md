@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-23
+
+### Fixed
+- Updating through Homebrew could stop with "Run `brew trust …` to trust it". When Zephydian's Homebrew tap moved to `zephydian/tap`, Homebrew renamed it on your Mac and, as a safety rule, stopped trusting it. The next update (Zephdeck) now asks Homebrew to trust the tap under its new name, and if Homebrew still refuses, offers **Install the Download Instead**. To fix Homebrew yourself, run `brew trust zephydian/tap` once.
+
 ## [1.0.1] - 2026-10-23
 
 Zephydian is becoming **Zephdeck**: same app, new name, now at [zephydian/zephdeck](https://github.com/zephydian/zephdeck). This update gets your Mac ready for the next one, which renames the app.

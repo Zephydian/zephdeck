@@ -286,23 +286,45 @@ final class AppUpdater {
         return nil
     }
 
-    /// The tap this copy's cask came from (Homebrew's install receipt), e.g. "ahmastan/tap".
-    nonisolated static func homebrewTap(caskroom: String) -> String {
+    /// The tap that holds Zephdeck's cask now, e.g. "zephydian/tap". Found on disk after `brew update`:
+    /// when the tap's GitHub repo moved, Homebrew renamed it (ahmastan/tap → zephydian/tap) and
+    /// dropped its trust (B-59), so the install receipt's tap name can be out of date.
+    nonisolated static func homebrewTap(brew: String, caskroom: String) -> String {
+        let prefix = URL(filePath: brew).deletingLastPathComponent().deletingLastPathComponent()
+        let tapsFolders = [prefix.appending(path: "Library/Taps"), prefix.appending(path: "Homebrew/Library/Taps")]
+        return homebrewTap(tapsFolders: tapsFolders, caskroom: caskroom)
+    }
+
+    nonisolated static func homebrewTap(tapsFolders: [URL], caskroom: String) -> String {
+        let fm = FileManager.default
+        let valid = { (tap: String) in tap.wholeMatch(of: /[a-z0-9_-]+\/[a-z0-9_-]+/.ignoresCase()) != nil }
+        for cask in ["zephdeck", "zephydian"] {
+            for folder in tapsFolders {
+                for user in (try? fm.contentsOfDirectory(atPath: folder.path)) ?? [] {
+                    for repo in (try? fm.contentsOfDirectory(atPath: folder.appending(path: user).path)) ?? [] where repo.hasPrefix("homebrew-") {
+                        let casks = folder.appending(path: "\(user)/\(repo)/Casks")
+                        guard fm.fileExists(atPath: casks.appending(path: cask + ".rb").path)
+                                || fm.fileExists(atPath: casks.appending(path: "\(cask.prefix(1))/\(cask).rb").path) else { continue }
+                        let tap = "\(user)/\(repo.dropFirst("homebrew-".count))".lowercased()
+                        if valid(tap) { return tap }
+                    }
+                }
+            }
+        }
         let receipt = URL(filePath: caskroom + "/.metadata/INSTALL_RECEIPT.json")
         if let data = try? Data(contentsOf: receipt),
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let tap = (json["source"] as? [String: Any])?["tap"] as? String,
-           tap.wholeMatch(of: /[a-z0-9_-]+\/[a-z0-9_-]+/.ignoresCase()) != nil {
+           let tap = (json["source"] as? [String: Any])?["tap"] as? String, valid(tap) {
             return tap.lowercased()
         }
-        return "ahmastan/tap"
+        return "zephydian/tap"
     }
 
-    /// Homebrew 7 loads casks from other taps only once they're trusted, one by one: people trusted
-    /// zephydian, so the renamed cask needs the person's OK (the update sheet asks) before it's trusted.
-    static var homebrewRenamedCask: String? {
-        guard let brew = homebrew, let release = AppUpdater.shared.available, renames(release) else { return nil }
-        return homebrewTap(caskroom: brew.caskroom) + "/zephdeck"
+    /// Homebrew 7 loads casks from other taps only once they're trusted, one by one: the renamed
+    /// cask needs the person's OK (the update sheet asks) before it's trusted.
+    static var homebrewRenames: Bool {
+        guard homebrew != nil, let release = AppUpdater.shared.available else { return false }
+        return renames(release)
     }
 
     /// An installed copy (in an Applications folder) can update itself; one run from Xcode or a
@@ -312,7 +334,8 @@ final class AppUpdater {
         return path.hasPrefix("/Applications/") || path.hasPrefix(NSHomeDirectory() + "/Applications/")
     }
 
-    /// Homebrew finished but didn't install the new version, so the sheet offers the download instead.
+    /// Homebrew didn't install the new version (not found yet, or it refused a cask it doesn't trust),
+    /// so the sheet offers the download instead.
     private(set) var homebrewMissed = false
 
     /// Updates through Homebrew or from the zip, then restarts. The old app stays if anything fails.
@@ -328,19 +351,23 @@ final class AppUpdater {
         if !fromDownload, let brew = Self.homebrew {
             install = .installing
             homebrewMissed = false
-            // The renamed cask, when this update is the rename (the tap's cask_renames.json moves
-            // Homebrew's record of zephydian over to it).
-            let renamed = Self.homebrewRenamedCask
+            // When this update is the rename, the tap's cask_renames.json moves Homebrew's record of
+            // zephydian over to zephdeck, whose cask is trusted first (the person allowed it in the sheet).
+            let renames = Self.homebrewRenames
             let result = await Task.detached(priority: .userInitiated) { () -> (status: Int32, output: String) in
                 // Homebrew refreshes its taps only once a day, so it may not know the new version yet (B-57).
                 _ = Self.run(brew.brew, ["update", "--quiet"])
-                guard let renamed else { return Self.run(brew.brew, ["upgrade", "--cask", "zephydian"]) }
-                let trust = Self.run(brew.brew, ["trust", "--cask", renamed])
+                guard renames else { return Self.run(brew.brew, ["upgrade", "--cask", "zephydian"]) }
+                let tap = Self.homebrewTap(brew: brew.brew, caskroom: brew.caskroom)
+                let trust = Self.run(brew.brew, ["trust", "--cask", tap + "/zephdeck"])
                 guard trust.status == 0 else { return trust }
                 return Self.run(brew.brew, ["upgrade", "--cask", "zephdeck"])
             }.value
             guard result.status == 0 else {
-                install = .failed("Homebrew couldn't update it: " + (result.output.split(separator: "\n").last.map(String.init) ?? "exit \(result.status)"))
+                let reason = result.output.split(separator: "\n").last.map(String.init) ?? "exit \(result.status)"
+                // A cask Homebrew doesn't trust (B-59), or the rename not going through: the download still works.
+                if renames || result.output.lowercased().contains("trust") { homebrewMissed = true }
+                install = .failed("Homebrew couldn't update it: " + reason + (homebrewMissed ? " You can install the download instead." : ""))
                 return
             }
             // A successful run can still leave the old version in place: restart only into the new one.
