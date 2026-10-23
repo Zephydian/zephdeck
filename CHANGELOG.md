@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-23
+
 **Zephydian is now Zephdeck.** Same app, new name: Zephydian is now the name of the company that makes it. Zephdeck lives at [zephydian.com/zephdeck](https://zephydian.com/zephdeck) and [github.com/zephydian/zephdeck](https://github.com/zephydian/zephdeck), and it's still a free, open-source utility app with games. More utilities are coming soon.
 
 ### Changed
@@ -15,7 +17,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Homebrew: the cask is now `zephdeck` in the `zephydian/tap` tap (`brew install zephydian/tap/zephdeck`). Existing installs follow the new name.
 - Packs: the pack SDK is now called `zephdeck` (SDK 13), and every pack in the Library was updated for it.
 
-## [1.0.1] - Unreleased
+## [1.0.1] - 2026-10-23
 
 Zephydian is becoming **Zephdeck**: same app, new name, now at [zephydian/zephdeck](https://github.com/zephydian/zephdeck). This update gets your Mac ready for the next one, which renames the app.
 
