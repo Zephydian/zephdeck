@@ -72,7 +72,7 @@ From 0.9.1, Zephdeck checks for new versions itself (Settings → General → Up
 
 ### Coming from Zephydian?
 
-Zephdeck is Zephydian's new name (from 1.1.0). Zephydian 1.0.1 updates itself to Zephdeck: your settings, notes, packs and shortcuts come along, and macOS asks for its permissions again because the app's identity changed. On 1.0.0? Update to 1.0.1 first, or download Zephdeck and drag it into **Applications** (your data still comes along on its first launch), then move **Zephydian.app** to the Trash. With Homebrew, run `brew update`, then `brew upgrade --cask zephdeck`; if Homebrew says the cask isn't trusted, run the `brew trust` command it suggests, then upgrade again.
+Zephdeck is Zephydian's new name (from 1.1.0). Zephydian 1.0.1 and later update themselves to Zephdeck: your settings, notes, packs and shortcuts come along, and macOS asks for its permissions again because the app's identity changed. On 1.0.0? Update to the latest Zephydian first, or download Zephdeck and drag it into **Applications** (your data still comes along on its first launch), then move **Zephydian.app** to the Trash. With Homebrew, run `brew trust zephydian/tap` once (Homebrew stops trusting a tap that moved), then `brew update` and `brew upgrade --cask zephdeck`.
 
 ### "Apple could not verify Zephdeck…"
 
